@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ComplianceStatus {
+  ACTIVE
+  EXPIRING
+  EXPIRED
+}
+
+model Contractor {
+  id        String    @id @default(cuid())
+  name      String
+  officers  Officer[]
+  createdAt DateTime  @default(now())
+}
+
+model Officer {
+  id             String          @id @default(cuid())
+  contractorId   String
+  contractor     Contractor      @relation(fields: [contractorId], references: [id])
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  licences       SiaLicence[]
+  vettingRecords VettingRecord[]
+  qualifications Qualification[]
+  documents      Document[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([contractorId])
+}
+
+// SIA licence held by an officer. `status` is derived by the scheduled
+// expiry-check job (backend/src/jobs/checkExpiries.ts), not set by hand,
+// since Vetro's whole pitch is that this is checked, not entered.
+model SiaLicence {
+  id            String           @id @default(cuid())
+  officerId     String
+  officer       Officer          @relation(fields: [officerId], references: [id])
+  licenceNumber String
+  sector        String
+  issueDate     DateTime
+  expiryDate    DateTime
+  status        ComplianceStatus @default(ACTIVE)
+  lastCheckedAt DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([officerId])
+  @@index([expiryDate])
+}
+
+model VettingRecord {
+  id            String           @id @default(cuid())
+  officerId     String
+  officer       Officer          @relation(fields: [officerId], references: [id])
+  standard      String           @default("BS7858")
+  completedDate DateTime
+  expiryDate    DateTime?
+  status        ComplianceStatus @default(ACTIVE)
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([officerId])
+  @@index([expiryDate])
+}
+
+model Qualification {
+  id         String    @id @default(cuid())
+  officerId  String
+  officer    Officer   @relation(fields: [officerId], references: [id])
+  name       String
+  issuedBy   String?
+  issueDate  DateTime?
+  expiryDate DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([officerId])
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  officerId  String
+  officer    Officer  @relation(fields: [officerId], references: [id])
+  kind       String
+  s3Key      String
+  uploadedAt DateTime @default(now())
+
+  @@index([officerId])
+}
+
+// Every write an ACS inspector or client export might need to prove happened.
+model AuditLogEntry {
+  id         String   @id @default(cuid())
+  actorEmail String
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
