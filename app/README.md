@@ -60,6 +60,28 @@ password at signup time. `login()` rejects with `NewPasswordRequiredError`
 `Login.tsx` catches that specifically and swaps to a "set a new password"
 form, finishing with `completeNewPassword`.
 
+## Visual design
+
+The dashboard's own look — distinct from the marketing site's — takes
+concrete cues from TimeGate+ (a real workforce-management product for the
+same security/cleaning industry; researched via its actual App Store
+screenshots, not just marketing copy, since neither is reachable through a
+browser in this environment): a dark navy-to-teal diagonal gradient hero
+banner behind every page's title (`.page-header` in `app.css`, applied
+consistently, not per-page), stat tiles that visually float across the
+hero's bottom edge on the Dashboard specifically (negative `margin-top` on
+`.summary-grid`), and a full-width rounded pill for the sign-in/sign-up
+submit button (`.btn-pill`) rather than every button in the app. Status is
+colour + text together everywhere (`StatusBadge.tsx`'s `ShiftStatusBadge`,
+`ShiftMixBar.tsx`) — TimeGate's own list rows pair a coloured dot with the
+status word rather than colour alone, and that pattern held up under the
+`dataviz` skill's palette validator (the five status colours fail a
+categorical-palette CVD check on lightness/chroma grounds in isolation, but
+pass once every occurrence carries a text label, never just colour).
+`components/SidebarIdentity.tsx` shows the org name and the signed-in
+account's email/role under the (now much bigger) logo, fetched via `GET
+/contractors/me` the same way `Login.tsx`'s post-auth redirect already does.
+
 ## What's here vs. not yet
 
 - Officer roster, officer detail, adding officers/licences/vetting/

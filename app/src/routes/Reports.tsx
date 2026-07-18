@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BarChartIcon } from "../components/icons.js";
+import { ShiftMixBar, ShiftMixLegend } from "../components/ShiftMixBar.js";
 import { SiteReport, useApi } from "../lib/api.js";
 
 export function Reports() {
@@ -37,40 +38,47 @@ export function Reports() {
           <p>Add sites and shifts to see reporting here.</p>
         </div>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Site</th>
-              <th>Officers</th>
-              <th>At risk</th>
-              <th>Scheduled</th>
-              <th>Confirmed</th>
-              <th>Completed</th>
-              <th>Missed</th>
-              <th>Late</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td>{row.name}</td>
-                <td>{row.officerCount}</td>
-                <td>
-                  {row.officersAtRisk > 0 ? (
-                    <span style={{ color: "var(--vetro-status-red)", fontWeight: 600 }}>{row.officersAtRisk}</span>
-                  ) : (
-                    "0"
-                  )}
-                </td>
-                <td>{row.shiftCounts.SCHEDULED}</td>
-                <td>{row.shiftCounts.CONFIRMED}</td>
-                <td>{row.shiftCounts.COMPLETED}</td>
-                <td>{row.shiftCounts.MISSED}</td>
-                <td>{row.shiftCounts.LATE}</td>
+        <>
+          <ShiftMixLegend />
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Site</th>
+                <th>Officers</th>
+                <th>At risk</th>
+                <th>Shift mix</th>
+                <th>Scheduled</th>
+                <th>Confirmed</th>
+                <th>Completed</th>
+                <th>Missed</th>
+                <th>Late</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  <td>{row.name}</td>
+                  <td>{row.officerCount}</td>
+                  <td>
+                    {row.officersAtRisk > 0 ? (
+                      <span style={{ color: "var(--vetro-status-red)", fontWeight: 600 }}>{row.officersAtRisk}</span>
+                    ) : (
+                      "0"
+                    )}
+                  </td>
+                  <td style={{ minWidth: 140 }}>
+                    <ShiftMixBar counts={row.shiftCounts} />
+                  </td>
+                  <td>{row.shiftCounts.SCHEDULED}</td>
+                  <td>{row.shiftCounts.CONFIRMED}</td>
+                  <td>{row.shiftCounts.COMPLETED}</td>
+                  <td>{row.shiftCounts.MISSED}</td>
+                  <td>{row.shiftCounts.LATE}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
     </div>
   );

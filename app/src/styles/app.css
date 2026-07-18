@@ -60,7 +60,76 @@ button {
 
 .sidebar-logo {
   display: block;
-  margin: 0 var(--vetro-space-2) var(--vetro-space-7);
+  margin: 0 var(--vetro-space-2) var(--vetro-space-6);
+}
+
+/* Org + signed-in-account block (SidebarIdentity.tsx) — sits between the
+   logo and the nav in every sidebar variant. */
+.sidebar-identity {
+  margin: 0 var(--vetro-space-2) var(--vetro-space-5);
+}
+
+.sidebar-org {
+  padding-bottom: var(--vetro-space-3);
+  margin-bottom: var(--vetro-space-3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-org-label {
+  color: #7B8794;
+  font-size: 10px;
+  font-weight: var(--vetro-fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--vetro-ls-label);
+  margin-bottom: 2px;
+}
+
+.sidebar-org-name {
+  color: var(--vetro-white);
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--vetro-space-3);
+  min-width: 0;
+}
+
+.sidebar-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--vetro-teal);
+  color: var(--vetro-white);
+  font-size: 12px;
+  font-weight: var(--vetro-fw-semibold);
+  flex-shrink: 0;
+}
+
+.sidebar-user-info {
+  min-width: 0;
+}
+
+.sidebar-user-email {
+  color: var(--vetro-white);
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+  color: #A7B4BE;
+  font-size: 11px;
 }
 
 .app-nav {
@@ -131,20 +200,31 @@ button {
   max-width: 1180px;
 }
 
+/* Page hero — full-bleed dark gradient banner behind every page's title,
+   consistent across the app (never a one-off per page). Bleeds past
+   .app-main's own padding via negative margins, then re-adds it as its own
+   padding so the title/actions still line up with the content below. */
 .page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--vetro-space-4);
-  margin-bottom: var(--vetro-space-6);
+  margin: calc(var(--vetro-space-6) * -1) calc(var(--vetro-space-8) * -1) var(--vetro-space-6);
+  padding: var(--vetro-space-6) var(--vetro-space-8) var(--vetro-space-7);
+  background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+  background-image:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 64px),
+    linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+  position: relative;
 }
 
 .page-header h1 {
   font-size: var(--vetro-fs-h1);
+  color: var(--vetro-white);
 }
 
 .page-header p {
-  color: var(--vetro-text-secondary);
+  color: #B8C2CC;
   margin: var(--vetro-space-1) 0 0;
 }
 
@@ -154,12 +234,16 @@ button {
   flex-shrink: 0;
 }
 
-/* Summary tiles */
+/* Summary tiles — pulled up to float across the hero banner's bottom edge
+   (Dashboard only; the negative margin assumes it directly follows
+   .page-header, matching the source inspiration's floating stat cards). */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: var(--vetro-space-4);
+  margin-top: -40px;
   margin-bottom: var(--vetro-space-5);
+  position: relative;
 }
 
 .summary-tile {
@@ -344,6 +428,15 @@ button {
 .btn-secondary { background: var(--vetro-surface); color: var(--vetro-ink); border-color: var(--vetro-border); }
 .btn-secondary:hover:not(:disabled) { border-color: var(--vetro-border-strong); box-shadow: var(--vetro-shadow-sm); }
 
+/* Pill CTA — sign-in/sign-up submit buttons only, not a global button
+   change; a full-width rounded-pill primary action reads as the one thing
+   to do on that screen. */
+.btn-pill {
+  border-radius: var(--vetro-radius-pill);
+  padding: 12px 24px;
+  font-size: var(--vetro-fs-body);
+}
+
 /* Status badges */
 .status-badge {
   display: inline-flex;
@@ -370,6 +463,209 @@ button {
 .status-active { color: #1C7A45; background: color-mix(in srgb, var(--vetro-status-green) 14%, white); }
 .status-expiring { color: #C24A16; background: color-mix(in srgb, var(--vetro-status-amber) 14%, white); }
 .status-expired { color: var(--vetro-status-red); background: color-mix(in srgb, var(--vetro-status-red) 12%, white); }
+
+/* Shift statuses (Schedule/ClientHome/Reports) — same pill/dot language,
+   two additions for "hasn't happened yet" states that compliance status
+   never needed: a neutral "planned" and the teal accent for "on track". */
+.status-neutral { color: var(--vetro-ink-500); background: var(--vetro-surface-muted); }
+.status-confirmed { color: var(--vetro-teal-dark); background: var(--vetro-teal-light); }
+
+/* Segmented control — Today/This week/All on Schedule, same pattern
+   reusable anywhere a small set of mutually-exclusive filters is needed. */
+.segmented-control {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  background: var(--vetro-surface-muted);
+  border-radius: var(--vetro-radius-md);
+  padding: 3px;
+  height: fit-content;
+}
+
+.segmented-control button {
+  border: none;
+  background: transparent;
+  color: var(--vetro-text-secondary);
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-medium);
+  padding: 6px 14px;
+  border-radius: var(--vetro-radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.segmented-control button:hover { color: var(--vetro-text); }
+
+.segmented-control button.active {
+  background: var(--vetro-surface);
+  color: var(--vetro-text);
+  box-shadow: var(--vetro-shadow-sm);
+}
+
+/* Schedule board — a shift-per-card, day-grouped view in place of a flat
+   table, so "who's where, when" reads at a glance instead of row-by-row. */
+.schedule-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-6);
+}
+
+.schedule-day-heading {
+  font-size: var(--vetro-fs-h4);
+  font-weight: var(--vetro-fw-semibold);
+  margin-bottom: var(--vetro-space-3);
+}
+
+.schedule-day-shifts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--vetro-space-3);
+}
+
+.shift-card {
+  background: var(--vetro-surface);
+  border: 1px solid var(--vetro-border);
+  border-left: 3px solid var(--vetro-border-strong);
+  border-radius: var(--vetro-radius-md);
+  padding: var(--vetro-space-4);
+  box-shadow: var(--vetro-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-3);
+}
+
+.shift-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--vetro-space-2);
+}
+
+.shift-card-site {
+  font-weight: var(--vetro-fw-semibold);
+  font-size: var(--vetro-fs-body);
+}
+
+.shift-card-officer {
+  color: var(--vetro-text-secondary);
+  font-size: var(--vetro-fs-body-sm);
+  margin-top: 2px;
+}
+
+.shift-card-time {
+  color: var(--vetro-text-muted);
+  font-size: var(--vetro-fs-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.shift-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vetro-space-2);
+  margin-top: auto;
+  padding-top: var(--vetro-space-2);
+  border-top: 1px solid var(--vetro-border);
+}
+
+/* Shift status-mix bar (Reports) — a stacked bar per site, gaps between
+   segments (not strokes) do the separating; the legend below is the
+   identity channel, colour alone never is. */
+.shift-mix-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vetro-space-4);
+  margin-bottom: var(--vetro-space-4);
+}
+
+.shift-mix-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text-secondary);
+}
+
+.shift-mix-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.shift-mix-bar {
+  display: flex;
+  align-items: stretch;
+  height: 16px;
+  border-radius: var(--vetro-radius-pill);
+  overflow: hidden;
+  gap: 2px;
+  background: var(--vetro-surface-muted);
+  min-width: 120px;
+}
+
+.shift-mix-bar-empty {
+  background: var(--vetro-surface-muted);
+}
+
+.shift-mix-segment {
+  min-width: 3px;
+}
+
+/* Sites — a card per site instead of a flat table, expanding in place to
+   reveal the client-invite form (same interaction as before, different
+   shell). */
+.site-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--vetro-space-4);
+}
+
+.site-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.site-card-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-2);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--vetro-space-5);
+}
+
+.site-card-summary:hover { background: var(--vetro-bg); }
+
+.site-card-name {
+  font-weight: var(--vetro-fw-semibold);
+  font-size: var(--vetro-fs-body);
+  color: var(--vetro-text);
+}
+
+.site-card-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--vetro-text-muted);
+  font-size: var(--vetro-fs-body-sm);
+  margin-top: 4px;
+}
+
+.site-card-contact {
+  color: var(--vetro-text-secondary);
+  font-size: var(--vetro-fs-body-sm);
+}
+
+.site-card-expanded .site-card-summary { background: var(--vetro-bg); }
+
+.site-card-manage {
+  padding: var(--vetro-space-4) var(--vetro-space-5) var(--vetro-space-5);
+  border-top: 1px solid var(--vetro-border);
+}
 
 .card {
   background: var(--vetro-surface);
@@ -460,7 +756,7 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: var(--vetro-ink);
+  background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
   color: var(--vetro-white);
   padding: var(--vetro-space-7);
   position: relative;
@@ -468,6 +764,19 @@ button {
 }
 
 .login-brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0px,
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px,
+    transparent 64px
+  );
+}
+
+.login-brand-panel::after {
   content: '';
   position: absolute;
   top: -180px;

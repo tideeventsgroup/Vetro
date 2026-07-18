@@ -156,7 +156,7 @@ export function Signup() {
                   />
                   <p className="subtle-meta">At least 12 characters, with upper and lower case, a number, and a symbol.</p>
                 </div>
-                <button className="btn btn-primary" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
+                <button className="btn btn-primary btn-pill" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
                   {isSubmitting ? "Creating…" : "Create organisation"}
                 </button>
               </form>
@@ -180,7 +180,7 @@ export function Signup() {
                     autoComplete="one-time-code"
                   />
                 </div>
-                <button className="btn btn-primary" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
+                <button className="btn btn-primary btn-pill" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
                   {isSubmitting ? "Verifying…" : "Verify & continue"}
                 </button>
               </form>

@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
+import { ShiftStatusBadge } from "../components/StatusBadge.js";
 import { CheckIcon, MapPinIcon, XIcon } from "../components/icons.js";
 import { Shift, Site, useApi } from "../lib/api.js";
 
@@ -101,7 +102,9 @@ export function ClientHome() {
                   <td>{shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "Unassigned"}</td>
                   <td>{formatDateTime(shift.startTime)}</td>
                   <td>{formatDateTime(shift.endTime)}</td>
-                  <td>{shift.status}</td>
+                  <td>
+                    <ShiftStatusBadge status={shift.status} />
+                  </td>
                 </tr>
                 {expandedId === shift.id && (
                   <tr>

@@ -181,36 +181,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {error && <p className="error-text">{error}</p>}
-
-      {pendingReviewCount > 0 && (
-        <Link
-          to={`/${tenant}/vetting-queue`}
-          className="card"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 24,
-            borderLeft: "3px solid var(--vetro-status-amber)",
-            textDecoration: "none",
-            color: "inherit",
-          }}
-        >
-          <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)", flexShrink: 0 }}>
-            <ShieldCheckIcon />
-          </span>
-          <div>
-            <strong>
-              {pendingReviewCount} vetting submission{pendingReviewCount === 1 ? "" : "s"} awaiting review
-            </strong>
-            <p style={{ color: "var(--vetro-text-muted)", fontSize: 13, margin: 0 }}>
-              Officers have submitted details through self-service — go through the queue.
-            </p>
-          </div>
-        </Link>
-      )}
-
       <div className="summary-grid">
         <div className="summary-tile">
           <div>
@@ -246,6 +216,36 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {error && <p className="error-text">{error}</p>}
+
+      {pendingReviewCount > 0 && (
+        <Link
+          to={`/${tenant}/vetting-queue`}
+          className="card"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 24,
+            borderLeft: "3px solid var(--vetro-status-amber)",
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)", flexShrink: 0 }}>
+            <ShieldCheckIcon />
+          </span>
+          <div>
+            <strong>
+              {pendingReviewCount} vetting submission{pendingReviewCount === 1 ? "" : "s"} awaiting review
+            </strong>
+            <p style={{ color: "var(--vetro-text-muted)", fontSize: 13, margin: 0 }}>
+              Officers have submitted details through self-service — go through the queue.
+            </p>
+          </div>
+        </Link>
+      )}
 
       {summary && (
         <p className="subtle-meta">

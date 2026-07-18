@@ -113,7 +113,7 @@ export function Login() {
                     autoComplete="new-password"
                   />
                 </div>
-                <button className="btn btn-primary" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
+                <button className="btn btn-primary btn-pill" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
                   {isSubmitting ? "Setting password…" : "Set password and sign in"}
                 </button>
               </form>
@@ -146,7 +146,7 @@ export function Login() {
                     autoComplete="current-password"
                   />
                 </div>
-                <button className="btn btn-primary" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
+                <button className="btn btn-primary btn-pill" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
                   {isSubmitting ? "Signing in…" : "Sign in"}
                 </button>
               </form>

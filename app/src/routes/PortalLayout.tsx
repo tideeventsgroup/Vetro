@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { SidebarIdentity } from "../components/SidebarIdentity.js";
 import { SignOutIcon } from "../components/icons.js";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
@@ -16,7 +17,8 @@ export function PortalLayout() {
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
-        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="22" className="sidebar-logo" />
+        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
+        <SidebarIdentity />
         <div style={{ flex: 1 }} />
         <div className="app-sidebar-footer">
           <a href="#" onClick={logout}>

@@ -1,5 +1,5 @@
-import { Fragment, FormEvent, useEffect, useState } from "react";
-import { MailIcon, PlusIcon } from "../components/icons.js";
+import { FormEvent, useEffect, useState } from "react";
+import { MailIcon, MapPinIcon, PlusIcon } from "../components/icons.js";
 import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
 import { Site, useApi } from "../lib/api.js";
 
@@ -114,54 +114,52 @@ export function Sites() {
           <p>No sites added yet. Add your first site to start scheduling.</p>
         </div>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Site</th>
-              <th>Address</th>
-              <th>Client contact</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sites.map((site) => (
-              <Fragment key={site.id}>
-                <tr className="clickable" onClick={() => toggleExpand(site)}>
-                  <td>{site.name}</td>
-                  <td>{site.address ?? "—"}</td>
-                  <td>{site.clientContactEmail ?? "—"}</td>
-                </tr>
-                {expandedId === site.id && (
-                  <tr>
-                    <td colSpan={3} style={{ background: "var(--vetro-bg)" }}>
-                      <div style={{ padding: "12px 4px" }}>
-                        <p style={{ fontSize: 13, marginBottom: 12 }}>
-                          Give this site's client contact their own login to review and confirm shifts.
-                        </p>
-                        <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-                          <div className="form-field" style={{ marginBottom: 0, minWidth: 240 }}>
-                            <label htmlFor={`invite-${site.id}`}>Client email</label>
-                            <input
-                              id={`invite-${site.id}`}
-                              type="email"
-                              value={inviteEmail}
-                              onChange={(e) => setInviteEmail(e.target.value)}
-                            />
-                          </div>
-                          <button className="btn btn-secondary" onClick={() => handleInviteClient(site.id)}>
-                            <MailIcon width={14} height={14} />
-                            Send invite
-                          </button>
-                        </div>
-                        {inviteStatus && <p className="subtle-meta">{inviteStatus}</p>}
-                        {invitedPassword && <TemporaryPasswordReveal password={invitedPassword} />}
+        <div className="site-grid">
+          {sites.map((site) => {
+            const isExpanded = expandedId === site.id;
+            return (
+              <div className={`card site-card${isExpanded ? " site-card-expanded" : ""}`} key={site.id}>
+                <button type="button" className="site-card-summary" onClick={() => toggleExpand(site)}>
+                  <div>
+                    <div className="site-card-name">{site.name}</div>
+                    {site.address && (
+                      <div className="site-card-address">
+                        <MapPinIcon width={13} height={13} />
+                        {site.address}
                       </div>
-                    </td>
-                  </tr>
+                    )}
+                  </div>
+                  <div className="site-card-contact">{site.clientContactEmail ?? "No client contact yet"}</div>
+                </button>
+
+                {isExpanded && (
+                  <div className="site-card-manage">
+                    <p style={{ fontSize: 13, marginBottom: 12, color: "var(--vetro-text-muted)" }}>
+                      Give this site's client contact their own login to review and confirm shifts.
+                    </p>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+                      <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}>
+                        <label htmlFor={`invite-${site.id}`}>Client email</label>
+                        <input
+                          id={`invite-${site.id}`}
+                          type="email"
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                        />
+                      </div>
+                      <button className="btn btn-secondary" onClick={() => handleInviteClient(site.id)}>
+                        <MailIcon width={14} height={14} />
+                        Send invite
+                      </button>
+                    </div>
+                    {inviteStatus && <p className="subtle-meta">{inviteStatus}</p>}
+                    {invitedPassword && <TemporaryPasswordReveal password={invitedPassword} />}
+                  </div>
                 )}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

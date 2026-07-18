@@ -1,4 +1,5 @@
 import { Navigate, NavLink, Outlet } from "react-router-dom";
+import { SidebarIdentity } from "../components/SidebarIdentity.js";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 import {
@@ -28,7 +29,8 @@ export function ProtectedLayout() {
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
-        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="22" className="sidebar-logo" />
+        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
+        <SidebarIdentity />
         <nav className="app-nav">
           <NavLink to={`/${tenant}`} end>
             <RosterIcon />

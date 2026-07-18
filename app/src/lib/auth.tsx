@@ -36,6 +36,8 @@ interface AuthContextValue {
   // the verified token itself.
   role?: string;
   officerId?: string;
+  /** The signed-in account's own email — sidebar display only, never trusted server-side. */
+  email?: string;
   /**
    * Reads whatever the ID token is *right now* — a stable function, not the
    * `idToken` field above. Use this (via lib/api.ts's useApi()) for any API
@@ -54,9 +56,12 @@ interface AuthContextValue {
    * tenant-scoped destination — isn't a render behind, same reasoning as
    * getIdToken above.
    */
-  login: (email: string, password: string) => Promise<{ role?: string; officerId?: string }>;
+  login: (email: string, password: string) => Promise<{ role?: string; officerId?: string; email?: string }>;
   /** Finishes the challenge login() rejected with, setting the account's real password. */
-  completeNewPassword: (user: CognitoUser, newPassword: string) => Promise<{ role?: string; officerId?: string }>;
+  completeNewPassword: (
+    user: CognitoUser,
+    newPassword: string
+  ) => Promise<{ role?: string; officerId?: string; email?: string }>;
   logout: () => void;
   /** Creates the raw Cognito account — email + password, nothing else (see infra/lib/auth-stack.ts's writeAttributes note). */
   signUp: (email: string, password: string) => Promise<void>;
@@ -72,12 +77,13 @@ interface AuthContextValue {
   refreshClaims: () => Promise<void>;
 }
 
-function claimsFromSession(session: CognitoUserSession): { role?: string; officerId?: string } {
+function claimsFromSession(session: CognitoUserSession): { role?: string; officerId?: string; email?: string } {
   const payload = session.getIdToken().decodePayload() as Record<string, unknown>;
   return {
     role: typeof payload["custom:role"] === "string" ? (payload["custom:role"] as string) : undefined,
     officerId:
       typeof payload["custom:officer_id"] === "string" ? (payload["custom:officer_id"] as string) : undefined,
+    email: typeof payload["email"] === "string" ? (payload["email"] as string) : undefined,
   };
 }
 
@@ -96,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(SKIP_AUTH);
   const [role, setRole] = useState<string | undefined>(SKIP_AUTH ? getDevRole() ?? "ADMIN" : undefined);
   const [officerId, setOfficerId] = useState<string | undefined>(SKIP_AUTH ? getDevOfficerId() : undefined);
+  const [email, setEmail] = useState<string | undefined>(SKIP_AUTH ? "dev@local" : undefined);
 
   // Mirrors `idToken` synchronously, so getIdToken() below is never a render
   // behind — see the getIdToken doc comment on AuthContextValue.
@@ -121,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const claims = claimsFromSession(session);
         setRole(claims.role);
         setOfficerId(claims.officerId);
+        setEmail(claims.email);
         setIsAuthenticated(true);
       }
       setIsLoading(false);
@@ -135,21 +143,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getIdToken,
       role,
       officerId,
-      login: (email, password) =>
+      email,
+      login: (loginEmail, password) =>
         new Promise((resolve, reject) => {
           if (SKIP_AUTH) {
             setIsAuthenticated(true);
-            resolve({ role, officerId });
+            resolve({ role, officerId, email });
             return;
           }
 
-          const user = new CognitoUser({ Username: email, Pool: getUserPool() });
-          user.authenticateUser(new AuthenticationDetails({ Username: email, Password: password }), {
+          const user = new CognitoUser({ Username: loginEmail, Pool: getUserPool() });
+          user.authenticateUser(new AuthenticationDetails({ Username: loginEmail, Password: password }), {
             onSuccess: (session) => {
               setIdToken(session.getIdToken().getJwtToken());
               const claims = claimsFromSession(session);
               setRole(claims.role);
               setOfficerId(claims.officerId);
+              setEmail(claims.email);
               setIsAuthenticated(true);
               resolve(claims);
             },
@@ -168,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const claims = claimsFromSession(session);
                 setRole(claims.role);
                 setOfficerId(claims.officerId);
+                setEmail(claims.email);
                 setIsAuthenticated(true);
                 resolve(claims);
               },
@@ -181,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIdToken(undefined);
         setRole(undefined);
         setOfficerId(undefined);
+        setEmail(undefined);
       },
       signUp: (email, password) =>
         new Promise((resolve, reject) => {
@@ -230,12 +242,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const claims = claimsFromSession(refreshed);
               setRole(claims.role);
               setOfficerId(claims.officerId);
+              setEmail(claims.email);
               resolve();
             });
           });
         }),
     }),
-    [isAuthenticated, isLoading, idToken, getIdToken, role, officerId]
+    [isAuthenticated, isLoading, idToken, getIdToken, role, officerId, email]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
