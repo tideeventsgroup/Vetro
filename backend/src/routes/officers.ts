@@ -87,7 +87,7 @@ officers.post("/:id/invite", async (c) => {
     await db.officer.update({ where: { id }, data: { email } });
   }
 
-  await createCognitoUser({
+  const { temporaryPassword } = await createCognitoUser({
     email,
     attributes: {
       "custom:contractor_id": officer.contractorId,
@@ -104,7 +104,7 @@ officers.post("/:id/invite", async (c) => {
     entityId: id,
   });
 
-  return c.json({ status: "invited", email }, 201);
+  return c.json({ status: "invited", email, temporaryPassword }, 201);
 });
 
 officers.delete("/:id", async (c) => {

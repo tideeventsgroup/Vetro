@@ -21,17 +21,40 @@ function requireUserPoolId(): string {
   return id;
 }
 
+const PASSWORD_CHARS = {
+  lower: "abcdefghijkmnpqrstuvwxyz",
+  upper: "ABCDEFGHJKLMNPQRSTUVWXYZ",
+  digit: "23456789",
+  symbol: "!@#$%^&*",
+};
+
+// Matches the pool's password policy (infra/lib/auth-stack.ts: min 12,
+// upper/lower/digit/symbol required) — generated ourselves rather than left
+// to Cognito so we can hand it back to the inviting admin directly, not only
+// via email.
+function generateTemporaryPassword(): string {
+  const all = Object.values(PASSWORD_CHARS).join("");
+  const required = Object.values(PASSWORD_CHARS).map((set) => set[Math.floor(Math.random() * set.length)]);
+  const rest = Array.from({ length: 8 }, () => all[Math.floor(Math.random() * all.length)]);
+  return [...required, ...rest].sort(() => Math.random() - 0.5).join("");
+}
+
 /**
- * Creates the Cognito account behind an invite. Username is the email, and
- * Cognito emails the temporary password itself (its built-in email service —
- * fine at onboarding volumes, no SES setup required). The caller sets
- * whichever custom:* attributes decide what the account can do once it logs
- * in (contractor_id, role, officer_id) — this module has no opinion on that.
+ * Creates the Cognito account behind an invite. Username is the email.
+ * Cognito's built-in email service also attempts to send the temporary
+ * password (DesiredDeliveryMediums below) — fine at onboarding volumes, but
+ * it's capped at 50 emails/day for the whole pool with no way to raise that
+ * short of moving to SES, so it's not the only way this password reaches
+ * the invitee: the caller gets it back in the response too, to hand over
+ * directly if email doesn't arrive. The caller sets whichever custom:*
+ * attributes decide what the account can do once it logs in
+ * (contractor_id, role, officer_id) — this module has no opinion on that.
  */
 export async function createCognitoUser(params: {
   email: string;
   attributes: Record<string, string>;
-}): Promise<void> {
+}): Promise<{ temporaryPassword: string }> {
+  const temporaryPassword = generateTemporaryPassword();
   await getClient().send(
     new AdminCreateUserCommand({
       UserPoolId: requireUserPoolId(),
@@ -41,9 +64,11 @@ export async function createCognitoUser(params: {
         { Name: "email_verified", Value: "true" },
         ...Object.entries(params.attributes).map(([Name, Value]) => ({ Name, Value })),
       ],
+      TemporaryPassword: temporaryPassword,
       DesiredDeliveryMediums: ["EMAIL"],
     }),
   );
+  return { temporaryPassword };
 }
 
 export async function addUserToGroup(email: string, groupName: string): Promise<void> {

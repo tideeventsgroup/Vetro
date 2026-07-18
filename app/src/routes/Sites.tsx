@@ -1,5 +1,6 @@
 import { Fragment, FormEvent, useEffect, useState } from "react";
 import { MailIcon, PlusIcon } from "../components/icons.js";
+import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
 import { Site, useApi } from "../lib/api.js";
 
 export function Sites() {
@@ -10,6 +11,7 @@ export function Sites() {
   const [expandedId, setExpandedId] = useState<string | undefined>(undefined);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteStatus, setInviteStatus] = useState<string | undefined>(undefined);
+  const [invitedPassword, setInvitedPassword] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -44,13 +46,18 @@ export function Sites() {
     setExpandedId((current) => (current === site.id ? undefined : site.id));
     setInviteEmail(site.clientContactEmail ?? "");
     setInviteStatus(undefined);
+    setInvitedPassword(undefined);
   }
 
   async function handleInviteClient(siteId: string) {
     setInviteStatus(undefined);
+    setInvitedPassword(undefined);
     try {
       const result = await api.inviteClient(siteId, inviteEmail.trim() || undefined);
-      setInviteStatus(`Invitation sent to ${result.email}.`);
+      setInviteStatus(
+        `Account created for ${result.email}. Email may not arrive (Cognito's sender is capped at 50/day) — share this temporary password directly if needed:`
+      );
+      setInvitedPassword(result.temporaryPassword);
       await load();
     } catch (err) {
       setInviteStatus(err instanceof Error ? err.message : "Could not send invitation");
@@ -146,6 +153,7 @@ export function Sites() {
                           </button>
                         </div>
                         {inviteStatus && <p className="subtle-meta">{inviteStatus}</p>}
+                        {invitedPassword && <TemporaryPasswordReveal password={invitedPassword} />}
                       </div>
                     </td>
                   </tr>

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { MailIcon, TrashIcon, UsersIcon } from "../components/icons.js";
+import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
 import { TeamMember, useApi } from "../lib/api.js";
 
 export function Team() {
@@ -7,6 +8,7 @@ export function Team() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<string | undefined>(undefined);
+  const [invitedPassword, setInvitedPassword] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [isLoadingTeam, setIsLoadingTeam] = useState(true);
@@ -31,10 +33,12 @@ export function Team() {
     e.preventDefault();
     setError(undefined);
     setStatus(undefined);
+    setInvitedPassword(undefined);
     setIsSubmitting(true);
     try {
       const result = await api.inviteTeammate(email.trim());
-      setStatus(`Invitation sent to ${result.email}.`);
+      setStatus(`Account created for ${result.email}. Cognito's own email may take a moment (or not arrive — it's capped at 50/day pool-wide) — share this temporary password directly if needed:`);
+      setInvitedPassword(result.temporaryPassword);
       setEmail("");
       await loadTeam();
     } catch (err) {
@@ -92,6 +96,7 @@ export function Team() {
           </button>
         </form>
         {status && <p className="subtle-meta">{status}</p>}
+        {invitedPassword && <TemporaryPasswordReveal password={invitedPassword} />}
       </div>
 
       <div className="card">

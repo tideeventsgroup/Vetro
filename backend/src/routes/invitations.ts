@@ -14,7 +14,7 @@ invitations.post("/invitations", async (c) => {
 
   const contractorId = c.get("contractorId")!;
 
-  await createCognitoUser({
+  const { temporaryPassword } = await createCognitoUser({
     email: body.email,
     attributes: { "custom:contractor_id": contractorId, "custom:role": "ADMIN" },
   });
@@ -28,5 +28,5 @@ invitations.post("/invitations", async (c) => {
     metadata: { email: body.email },
   });
 
-  return c.json({ status: "invited", email: body.email }, 201);
+  return c.json({ status: "invited", email: body.email, temporaryPassword }, 201);
 });

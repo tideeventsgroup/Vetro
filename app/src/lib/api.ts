@@ -286,7 +286,7 @@ class VetroApiClient {
     return this.request("/dashboard/summary");
   }
 
-  inviteTeammate(email: string): Promise<{ status: string; email: string }> {
+  inviteTeammate(email: string): Promise<{ status: string; email: string; temporaryPassword: string }> {
     return this.request("/invitations", { method: "POST", body: JSON.stringify({ email }) });
   }
 
@@ -315,7 +315,10 @@ class VetroApiClient {
     return this.request(`/vetting-submissions/${id}`, { method: "PATCH", body: JSON.stringify(input) });
   }
 
-  inviteOfficer(officerId: string, email?: string): Promise<{ status: string; email: string }> {
+  inviteOfficer(
+    officerId: string,
+    email?: string
+  ): Promise<{ status: string; email: string; temporaryPassword: string }> {
     return this.request(`/officers/${officerId}/invite`, { method: "POST", body: JSON.stringify({ email }) });
   }
 
@@ -380,7 +383,10 @@ class VetroApiClient {
     return this.request(`/sites/${id}`, { method: "DELETE" });
   }
 
-  inviteClient(siteId: string, email?: string): Promise<{ status: string; email: string }> {
+  inviteClient(
+    siteId: string,
+    email?: string
+  ): Promise<{ status: string; email: string; temporaryPassword: string }> {
     return this.request(`/sites/${siteId}/invite-client`, { method: "POST", body: JSON.stringify({ email }) });
   }
 

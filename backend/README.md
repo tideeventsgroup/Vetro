@@ -76,8 +76,17 @@ leaving an org behind with no admin who can ever log into it.
    officer's login can only ever reach their own record.
 
 Both of those create the Cognito user via `AdminCreateUser`
-(`src/lib/cognito.ts`), which lets Cognito's own built-in email service send
-the temporary password — fine at onboarding volumes, no SES setup required.
+(`src/lib/cognito.ts`), which also asks Cognito's own built-in email service
+to send the temporary password — no SES setup required, but that service is
+hard-capped at 50 emails/day for the whole pool with no way to raise it
+short of moving to SES (blocked for now: SES is still sandboxed on this AWS
+account and there's no verified `vetro.co.uk` domain identity, so it can
+only email pre-verified addresses today). Email is therefore not the only
+way the invitee gets their password: `createCognitoUser` generates it itself
+(matching the pool's password policy) and every invite route
+(`/invitations`, `/officers/:id/invite`, `/sites/:id/invite-client`) returns
+it in the response, so the inviting admin can hand it over directly if the
+email doesn't arrive.
 
 The officer self-service portal (`/me/*`, gated by `requireOfficerSelf`) is
 deliberately narrow: an officer can view their own record and submit their

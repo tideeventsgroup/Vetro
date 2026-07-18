@@ -107,7 +107,7 @@ sites.post("/sites/:id/invite-client", async (c) => {
     await db.site.update({ where: { id }, data: { clientContactEmail: email } });
   }
 
-  await createCognitoUser({
+  const { temporaryPassword } = await createCognitoUser({
     email,
     attributes: {
       "custom:contractor_id": site.contractorId,
@@ -124,5 +124,5 @@ sites.post("/sites/:id/invite-client", async (c) => {
     entityId: id,
   });
 
-  return c.json({ status: "invited", email }, 201);
+  return c.json({ status: "invited", email, temporaryPassword }, 201);
 });

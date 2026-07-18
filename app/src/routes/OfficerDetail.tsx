@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DocumentsSection } from "../components/DocumentsSection.js";
 import { StatusBadge } from "../components/StatusBadge.js";
+import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
 import { ArrowLeftIcon, MailIcon, PlusIcon } from "../components/icons.js";
 import { Officer, useApi } from "../lib/api.js";
 import { useTenantSlug } from "../lib/tenant.js";
@@ -25,6 +26,7 @@ export function OfficerDetail() {
   const [showAddQualification, setShowAddQualification] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteStatus, setInviteStatus] = useState<string | undefined>(undefined);
+  const [invitedPassword, setInvitedPassword] = useState<string | undefined>(undefined);
   const [inviteError, setInviteError] = useState<string | undefined>(undefined);
   const [isInviting, setIsInviting] = useState(false);
 
@@ -83,11 +85,15 @@ export function OfficerDetail() {
     e.preventDefault();
     if (!id) return;
     setInviteStatus(undefined);
+    setInvitedPassword(undefined);
     setInviteError(undefined);
     setIsInviting(true);
     try {
       const result = await api.inviteOfficer(id, inviteEmail.trim() || undefined);
-      setInviteStatus(`Invitation sent to ${result.email}.`);
+      setInviteStatus(
+        `Account created for ${result.email}. Email may not arrive (Cognito's sender is capped at 50/day) — share this temporary password directly if needed:`
+      );
+      setInvitedPassword(result.temporaryPassword);
       await load(id);
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : "Could not send invitation");
@@ -138,6 +144,7 @@ export function OfficerDetail() {
           </button>
         </form>
         {inviteStatus && <p className="subtle-meta" style={{ marginTop: 12 }}>{inviteStatus}</p>}
+        {invitedPassword && <TemporaryPasswordReveal password={invitedPassword} />}
       </div>
 
       <div className="card">
