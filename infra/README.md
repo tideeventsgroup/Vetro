@@ -132,10 +132,12 @@ to point `vetro.com` at it once that's in hand) — CloudFront serves
 remains unexercised against a real account for the same reason — `cdk
 synth` succeeds with a placeholder `hostedZoneId` (`fromHostedZoneAttributes`,
 no AWS call needed), but there's no real hosted zone to deploy it against
-yet. Without a custom domain, subdomain-based tenant routing
-(`app/src/lib/tenant.ts`) has nothing to read — the deployed frontend only
-resolves a tenant via `VITE_DEV_TENANT_SLUG` baked in at build time, so it's
-effectively single-tenant until `vetro.com` exists.
+yet. Without a custom domain, subdomain-based tenant routing has nothing to
+read, so every app route nests under `/:tenant` instead
+(`.../clyde-coast`, `.../highland-guard` — same CloudFront distribution,
+same build) — see `app/src/lib/tenant.ts`. Subdomain resolution stays in
+place and takes priority automatically once `vetro.com` exists; nothing
+about that switchover requires touching this stack.
 
 The onboarding/vetting-portal role model (`custom:role`, `custom:officer_id`,
 `PlatformAdmins` group — see `backend/README.md`'s "Onboarding & roles") is

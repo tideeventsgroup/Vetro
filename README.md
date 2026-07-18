@@ -38,15 +38,20 @@ to click around locally.
 
 ## Multi-tenant
 
-Each contractor is a tenant on its own subdomain — `clyde-coast.vetro.co.uk`,
-`highland-guard.vetro.co.uk`. One app deployment, one API, one database
-serve every tenant; there's no per-tenant infrastructure. Isolation is
-enforced server-side (see `backend/README.md`'s "Multi-tenancy" section),
-not just by which subdomain the app happens to be pointed at.
+Each contractor is a tenant, one app deployment/API/database serving all of
+them — there's no per-tenant infrastructure. With a custom domain, that's a
+subdomain each (`clyde-coast.vetro.co.uk`, `highland-guard.vetro.co.uk`); until
+`vetro.com` is in hand, every route instead nests under `/:tenant`
+(`.../clyde-coast`, `.../highland-guard`) so this still works today from a
+single CloudFront default domain (see `app/src/lib/tenant.ts` — subdomain
+takes priority automatically once one exists). Either way, isolation is
+enforced server-side (see `backend/README.md`'s "Multi-tenancy" section), not
+just by which URL the app happens to be pointed at.
 
-Locally, visit `http://<slug>.localhost:5173` to develop against a specific
-tenant — `prisma/seed.ts` creates two (`clyde-coast`, `highland-guard`) so
-you can see isolation between them without any DNS setup.
+Locally, visit `http://localhost:5173/<slug>` (or `http://<slug>.localhost:5173`
+to exercise the subdomain path) to develop against a specific tenant —
+`prisma/seed.ts` creates two (`clyde-coast`, `highland-guard`) so you can see
+isolation between them without any DNS setup.
 
 ## Onboarding & roles
 
