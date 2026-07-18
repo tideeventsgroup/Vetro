@@ -21,6 +21,52 @@ me.get("/officer", async (c) => {
   return c.json(officer);
 });
 
+// An officer's own shifts — the same "who's where, when" data Schedule.tsx
+// gives an admin, scoped to just the shifts assigned to this officer. Every
+// staff-facing security scheduling tool (Rota, When I Work, TimeGate+'s own
+// employee app) treats "can I see my next shift" as table stakes.
+me.get("/shifts", async (c) => {
+  const db = await getDb();
+  const rows = await db.shift.findMany({
+    where: { officerId: c.get("officerId")! },
+    include: { site: true },
+    orderBy: { startTime: "asc" },
+  });
+  return c.json(rows);
+});
+
+// Acknowledging an assigned shift — distinct from the client's later
+// COMPLETED/MISSED/LATE confirmation (client.ts): this is the officer
+// saying "I've seen this and I'm coming", not reporting what happened.
+// Only valid from SCHEDULED so it can't be used to relitigate a shift the
+// client or admin has already resolved.
+me.patch("/shifts/:id/confirm", async (c) => {
+  const db = await getDb();
+  const id = c.req.param("id");
+  const officerId = c.get("officerId")!;
+  const existing = await db.shift.findUnique({ where: { id } });
+  if (!existing || existing.officerId !== officerId) return c.json({ error: "Shift not found" }, 404);
+  if (existing.status !== "SCHEDULED") {
+    return c.json({ error: "Only a scheduled shift can be confirmed" }, 400);
+  }
+
+  const updated = await db.shift.update({
+    where: { id },
+    data: { status: "CONFIRMED" },
+    include: { site: true },
+  });
+
+  await recordAudit({
+    contractorId: existing.contractorId,
+    actorEmail: c.get("actorEmail") ?? "unknown",
+    action: "shift.officer_confirmed",
+    entityType: "Shift",
+    entityId: id,
+  });
+
+  return c.json(updated);
+});
+
 me.get("/vetting-submissions", async (c) => {
   const db = await getDb();
   const rows = await db.vettingSubmission.findMany({

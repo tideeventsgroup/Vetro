@@ -367,6 +367,14 @@ class VetroApiClient {
     return downloadUrl;
   }
 
+  listMyShifts(): Promise<Shift[]> {
+    return this.request("/me/shifts");
+  }
+
+  confirmMyShift(id: string): Promise<Shift> {
+    return this.request(`/me/shifts/${id}/confirm`, { method: "PATCH" });
+  }
+
   listSites(): Promise<Site[]> {
     return this.request("/sites");
   }

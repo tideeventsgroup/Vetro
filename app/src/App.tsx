@@ -6,6 +6,7 @@ import { ClientLayout } from "./routes/ClientLayout.js";
 import { Dashboard } from "./routes/Dashboard.js";
 import { Login } from "./routes/Login.js";
 import { NoTenant } from "./routes/NoTenant.js";
+import { MyShifts } from "./routes/MyShifts.js";
 import { OfficerDetail } from "./routes/OfficerDetail.js";
 import { PortalHome } from "./routes/PortalHome.js";
 import { PortalLayout } from "./routes/PortalLayout.js";
@@ -49,6 +50,7 @@ export function App() {
             </Route>
             <Route path="portal" element={<PortalLayout />}>
               <Route index element={<PortalHome />} />
+              <Route path="shifts" element={<MyShifts />} />
               <Route path="vetting" element={<VettingWizard />} />
             </Route>
             <Route element={<ClientLayout />}>

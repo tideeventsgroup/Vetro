@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
-import { HomeIcon, MenuIcon, ShieldCheckIcon, SignOutIcon } from "../components/icons.js";
+import { CalendarIcon, HomeIcon, MenuIcon, ShieldCheckIcon, SignOutIcon } from "../components/icons.js";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 
@@ -26,6 +26,10 @@ export function PortalLayout() {
             <HomeIcon />
             Home
           </NavLink>
+          <NavLink to={`/${tenant}/portal/shifts`}>
+            <CalendarIcon />
+            My shifts
+          </NavLink>
           <NavLink to={`/${tenant}/portal/vetting`}>
             <ShieldCheckIcon />
             Vetting
@@ -49,6 +53,10 @@ export function PortalLayout() {
         <NavLink to={`/${tenant}/portal`} end className="mobile-tab">
           <HomeIcon />
           <span>Home</span>
+        </NavLink>
+        <NavLink to={`/${tenant}/portal/shifts`} className="mobile-tab">
+          <CalendarIcon />
+          <span>Shifts</span>
         </NavLink>
         <NavLink to={`/${tenant}/portal/vetting`} className="mobile-tab">
           <ShieldCheckIcon />
