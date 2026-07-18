@@ -7,17 +7,21 @@ import { OfficerDetail } from "./routes/OfficerDetail.js";
 import { PortalHome } from "./routes/PortalHome.js";
 import { PortalLayout } from "./routes/PortalLayout.js";
 import { ProtectedLayout } from "./routes/ProtectedLayout.js";
+import { Signup } from "./routes/Signup.js";
 import { Team } from "./routes/Team.js";
 
 // Every real route lives under /:tenant — clyde-coast.vetro.co.uk's
 // per-org subdomain, once a custom domain exists, becomes .../clyde-coast
 // today instead (see lib/tenant.ts). Bare "/" has no tenant to resolve.
+// /signup is the one exception — by definition, someone signing up doesn't
+// have a tenant slug yet (they're picking one).
 export function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<NoTenant />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/:tenant">
             <Route path="login" element={<Login />} />
             <Route element={<ProtectedLayout />}>

@@ -37,28 +37,45 @@ tenant A gets a 404, not tenant B's data, for tenant B's records.
 
 ## Onboarding & roles
 
-There's no public signup. Two Cognito custom attributes on top of
-`custom:contractor_id` decide what an account can do — `custom:role`
-(`ADMIN` | `OFFICER`) and `custom:officer_id` (only set for `OFFICER`
-accounts) — plus a `PlatformAdmins` Cognito group for the one action that
-isn't scoped to a tenant at all:
+An organization gets created one of two ways; everything after that —
+inviting teammates, inviting officers — is the same either way. Two Cognito
+custom attributes on top of `custom:contractor_id` decide what an account
+can do — `custom:role` (`ADMIN` | `OFFICER`) and `custom:officer_id` (only
+set for `OFFICER` accounts) — plus a `PlatformAdmins` Cognito group for the
+one action that isn't scoped to a tenant at all:
 
-1. **A platform admin creates the organization.** `POST /admin/organizations`
-   (gated on `PlatformAdmins` group membership — `requirePlatformAdmin` in
-   `src/lib/auth.ts`) creates the `Contractor` row and the org's first
-   `ADMIN` Cognito account in one step (`src/routes/admin.ts`). If the
-   Cognito call fails, the `Contractor` row is rolled back rather than left
-   behind with no admin who can ever log into it.
-2. **That org's admin invites teammates.** `POST /invitations`
+1. **Self-serve signup.** Cognito's own public sign-up (`selfSignUpEnabled`,
+   `infra/lib/auth-stack.ts`) creates the bare account — email + password,
+   nothing else. Custom attributes are deliberately **not** among the app
+   client's `writeAttributes`, so the client can never set its own
+   `custom:role`/`custom:contractor_id` at signup (or ever — see the comment
+   in `auth-stack.ts`). Once that account is confirmed (email code) and
+   signed in, `POST /signup/organization` (`src/routes/signup.ts`) creates
+   the `Contractor` row and calls `AdminUpdateUserAttributes` to grant that
+   *specific, already-authenticated* account `ADMIN` of the org it just
+   created — gated only on the caller not already having a `contractorId`,
+   so it can't be replayed against an existing account. This is the backend
+   the redesigned login/signup page (`app/src/routes/Signup.tsx`) drives.
+2. **A platform admin creates the organization on someone's behalf.** `POST
+   /admin/organizations` (gated on `PlatformAdmins` group membership —
+   `requirePlatformAdmin` in `src/lib/auth.ts`) creates the `Contractor` row
+   and the org's first `ADMIN` Cognito account in one step
+   (`src/routes/admin.ts`), via `AdminCreateUser` instead — useful for
+   setting an org up without the customer going through signup themselves.
+
+Both roll back the `Contractor` row if the Cognito call fails, rather than
+leaving an org behind with no admin who can ever log into it.
+
+3. **That org's admin invites teammates.** `POST /invitations`
    (`src/routes/invitations.ts`) creates another `ADMIN` account scoped to
    the same `contractor_id` — full access to the org's roster, same as the
    inviter.
-3. **That org's admin invites officers to self-service.** `POST
+4. **That org's admin invites officers to self-service.** `POST
    /officers/:id/invite` (`src/routes/officers.ts`) creates an `OFFICER`
    account with `custom:officer_id` set to that one `Officer` row — an
    officer's login can only ever reach their own record.
 
-All three create the Cognito user via `AdminCreateUser`
+Both of those create the Cognito user via `AdminCreateUser`
 (`src/lib/cognito.ts`), which lets Cognito's own built-in email service send
 the temporary password — fine at onboarding volumes, no SES setup required.
 
@@ -94,6 +111,7 @@ in `.env.example`), so requests don't need a bearer token locally.
 | GET | `/contractors/me` | The resolved tenant, or `null` (404) if none |
 | POST | `/contractors` | Dev-only: creates a tenant for the current subdomain |
 | POST | `/admin/organizations` | Platform-admin only — creates a `Contractor` + its first `ADMIN` account |
+| POST | `/signup/organization` | Self-serve — creates a `Contractor` and grants the calling (already-signed-up) account `ADMIN` of it; 409s if the caller already belongs to one |
 | POST | `/invitations` | Admin-only — invites a teammate as another `ADMIN` in the same tenant |
 | GET | `/officers` | List officers with licences + vetting, scoped to tenant (admin-only) |
 | POST | `/officers` | Create officer in the resolved tenant (admin-only) |

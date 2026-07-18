@@ -55,8 +55,11 @@ isolation between them without any DNS setup.
 
 ## Onboarding & roles
 
-There's no public signup. A platform admin creates an organization (and its
-first admin account); that org's admin invites teammates and invites
+Anyone can sign up and create their own organization (`/signup`) — Cognito
+handles the raw account (email + password, email-code verified), then the
+backend grants that specific account `ADMIN` of the org it just created. A
+platform admin can also create an org on someone's behalf as an alternative
+entry point. Either way, that org's admin invites teammates and invites
 officers to a self-service portal where they submit their own vetting
 details and documents for review — Vetro still never performs the BS7858
 check itself. See `backend/README.md`'s "Onboarding & roles" for the full

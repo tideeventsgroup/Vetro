@@ -5,6 +5,7 @@ import { contractors } from "./routes/contractors.js";
 import { invitations } from "./routes/invitations.js";
 import { me } from "./routes/me.js";
 import { officers } from "./routes/officers.js";
+import { signup } from "./routes/signup.js";
 import { licences } from "./routes/licences.js";
 import { vetting } from "./routes/vetting.js";
 import { qualifications } from "./routes/qualifications.js";
@@ -35,6 +36,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 const api = new Hono<AppEnv>();
 api.use("/*", requireAuth);
 api.route("/contractors", contractors);
+api.route("/", signup);
 
 // Guard middleware below is scoped to explicit path prefixes rather than a
 // blanket "/*" on a sub-app mounted at "/". Hono flattens a mounted sub-app's

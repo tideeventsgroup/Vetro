@@ -1,6 +1,7 @@
 import {
   AdminAddUserToGroupCommand,
   AdminCreateUserCommand,
+  AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
 } from "@aws-sdk/client-cognito-identity-provider";
 
@@ -45,5 +46,22 @@ export async function createCognitoUser(params: {
 export async function addUserToGroup(email: string, groupName: string): Promise<void> {
   await getClient().send(
     new AdminAddUserToGroupCommand({ UserPoolId: requireUserPoolId(), Username: email, GroupName: groupName }),
+  );
+}
+
+/**
+ * Grants an already-existing Cognito account its tenant/role — the step
+ * that turns a self-signed-up account (see routes/signup.ts) into an
+ * ADMIN of the organization it just created. Uses the IAM-gated Admin API,
+ * not the client-facing UpdateUserAttributes the app client is deliberately
+ * denied write access to (see infra/lib/auth-stack.ts).
+ */
+export async function updateUserAttributes(email: string, attributes: Record<string, string>): Promise<void> {
+  await getClient().send(
+    new AdminUpdateUserAttributesCommand({
+      UserPoolId: requireUserPoolId(),
+      Username: email,
+      UserAttributes: Object.entries(attributes).map(([Name, Value]) => ({ Name, Value })),
+    }),
   );
 }

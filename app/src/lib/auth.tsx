@@ -1,6 +1,7 @@
 import {
   AuthenticationDetails,
   CognitoUser,
+  CognitoUserAttribute,
   CognitoUserPool,
   CognitoUserSession,
 } from "amazon-cognito-identity-js";
@@ -24,6 +25,18 @@ interface AuthContextValue {
   officerId?: string;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  /** Creates the raw Cognito account — email + password, nothing else (see infra/lib/auth-stack.ts's writeAttributes note). */
+  signUp: (email: string, password: string) => Promise<void>;
+  /** Confirms the emailed verification code so the account can sign in. */
+  confirmSignUp: (email: string, code: string) => Promise<void>;
+  /**
+   * Re-pulls the session via Cognito's refresh-token flow, which mints a
+   * fresh ID token reflecting whatever custom:* attributes the backend has
+   * set *since* the current token was issued — the existing token is a
+   * static JWT snapshot, so this is the only way to see a just-granted
+   * custom:contractor_id/custom:role without signing out and back in.
+   */
+  refreshClaims: () => Promise<void>;
 }
 
 function claimsFromSession(session: CognitoUserSession): { role?: string; officerId?: string } {
@@ -107,6 +120,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(undefined);
         setOfficerId(undefined);
       },
+      signUp: (email, password) =>
+        new Promise((resolve, reject) => {
+          if (SKIP_AUTH) {
+            resolve();
+            return;
+          }
+          getUserPool().signUp(email, password, [new CognitoUserAttribute({ Name: "email", Value: email })], [], (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        }),
+      confirmSignUp: (email, code) =>
+        new Promise((resolve, reject) => {
+          if (SKIP_AUTH) {
+            resolve();
+            return;
+          }
+          const user = new CognitoUser({ Username: email, Pool: getUserPool() });
+          user.confirmRegistration(code, true, (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        }),
+      refreshClaims: () =>
+        new Promise((resolve, reject) => {
+          if (SKIP_AUTH) {
+            resolve();
+            return;
+          }
+          const currentUser = getUserPool().getCurrentUser();
+          if (!currentUser) {
+            reject(new Error("Not signed in"));
+            return;
+          }
+          currentUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
+            if (err || !session) {
+              reject(err ?? new Error("No session"));
+              return;
+            }
+            currentUser.refreshSession(session.getRefreshToken(), (refreshErr: Error | null, refreshed: CognitoUserSession) => {
+              if (refreshErr || !refreshed) {
+                reject(refreshErr ?? new Error("Could not refresh session"));
+                return;
+              }
+              setIdToken(refreshed.getIdToken().getJwtToken());
+              const claims = claimsFromSession(refreshed);
+              setRole(claims.role);
+              setOfficerId(claims.officerId);
+              resolve();
+            });
+          });
+        }),
     }),
     [isAuthenticated, isLoading, idToken, role, officerId]
   );

@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 const DEV_TENANT_SLUG = import.meta.env.VITE_DEV_TENANT_SLUG;
 
@@ -17,6 +17,9 @@ export function NoTenant() {
         Visit your organisation's own link to sign in — for example
         <br />
         <code>{window.location.origin}/clyde-coast</code>.
+      </p>
+      <p style={{ color: "var(--vetro-text-muted)", marginTop: 16 }}>
+        New to Vetro? <Link to="/signup">Create an organisation</Link>.
       </p>
     </div>
   );

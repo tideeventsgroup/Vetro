@@ -129,6 +129,11 @@ class VetroApiClient {
     return this.request("/contractors", { method: "POST", body: JSON.stringify({ name }) });
   }
 
+  /** Self-serve signup's org-creation step — see routes/Signup.tsx. */
+  createOrganizationSelfSignup(input: { name: string; slug: string }): Promise<Contractor> {
+    return this.request("/signup/organization", { method: "POST", body: JSON.stringify(input) });
+  }
+
   listOfficers(): Promise<Officer[]> {
     return this.request("/officers");
   }

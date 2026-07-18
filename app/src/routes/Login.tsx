@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 import { ShieldCheckIcon } from "../components/icons.js";
@@ -82,6 +82,9 @@ export function Login() {
               {isSubmitting ? "Signing in…" : "Sign in"}
             </button>
           </form>
+          <p className="subtle-meta" style={{ marginTop: 16 }}>
+            New to Vetro? <Link to="/signup">Create an organisation</Link>
+          </p>
         </div>
       </div>
     </div>
