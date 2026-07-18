@@ -47,3 +47,12 @@ not just by which subdomain the app happens to be pointed at.
 Locally, visit `http://<slug>.localhost:5173` to develop against a specific
 tenant — `prisma/seed.ts` creates two (`clyde-coast`, `highland-guard`) so
 you can see isolation between them without any DNS setup.
+
+## Onboarding & roles
+
+There's no public signup. A platform admin creates an organization (and its
+first admin account); that org's admin invites teammates and invites
+officers to a self-service portal where they submit their own vetting
+details and documents for review — Vetro still never performs the BS7858
+check itself. See `backend/README.md`'s "Onboarding & roles" for the full
+flow and the Cognito role model behind it.

@@ -1,17 +1,18 @@
 import { ChangeEvent, useState } from "react";
-import { OfficerDocument, useApi } from "../lib/api.js";
+import { OfficerDocument } from "../lib/api.js";
 import { DownloadIcon, FileIcon, UploadIcon } from "./icons.js";
 
 export function DocumentsSection({
-  officerId,
   documents,
+  onUpload,
+  onGetDownloadUrl,
   onChange,
 }: {
-  officerId: string;
   documents: OfficerDocument[];
+  onUpload: (file: File, kind: string) => Promise<OfficerDocument>;
+  onGetDownloadUrl: (id: string) => Promise<string>;
   onChange: () => void;
 }) {
-  const api = useApi();
   const [kind, setKind] = useState("SIA licence scan");
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -24,7 +25,7 @@ export function DocumentsSection({
     setError(undefined);
     setIsUploading(true);
     try {
-      await api.uploadDocument(officerId, file, kind);
+      await onUpload(file, kind);
       onChange();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -36,7 +37,7 @@ export function DocumentsSection({
   async function handleDownload(id: string) {
     setError(undefined);
     try {
-      const url = await api.getDocumentDownloadUrl(id);
+      const url = await onGetDownloadUrl(id);
       window.open(url, "_blank");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not get download link");

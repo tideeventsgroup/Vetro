@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_COGNITO_CLIENT_ID: string;
   readonly VITE_BASE_DOMAIN: string;
   readonly VITE_DEV_TENANT_SLUG: string;
+  readonly VITE_DEV_ROLE: string;
+  readonly VITE_DEV_OFFICER_ID: string;
 }
 
 interface ImportMeta {

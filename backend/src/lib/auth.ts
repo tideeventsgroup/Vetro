@@ -43,6 +43,10 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (process.env.SKIP_AUTH === "true") {
     const tenantSlug = c.req.header("X-Vetro-Tenant");
     c.set("actorEmail", "dev@local");
+    c.set("role", c.req.header("X-Vetro-Role") ?? "ADMIN");
+    const officerId = c.req.header("X-Vetro-Officer-Id");
+    if (officerId) c.set("officerId", officerId);
+    c.set("isPlatformAdmin", c.req.header("X-Vetro-Platform-Admin") === "true");
     if (tenantSlug) {
       c.set("tenantSlug", tenantSlug);
       const db = await getDb();
@@ -64,6 +68,12 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
     c.set("actorEmail", (payload["email"] as string | undefined) ?? payload.sub);
     const contractorId = payload["custom:contractor_id"] as string | undefined;
     if (contractorId) c.set("contractorId", contractorId);
+    const role = payload["custom:role"] as string | undefined;
+    if (role) c.set("role", role);
+    const officerId = payload["custom:officer_id"] as string | undefined;
+    if (officerId) c.set("officerId", officerId);
+    const groups = (payload["cognito:groups"] as string[] | undefined) ?? [];
+    c.set("isPlatformAdmin", groups.includes("PlatformAdmins"));
   } catch {
     return c.json({ error: "Invalid or expired token" }, 401);
   }
@@ -75,6 +85,30 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
 export const requireContractor: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (!c.get("contractorId")) {
     return c.json({ error: "No tenant resolved for this account" }, 403);
+  }
+  await next();
+};
+
+/** Guards routes that only a contractor's own ADMIN accounts may use — mount below requireAuth. */
+export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
+  if (c.get("role") !== "ADMIN") {
+    return c.json({ error: "Admin access required" }, 403);
+  }
+  await next();
+};
+
+/** Guards routes that only an officer's own self-service login may use — mount below requireAuth. */
+export const requireOfficerSelf: MiddlewareHandler<AppEnv> = async (c, next) => {
+  if (c.get("role") !== "OFFICER" || !c.get("officerId")) {
+    return c.json({ error: "Officer self-service access required" }, 403);
+  }
+  await next();
+};
+
+/** Guards platform-level routes (e.g. creating organizations) — mount below requireAuth. */
+export const requirePlatformAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
+  if (!c.get("isPlatformAdmin")) {
+    return c.json({ error: "Platform admin access required" }, 403);
   }
   await next();
 };

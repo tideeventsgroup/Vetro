@@ -35,6 +35,43 @@ Every route handler filters by `contractorId`, and anything reached by ID
 officer's `contractorId` before returning or mutating it — a valid token for
 tenant A gets a 404, not tenant B's data, for tenant B's records.
 
+## Onboarding & roles
+
+There's no public signup. Two Cognito custom attributes on top of
+`custom:contractor_id` decide what an account can do — `custom:role`
+(`ADMIN` | `OFFICER`) and `custom:officer_id` (only set for `OFFICER`
+accounts) — plus a `PlatformAdmins` Cognito group for the one action that
+isn't scoped to a tenant at all:
+
+1. **A platform admin creates the organization.** `POST /admin/organizations`
+   (gated on `PlatformAdmins` group membership — `requirePlatformAdmin` in
+   `src/lib/auth.ts`) creates the `Contractor` row and the org's first
+   `ADMIN` Cognito account in one step (`src/routes/admin.ts`). If the
+   Cognito call fails, the `Contractor` row is rolled back rather than left
+   behind with no admin who can ever log into it.
+2. **That org's admin invites teammates.** `POST /invitations`
+   (`src/routes/invitations.ts`) creates another `ADMIN` account scoped to
+   the same `contractor_id` — full access to the org's roster, same as the
+   inviter.
+3. **That org's admin invites officers to self-service.** `POST
+   /officers/:id/invite` (`src/routes/officers.ts`) creates an `OFFICER`
+   account with `custom:officer_id` set to that one `Officer` row — an
+   officer's login can only ever reach their own record.
+
+All three create the Cognito user via `AdminCreateUser`
+(`src/lib/cognito.ts`), which lets Cognito's own built-in email service send
+the temporary password — fine at onboarding volumes, no SES setup required.
+
+The officer self-service portal (`/me/*`, gated by `requireOfficerSelf`) is
+deliberately narrow: an officer can view their own record and submit their
+own vetting details (address history, employment history, references,
+consent) and documents. Vetro still never performs the BS7858 check itself —
+what they submit lands as a `VettingSubmission` (`PENDING_REVIEW`), a
+distinct model from the authoritative `VettingRecord` an admin still owns
+and updates by hand after reviewing it. "Verified, not assumed" applies to
+this flow the same as everywhere else: the officer's own claim about their
+address history isn't the record until an admin has looked at it.
+
 ## Local development
 
 ```bash
@@ -56,25 +93,35 @@ in `.env.example`), so requests don't need a bearer token locally.
 | GET | `/health` | Unauthenticated |
 | GET | `/contractors/me` | The resolved tenant, or `null` (404) if none |
 | POST | `/contractors` | Dev-only: creates a tenant for the current subdomain |
-| GET | `/officers` | List officers with licences + vetting, scoped to tenant |
-| POST | `/officers` | Create officer in the resolved tenant |
-| GET | `/officers/:id` | Full officer record |
-| PATCH / DELETE | `/officers/:id` | |
-| POST | `/officers/:officerId/licences` | Add SIA licence |
-| PATCH | `/licences/:id` | |
-| POST | `/officers/:officerId/vetting` | Add BS7858 vetting record |
-| PATCH | `/vetting/:id` | |
-| POST | `/officers/:officerId/qualifications` | |
-| PATCH / DELETE | `/qualifications/:id` | |
-| POST | `/officers/:officerId/documents/upload-url` | Returns a presigned S3 PUT URL |
-| POST | `/officers/:officerId/documents` | Confirms an upload, creates the `Document` row |
-| GET | `/documents/:id/download-url` | Returns a presigned S3 GET URL |
-| DELETE | `/documents/:id` | |
-| GET | `/dashboard/summary` | Status counts, powers the dashboard preview |
-| GET | `/exports/officers.csv` | Audit-ready export |
+| POST | `/admin/organizations` | Platform-admin only — creates a `Contractor` + its first `ADMIN` account |
+| POST | `/invitations` | Admin-only — invites a teammate as another `ADMIN` in the same tenant |
+| GET | `/officers` | List officers with licences + vetting, scoped to tenant (admin-only) |
+| POST | `/officers` | Create officer in the resolved tenant (admin-only) |
+| GET | `/officers/:id` | Full officer record (admin-only) |
+| PATCH / DELETE | `/officers/:id` | Admin-only |
+| POST | `/officers/:id/invite` | Admin-only — invites that officer to the self-service portal |
+| POST | `/officers/:officerId/licences` | Add SIA licence (admin-only) |
+| PATCH | `/licences/:id` | Admin-only |
+| POST | `/officers/:officerId/vetting` | Add BS7858 vetting record (admin-only) |
+| PATCH | `/vetting/:id` | Admin-only |
+| POST | `/officers/:officerId/qualifications` | Admin-only |
+| PATCH / DELETE | `/qualifications/:id` | Admin-only |
+| POST | `/officers/:officerId/documents/upload-url` | Returns a presigned S3 PUT URL (admin-only) |
+| POST | `/officers/:officerId/documents` | Confirms an upload, creates the `Document` row (admin-only) |
+| GET | `/documents/:id/download-url` | Returns a presigned S3 GET URL (admin-only) |
+| DELETE | `/documents/:id` | Admin-only |
+| GET | `/dashboard/summary` | Status counts, powers the dashboard preview (admin-only) |
+| GET | `/exports/officers.csv` | Audit-ready export (admin-only) |
+| GET | `/me/officer` | Officer self-service — own record, scoped by `custom:officer_id` |
+| GET / POST | `/me/vetting-submissions` | Officer self-service — own submissions / submit new one |
+| POST | `/me/documents/upload-url` | Officer self-service — same presigned flow, scoped to the caller |
+| POST | `/me/documents` | Officer self-service |
+| GET | `/me/documents/:id/download-url` | Officer self-service |
 
 All of the above except `/health` and `/contractors/me`+`/contractors`
-require a resolved tenant (403 otherwise) — see "Multi-tenancy" above.
+require a resolved tenant (403 otherwise) — see "Multi-tenancy" above. Routes
+marked admin-only additionally 403 an `OFFICER` login (`requireAdmin`); `/me/*`
+routes require the reverse (`requireOfficerSelf`) — see "Onboarding & roles".
 
 All writes go through `src/lib/audit.ts` into `AuditLogEntry` — that table is
 the answer to "prove this happened" for an ACS inspector.

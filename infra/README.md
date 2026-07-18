@@ -125,11 +125,25 @@ Two real bugs only surfaced at this point and are now fixed: Aurora
 bundle meant it was simply missing from the deployed Lambda — see
 `lib/prisma-bundling.ts` and `prisma/schema.prisma`'s `binaryTargets`.
 
-`VetroDomainStack` and `VetroFrontendStack` remain unexercised against a
-real account — `cdk synth` succeeds with a placeholder `hostedZoneId`
-(`fromHostedZoneAttributes`, no AWS call needed), but there's no
-`vetro.co.uk` hosted zone in this account yet to deploy them against for
-real.
+`VetroFrontendStack` is also deployed for real, without a custom domain
+(`vetro.co.uk` turned out to be already registered elsewhere; the plan is
+to point `vetro.com` at it once that's in hand) — CloudFront serves
+`app/dist` directly at its own `*.cloudfront.net` domain. `VetroDomainStack`
+remains unexercised against a real account for the same reason — `cdk
+synth` succeeds with a placeholder `hostedZoneId` (`fromHostedZoneAttributes`,
+no AWS call needed), but there's no real hosted zone to deploy it against
+yet. Without a custom domain, subdomain-based tenant routing
+(`app/src/lib/tenant.ts`) has nothing to read — the deployed frontend only
+resolves a tenant via `VITE_DEV_TENANT_SLUG` baked in at build time, so it's
+effectively single-tenant until `vetro.com` exists.
+
+The onboarding/vetting-portal role model (`custom:role`, `custom:officer_id`,
+`PlatformAdmins` group — see `backend/README.md`'s "Onboarding & roles") is
+deployed too: `VetroAuthStack`'s Cognito changes and `VetroApiStack`'s
+updated Lambda + IAM permissions for `AdminCreateUser` went out as pure
+schema/permission additions (verified via `cdk diff` before deploying), and
+the `VettingSubmission` migration was applied via the same `VetroMigrateStack`
+Lambda used for earlier migrations.
 
 ## Cost shape
 

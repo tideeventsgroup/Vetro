@@ -1,30 +1,21 @@
-import { Navigate, NavLink, Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { SignOutIcon } from "../components/icons.js";
 import { useAuth } from "../lib/auth.js";
-import { RosterIcon, SignOutIcon, UsersIcon } from "../components/icons.js";
 
-export function ProtectedLayout() {
+export function PortalLayout() {
   const { isAuthenticated, isLoading, logout, role } = useAuth();
 
   if (isLoading) return <p style={{ padding: 24, color: "var(--vetro-text-muted)" }}>Loading…</p>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  // This dashboard is the ADMIN-facing side of Vetro — an officer's own
-  // self-service login belongs on /portal instead (see PortalLayout.tsx).
-  if (role === "OFFICER") return <Navigate to="/portal" replace />;
+  // The officer self-service portal is scoped to OFFICER logins only — an
+  // org admin visiting /portal by mistake belongs on the dashboard instead.
+  if (role !== "OFFICER") return <Navigate to="/" replace />;
 
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="22" className="sidebar-logo" />
-        <nav className="app-nav">
-          <NavLink to="/" end>
-            <RosterIcon />
-            Roster
-          </NavLink>
-          <NavLink to="/team">
-            <UsersIcon />
-            Team
-          </NavLink>
-        </nav>
+        <div style={{ flex: 1 }} />
         <div className="app-sidebar-footer">
           <a href="#" onClick={logout}>
             <SignOutIcon />

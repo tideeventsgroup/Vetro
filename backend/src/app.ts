@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { admin } from "./routes/admin.js";
 import { contractors } from "./routes/contractors.js";
+import { invitations } from "./routes/invitations.js";
+import { me } from "./routes/me.js";
 import { officers } from "./routes/officers.js";
 import { licences } from "./routes/licences.js";
 import { vetting } from "./routes/vetting.js";
@@ -8,7 +11,7 @@ import { qualifications } from "./routes/qualifications.js";
 import { documents } from "./routes/documents.js";
 import { dashboard } from "./routes/dashboard.js";
 import { exports_ } from "./routes/exports.js";
-import { requireAuth, requireContractor } from "./lib/auth.js";
+import { requireAdmin, requireAuth, requireContractor, requireOfficerSelf, requirePlatformAdmin } from "./lib/auth.js";
 import type { AppEnv } from "./lib/hono-env.js";
 
 export const app = new Hono<AppEnv>();
@@ -16,7 +19,13 @@ export const app = new Hono<AppEnv>();
 // Also handled by API Gateway's own CORS config once deployed (see
 // infra/lib/api-stack.ts) — needed here too since local dev talks to this
 // server directly, with no API Gateway in front of it.
-app.use("/*", cors({ origin: "*", allowHeaders: ["Authorization", "Content-Type", "X-Vetro-Tenant"] }));
+app.use(
+  "/*",
+  cors({
+    origin: "*",
+    allowHeaders: ["Authorization", "Content-Type", "X-Vetro-Tenant", "X-Vetro-Role", "X-Vetro-Officer-Id", "X-Vetro-Platform-Admin"],
+  }),
+);
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
@@ -27,16 +36,49 @@ const api = new Hono<AppEnv>();
 api.use("/*", requireAuth);
 api.route("/contractors", contractors);
 
-// Everything else is tenant data and 403s without a resolved contractorId.
-const tenantScoped = new Hono<AppEnv>();
-tenantScoped.use("/*", requireContractor);
-tenantScoped.route("/officers", officers);
-tenantScoped.route("/", licences);
-tenantScoped.route("/", vetting);
-tenantScoped.route("/", qualifications);
-tenantScoped.route("/", documents);
-tenantScoped.route("/dashboard", dashboard);
-tenantScoped.route("/exports", exports_);
-api.route("/", tenantScoped);
+// Guard middleware below is scoped to explicit path prefixes rather than a
+// blanket "/*" on a sub-app mounted at "/". Hono flattens a mounted sub-app's
+// own "/*" into the parent's global "/*" once merged at the "/" prefix — with
+// three sibling groups (platform, officer, tenant-admin) all needing to live
+// under the same api instance, that would make each group's guard run (and
+// potentially reject) requests meant for the other groups. Scoping every
+// guard to only the real top-level paths it should cover avoids that.
+
+// Platform-level: creating organizations. No tenant involved — gated purely
+// on Cognito PlatformAdmins group membership.
+api.use("/admin/*", requirePlatformAdmin);
+api.route("/admin", admin);
+
+// The officer self-service portal — scoped entirely by custom:officer_id,
+// never by contractorId or an :id param (see routes/me.ts).
+api.use("/me/*", requireOfficerSelf);
+api.route("/me", me);
+
+// Everything else is tenant data, admin-only (an OFFICER self-service login
+// has no business here, only under /me/*), and 403s without a resolved
+// contractorId. Every top-level path these route modules actually define —
+// bare and nested — needs to be listed here.
+const tenantAdminPrefixes = [
+  "/officers",
+  "/licences",
+  "/vetting",
+  "/qualifications",
+  "/documents",
+  "/dashboard",
+  "/exports",
+  "/invitations",
+];
+for (const prefix of tenantAdminPrefixes) {
+  api.use(prefix, requireContractor, requireAdmin);
+  api.use(`${prefix}/*`, requireContractor, requireAdmin);
+}
+api.route("/officers", officers);
+api.route("/", licences);
+api.route("/", vetting);
+api.route("/", qualifications);
+api.route("/", documents);
+api.route("/dashboard", dashboard);
+api.route("/exports", exports_);
+api.route("/", invitations);
 
 app.route("/", api);

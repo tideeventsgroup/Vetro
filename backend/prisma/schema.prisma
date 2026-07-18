@@ -17,6 +17,12 @@ enum ComplianceStatus {
   EXPIRED
 }
 
+enum SubmissionStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
 // The tenant boundary. `slug` is the subdomain — clyde-coast.vetro.co.uk —
 // and is how a request is scoped, either via the Cognito user's
 // custom:contractor_id claim or, in local dev, the X-Vetro-Tenant header
@@ -37,12 +43,13 @@ model Officer {
   lastName       String
   email          String?
   phone          String?
-  licences       SiaLicence[]
-  vettingRecords VettingRecord[]
-  qualifications Qualification[]
-  documents      Document[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  licences           SiaLicence[]
+  vettingRecords     VettingRecord[]
+  qualifications     Qualification[]
+  documents          Document[]
+  vettingSubmissions VettingSubmission[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([contractorId])
 }
@@ -81,6 +88,26 @@ model VettingRecord {
 
   @@index([officerId])
   @@index([expiryDate])
+}
+
+// What an officer submits themselves through the self-service portal —
+// Vetro still doesn't perform the BS7858 check; this is the record an
+// admin reviews before turning it into (or updating) a VettingRecord.
+model VettingSubmission {
+  id                String           @id @default(cuid())
+  officerId         String
+  officer           Officer          @relation(fields: [officerId], references: [id])
+  addressHistory    Json
+  employmentHistory Json
+  references        Json
+  consentGiven      Boolean
+  status            SubmissionStatus @default(PENDING_REVIEW)
+  reviewedAt        DateTime?
+  reviewedBy        String?
+  reviewNotes       String?
+  submittedAt       DateTime         @default(now())
+
+  @@index([officerId])
 }
 
 model Qualification {

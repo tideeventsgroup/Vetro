@@ -18,11 +18,17 @@ export class AuthStack extends Stack {
       standardAttributes: {
         email: { required: true, mutable: false },
       },
-      // The tenant assignment. Set via AdminUpdateUserAttributes when a
-      // contractor's account is set up — there's no self-serve flow that
-      // lets a user set their own (see backend/README.md's "Multi-tenancy").
+      // The tenant assignment, plus who this account is within that tenant.
+      // All three are set via AdminCreateUser/AdminUpdateUserAttributes when
+      // an account is provisioned — there's no self-serve flow that lets a
+      // user set any of these (see backend/README.md's "Multi-tenancy").
+      // role: "ADMIN" for contractor admins/office managers, "OFFICER" for
+      // the self-service portal. officer_id is only set for OFFICER accounts
+      // and scopes that login to exactly one Officer record.
       customAttributes: {
         contractor_id: new cognito.StringAttribute({ mutable: true }),
+        role: new cognito.StringAttribute({ mutable: true }),
+        officer_id: new cognito.StringAttribute({ mutable: true }),
       },
       passwordPolicy: {
         minLength: 12,
@@ -38,12 +44,22 @@ export class AuthStack extends Stack {
     this.userPoolClient = this.userPool.addClient("VetroWebClient", {
       authFlows: { userPassword: true, userSrp: true },
       generateSecret: false,
-      // custom:contractor_id has to be explicitly readable by the client to
-      // show up as an ID token claim at all — this is what
-      // backend/src/lib/auth.ts reads to resolve the tenant.
+      // Custom attributes have to be explicitly readable by the client to
+      // show up as ID token claims at all — this is what
+      // backend/src/lib/auth.ts reads to resolve tenant, role and officer.
       readAttributes: new cognito.ClientAttributes()
         .withStandardAttributes({ email: true })
-        .withCustomAttributes("contractor_id"),
+        .withCustomAttributes("contractor_id", "role", "officer_id"),
+    });
+
+    // Platform operators who can create new organizations (contractors) —
+    // distinct from a contractor's own ADMIN accounts, which can only manage
+    // their own tenant. Membership is granted by hand (AdminAddUserToGroup),
+    // not through any API route.
+    new cognito.CfnUserPoolGroup(this, "PlatformAdminsGroup", {
+      userPoolId: this.userPool.userPoolId,
+      groupName: "PlatformAdmins",
+      description: "Can create new organizations (contractors) across all tenants.",
     });
   }
 }

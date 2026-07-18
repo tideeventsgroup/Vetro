@@ -96,3 +96,23 @@ export function ShieldCheckIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function MailIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7L12 13L21 7" />
+    </Icon>
+  );
+}
+
+export function UsersIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <circle cx="9" cy="8" r="3.25" />
+      <path d="M3.5 20C3.5 16.5 6 14 9 14C12 14 14.5 16.5 14.5 20" />
+      <path d="M16 8.5C17.1 8.5 18 7.6 18 6.5C18 5.4 17.1 4.5 16 4.5" />
+      <path d="M15 14.2C17.5 14.7 19.5 16.9 19.5 20" />
+    </Icon>
+  );
+}
+

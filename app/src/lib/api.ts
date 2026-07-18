@@ -1,4 +1,5 @@
 import { useAuth } from "./auth.js";
+import { getDevOfficerId, getDevRole } from "./dev.js";
 import { getTenantSlug } from "./tenant.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -43,6 +44,22 @@ export interface OfficerDocument {
   uploadedAt: string;
 }
 
+export type SubmissionStatus = "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+
+export interface VettingSubmission {
+  id: string;
+  officerId: string;
+  addressHistory: unknown;
+  employmentHistory: unknown;
+  references: unknown;
+  consentGiven: boolean;
+  status: SubmissionStatus;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  reviewNotes: string | null;
+  submittedAt: string;
+}
+
 export interface Officer {
   id: string;
   contractorId: string;
@@ -54,6 +71,7 @@ export interface Officer {
   vettingRecords: VettingRecord[];
   qualifications?: Qualification[];
   documents?: OfficerDocument[];
+  vettingSubmissions?: VettingSubmission[];
 }
 
 export interface Contractor {
@@ -79,12 +97,16 @@ class VetroApiClient {
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
     const token = this.getToken();
     const tenantSlug = getTenantSlug();
+    const devRole = getDevRole();
+    const devOfficerId = getDevOfficerId();
     const response = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(tenantSlug ? { "X-Vetro-Tenant": tenantSlug } : {}),
+        ...(devRole ? { "X-Vetro-Role": devRole } : {}),
+        ...(devOfficerId ? { "X-Vetro-Officer-Id": devOfficerId } : {}),
         ...init?.headers,
       },
     });
@@ -195,6 +217,52 @@ class VetroApiClient {
 
   getDashboardSummary(): Promise<DashboardSummary> {
     return this.request("/dashboard/summary");
+  }
+
+  inviteTeammate(email: string): Promise<{ status: string; email: string }> {
+    return this.request("/invitations", { method: "POST", body: JSON.stringify({ email }) });
+  }
+
+  inviteOfficer(officerId: string, email?: string): Promise<{ status: string; email: string }> {
+    return this.request(`/officers/${officerId}/invite`, { method: "POST", body: JSON.stringify({ email }) });
+  }
+
+  // Officer self-service portal — scoped server-side to the caller's own
+  // officerId claim, never to an :id in the URL (see backend/src/routes/me.ts).
+  getMyOfficer(): Promise<Officer> {
+    return this.request("/me/officer");
+  }
+
+  listMyVettingSubmissions(): Promise<VettingSubmission[]> {
+    return this.request("/me/vetting-submissions");
+  }
+
+  submitVetting(input: {
+    addressHistory: unknown;
+    employmentHistory: unknown;
+    references: unknown;
+    consentGiven: boolean;
+  }): Promise<VettingSubmission> {
+    return this.request("/me/vetting-submissions", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  async uploadMyDocument(file: File, kind: string): Promise<OfficerDocument> {
+    const { uploadUrl, s3Key } = await this.request<{ uploadUrl: string; s3Key: string }>(
+      "/me/documents/upload-url",
+      { method: "POST", body: JSON.stringify({ fileName: file.name, contentType: file.type || "application/octet-stream" }) }
+    );
+    const putResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!putResponse.ok) throw new ApiError(putResponse.status, "Upload to storage failed");
+    return this.request<OfficerDocument>("/me/documents", { method: "POST", body: JSON.stringify({ kind, s3Key }) });
+  }
+
+  async getMyDocumentDownloadUrl(id: string): Promise<string> {
+    const { downloadUrl } = await this.request<{ downloadUrl: string }>(`/me/documents/${id}/download-url`);
+    return downloadUrl;
   }
 
   async downloadExport(): Promise<Blob> {

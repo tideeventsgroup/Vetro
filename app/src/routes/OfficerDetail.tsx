@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DocumentsSection } from "../components/DocumentsSection.js";
 import { StatusBadge } from "../components/StatusBadge.js";
-import { ArrowLeftIcon, PlusIcon } from "../components/icons.js";
+import { ArrowLeftIcon, MailIcon, PlusIcon } from "../components/icons.js";
 import { Officer, useApi } from "../lib/api.js";
 
 function formatDate(value: string | null): string {
@@ -21,13 +21,19 @@ export function OfficerDetail() {
   const [showAddLicence, setShowAddLicence] = useState(false);
   const [showAddVetting, setShowAddVetting] = useState(false);
   const [showAddQualification, setShowAddQualification] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteStatus, setInviteStatus] = useState<string | undefined>(undefined);
+  const [inviteError, setInviteError] = useState<string | undefined>(undefined);
+  const [isInviting, setIsInviting] = useState(false);
 
   useEffect(() => {
     if (id) void load(id);
   }, [id]);
 
   async function load(officerId: string) {
-    setOfficer(await api.getOfficer(officerId));
+    const loaded = await api.getOfficer(officerId);
+    setOfficer(loaded);
+    setInviteEmail((current) => current || loaded.email || "");
   }
 
   async function handleAddLicence(e: FormEvent<HTMLFormElement>) {
@@ -71,6 +77,23 @@ export function OfficerDetail() {
     await load(id);
   }
 
+  async function handleInvite(e: FormEvent) {
+    e.preventDefault();
+    if (!id) return;
+    setInviteStatus(undefined);
+    setInviteError(undefined);
+    setIsInviting(true);
+    try {
+      const result = await api.inviteOfficer(id, inviteEmail.trim() || undefined);
+      setInviteStatus(`Invitation sent to ${result.email}.`);
+      await load(id);
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : "Could not send invitation");
+    } finally {
+      setIsInviting(false);
+    }
+  }
+
   if (!officer) return <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>;
 
   return (
@@ -86,6 +109,33 @@ export function OfficerDetail() {
           </span>
           {officer.firstName} {officer.lastName}
         </h1>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h2>Self-service portal</h2>
+        </div>
+        <p style={{ color: "var(--vetro-text-muted)", fontSize: 14, marginBottom: 12 }}>
+          Give this officer their own login to submit vetting details and documents for review.
+        </p>
+        {inviteError && <p className="error-text">{inviteError}</p>}
+        <form onSubmit={handleInvite} style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <div className="form-field" style={{ marginBottom: 0, minWidth: 240 }}>
+            <label htmlFor="inviteEmail">Email</label>
+            <input
+              id="inviteEmail"
+              type="email"
+              required
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+          </div>
+          <button className="btn btn-secondary" type="submit" disabled={isInviting}>
+            <MailIcon width={14} height={14} />
+            {isInviting ? "Sending…" : "Send invite"}
+          </button>
+        </form>
+        {inviteStatus && <p className="subtle-meta" style={{ marginTop: 12 }}>{inviteStatus}</p>}
       </div>
 
       <div className="card">
@@ -264,7 +314,12 @@ export function OfficerDetail() {
       </div>
 
       {id && (
-        <DocumentsSection officerId={id} documents={officer.documents ?? []} onChange={() => load(id)} />
+        <DocumentsSection
+          documents={officer.documents ?? []}
+          onUpload={(file, kind) => api.uploadDocument(id, file, kind)}
+          onGetDownloadUrl={(docId) => api.getDocumentDownloadUrl(docId)}
+          onChange={() => load(id)}
+        />
       )}
     </div>
   );

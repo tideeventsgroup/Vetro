@@ -68,10 +68,28 @@ export class ApiStack extends Stack {
     props.dbSecret.grantRead(apiFn);
     props.documentsBucket.grantReadWrite(apiFn);
 
+    // Admin-initiated invites (organizations, teammates, officers — see
+    // routes/admin.ts, routes/invitations.ts, routes/officers.ts) create the
+    // Cognito account directly rather than going through any self-serve
+    // signup, so the API needs these Admin* actions scoped to its own pool.
+    props.userPool.grant(
+      apiFn,
+      "cognito-idp:AdminCreateUser",
+      "cognito-idp:AdminAddUserToGroup",
+      "cognito-idp:AdminUpdateUserAttributes",
+    );
+
     const httpApi = new apigwv2.HttpApi(this, "VetroHttpApi", {
       apiName: "vetro-api",
       corsPreflight: {
-        allowHeaders: ["Authorization", "Content-Type", "X-Vetro-Tenant"],
+        allowHeaders: [
+          "Authorization",
+          "Content-Type",
+          "X-Vetro-Tenant",
+          "X-Vetro-Role",
+          "X-Vetro-Officer-Id",
+          "X-Vetro-Platform-Admin",
+        ],
         allowMethods: [
           apigwv2.CorsHttpMethod.GET,
           apigwv2.CorsHttpMethod.POST,

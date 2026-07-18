@@ -4,4 +4,7 @@ cdk.out/
 cdk.context.json
 *.tsbuildinfo
 .env
+.env.production
 .DS_Store
+infra/bin/*.js
+infra/lib/*.js

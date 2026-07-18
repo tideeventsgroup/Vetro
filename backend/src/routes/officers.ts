@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
+import { createCognitoUser } from "../lib/cognito.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
 export const officers = new Hono<AppEnv>();
@@ -61,6 +62,46 @@ officers.patch("/:id", async (c) => {
     entityId: id,
   });
   return c.json(updated);
+});
+
+// Gives an officer their own login to the self-service vetting portal.
+// Vetro still never performs the BS7858 check itself — this just lets the
+// officer submit their own details/documents for an admin to review (see
+// VettingSubmission in prisma/schema.prisma and the /me/* routes it feeds).
+officers.post("/:id/invite", async (c) => {
+  const db = await getDb();
+  const id = c.req.param("id");
+  const officer = await db.officer.findUnique({ where: { id } });
+  if (!officer || officer.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Officer not found" }, 404);
+  }
+
+  const body = await c.req.json<{ email?: string }>().catch(() => ({}) as { email?: string });
+  const email = body.email ?? officer.email;
+  if (!email) {
+    return c.json({ error: "Officer has no email on file — provide one to invite" }, 400);
+  }
+  if (email !== officer.email) {
+    await db.officer.update({ where: { id }, data: { email } });
+  }
+
+  await createCognitoUser({
+    email,
+    attributes: {
+      "custom:contractor_id": officer.contractorId,
+      "custom:role": "OFFICER",
+      "custom:officer_id": officer.id,
+    },
+  });
+
+  await recordAudit({
+    actorEmail: c.get("actorEmail") ?? "unknown",
+    action: "officer.invited",
+    entityType: "Officer",
+    entityId: id,
+  });
+
+  return c.json({ status: "invited", email }, 201);
 });
 
 officers.delete("/:id", async (c) => {
