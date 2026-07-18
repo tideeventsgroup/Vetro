@@ -2,8 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AddOfficerModal } from "../components/AddOfficerModal.js";
 import { StatusBadge } from "../components/StatusBadge.js";
+import { DownloadIcon, PlusIcon, RosterIcon, ShieldCheckIcon } from "../components/icons.js";
 import { Contractor, DashboardSummary, Officer, useApi } from "../lib/api.js";
 import { worstStatus } from "../lib/status.js";
+
+function initials(officer: Officer): string {
+  return `${officer.firstName[0] ?? ""}${officer.lastName[0] ?? ""}`.toUpperCase();
+}
 
 export function Dashboard() {
   const api = useApi();
@@ -64,11 +69,14 @@ export function Dashboard() {
     URL.revokeObjectURL(url);
   }
 
-  if (isLoading) return <p>Loading…</p>;
+  if (isLoading) return <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>;
 
   if (!contractor) {
     return (
       <div className="card" style={{ maxWidth: 420 }}>
+        <span className="empty-icon">
+          <ShieldCheckIcon />
+        </span>
         <h2 style={{ fontSize: 18, marginBottom: 8 }}>No officers added yet</h2>
         <p style={{ color: "var(--vetro-text-muted)" }}>
           Name your organisation to start automatic checks.
@@ -98,11 +106,13 @@ export function Dashboard() {
           <h1>{contractor.name}</h1>
           <p>One record per officer — checked automatically, not chased manually.</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="page-actions">
           <button className="btn btn-secondary" onClick={handleExport}>
+            <DownloadIcon />
             Export CSV
           </button>
           <button className="btn btn-primary" onClick={() => setShowAddOfficer(true)}>
+            <PlusIcon />
             Add officer
           </button>
         </div>
@@ -112,31 +122,42 @@ export function Dashboard() {
 
       <div className="summary-grid">
         <div className="summary-tile">
-          <div className="count">{officers.length}</div>
-          <div className="label">Officers</div>
+          <div>
+            <div className="count">{officers.length}</div>
+            <div className="label">Officers</div>
+          </div>
+          <span className="tile-icon">
+            <RosterIcon />
+          </span>
         </div>
         <div className="summary-tile">
-          <div className="count" style={{ color: "var(--vetro-status-green)" }}>
-            {tally.ACTIVE}
+          <div>
+            <div className="count" style={{ color: "#1C7A45" }}>
+              {tally.ACTIVE}
+            </div>
+            <div className="label">Active</div>
           </div>
-          <div className="label">Active</div>
         </div>
         <div className="summary-tile">
-          <div className="count" style={{ color: "var(--vetro-status-amber)" }}>
-            {tally.EXPIRING}
+          <div>
+            <div className="count" style={{ color: "#C24A16" }}>
+              {tally.EXPIRING}
+            </div>
+            <div className="label">Expiring soon</div>
           </div>
-          <div className="label">Expiring soon</div>
         </div>
         <div className="summary-tile">
-          <div className="count" style={{ color: "var(--vetro-status-red)" }}>
-            {tally.EXPIRED}
+          <div>
+            <div className="count" style={{ color: "var(--vetro-status-red)" }}>
+              {tally.EXPIRED}
+            </div>
+            <div className="label">Expired</div>
           </div>
-          <div className="label">Expired</div>
         </div>
       </div>
 
       {summary && (
-        <p style={{ color: "var(--vetro-text-muted)", fontSize: 13, marginTop: -12, marginBottom: 20 }}>
+        <p className="subtle-meta">
           Licences — {summary.licences.ACTIVE ?? 0} active, {summary.licences.EXPIRING ?? 0} expiring,{" "}
           {summary.licences.EXPIRED ?? 0} expired · Vetting — {summary.vetting.ACTIVE ?? 0} active,{" "}
           {summary.vetting.EXPIRING ?? 0} expiring, {summary.vetting.EXPIRED ?? 0} expired
@@ -144,9 +165,12 @@ export function Dashboard() {
       )}
 
       {officers.length === 0 ? (
-        <p style={{ color: "var(--vetro-text-muted)" }}>
-          No officers added yet. Add your first officer to start automatic checks.
-        </p>
+        <div className="card empty-state">
+          <span className="empty-icon">
+            <RosterIcon />
+          </span>
+          <p>No officers added yet. Add your first officer to start automatic checks.</p>
+        </div>
       ) : (
         <table className="data-table">
           <thead>
@@ -161,7 +185,10 @@ export function Dashboard() {
             {officers.map((officer) => (
               <tr key={officer.id} className="clickable" onClick={() => navigate(`/officers/${officer.id}`)}>
                 <td>
-                  {officer.firstName} {officer.lastName}
+                  <div className="officer-cell">
+                    <span className="officer-avatar">{initials(officer)}</span>
+                    {officer.firstName} {officer.lastName}
+                  </div>
                 </td>
                 <td>
                   <StatusBadge status={worstStatus(officer)} />

@@ -3,24 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Vetro — Scotland's Security Workforce, Verified.</title>
+  <title>Vetro — Scotland's security workforce, verified.</title>
   <meta name="description" content="Vetro checks your officers' SIA licences and BS7858 vetting automatically, so you always know who's actually cleared to work. Built by Tide Events Group Scotland." />
+  <link rel="icon" href="assets/brand/vetro-icon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="src/styles/main.css" />
 </head>
 <body>
 
   <header class="site-header">
     <div class="container">
-      <a href="#" class="vetro-wordmark" aria-label="Vetro home">
-        <span class="vetro-wordmark-mark" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 4L12 20L20 4" stroke="#0E7C7B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </span>
-        VETRO
+      <a href="#" aria-label="Vetro home" style="display:inline-flex;">
+        <img src="assets/brand/vetro-logo-horizontal.svg" alt="Vetro" height="26" />
       </a>
       <nav class="site-nav">
         <a href="#how-it-works">How it works</a>
@@ -33,7 +29,13 @@
   <main>
     <section class="hero">
       <div class="container hero-inner">
-        <span class="eyebrow">A Tide Events Group Scotland product</span>
+        <span class="eyebrow">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 2L4 5V11C4 16.5 7.4 20.7 12 22C16.6 20.7 20 16.5 20 11V5L12 2Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+            <path d="M9 12L11 14L15.5 9.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          A Tide Events Group Scotland product
+        </span>
         <h1>Scotland's security workforce, verified.</h1>
         <p class="hero-lede">
           One record per officer — licence, vetting, qualifications, documents, in one place.
@@ -50,50 +52,68 @@
       <div class="container">
         <span class="section-label">What the dashboard actually shows</span>
         <h2>Real expiry windows. Real data. No fake green.</h2>
-        <p style="max-width:620px;color:var(--vetro-text-muted);">
+        <p style="max-width:620px;color:var(--vetro-text-secondary);">
           Every officer, one row, one answer: are they legally allowed to work today.
         </p>
 
-        <div class="card dashboard-preview" style="margin-top:32px;max-width:720px;">
-          <div class="dashboard-preview-header">
-            <h3>Officer roster</h3>
-            <span class="footer-disclaimer">12 officers · updated automatically</span>
-          </div>
-
-          <div class="officer-row">
-            <div>
-              <div class="officer-name">A. Mackenzie</div>
-              <div class="officer-meta">SIA Door Supervisor · BS7858 vetted</div>
+        <div class="dashboard-preview-wrap">
+          <div class="card dashboard-preview">
+            <div class="dashboard-preview-chrome" aria-hidden="true">
+              <span></span><span></span><span></span>
             </div>
-            <span class="status-badge status-active">Active</span>
-            <div class="officer-expiry">Renews 4 Mar 2027</div>
-          </div>
-
-          <div class="officer-row">
-            <div>
-              <div class="officer-name">J. Smith</div>
-              <div class="officer-meta">SIA Door Supervisor · BS7858 vetted</div>
+            <div class="dashboard-preview-header">
+              <h4>Officer roster</h4>
+              <span class="footer-disclaimer">12 officers · updated automatically</span>
             </div>
-            <span class="status-badge status-expiring">Expiring soon</span>
-            <div class="officer-expiry">Expires in 14 days</div>
-          </div>
+            <div class="dashboard-preview-body">
+              <div class="officer-row">
+                <div class="officer-name-row">
+                  <span class="officer-avatar" aria-hidden="true">AM</span>
+                  <div>
+                    <div class="officer-name">A. Mackenzie</div>
+                    <div class="officer-meta">SIA Door Supervisor · BS7858 vetted</div>
+                  </div>
+                </div>
+                <span class="status-badge status-active">Active</span>
+                <div class="officer-expiry">Renews 4 Mar 2027</div>
+              </div>
 
-          <div class="officer-row">
-            <div>
-              <div class="officer-name">R. Campbell</div>
-              <div class="officer-meta">SIA Security Guard · Vetting on file</div>
-            </div>
-            <span class="status-badge status-expired">Expired</span>
-            <div class="officer-expiry">Expired 2 Jul 2026</div>
-          </div>
+              <div class="officer-row">
+                <div class="officer-name-row">
+                  <span class="officer-avatar" aria-hidden="true">JS</span>
+                  <div>
+                    <div class="officer-name">J. Smith</div>
+                    <div class="officer-meta">SIA Door Supervisor · BS7858 vetted</div>
+                  </div>
+                </div>
+                <span class="status-badge status-expiring">Expiring soon</span>
+                <div class="officer-expiry">Expires in 14 days</div>
+              </div>
 
-          <div class="officer-row">
-            <div>
-              <div class="officer-name">F. Adeyemi</div>
-              <div class="officer-meta">SIA CCTV Operator · BS7858 vetted</div>
+              <div class="officer-row">
+                <div class="officer-name-row">
+                  <span class="officer-avatar" aria-hidden="true">RC</span>
+                  <div>
+                    <div class="officer-name">R. Campbell</div>
+                    <div class="officer-meta">SIA Security Guard · Vetting on file</div>
+                  </div>
+                </div>
+                <span class="status-badge status-expired">Expired</span>
+                <div class="officer-expiry">Expired 2 Jul 2026</div>
+              </div>
+
+              <div class="officer-row">
+                <div class="officer-name-row">
+                  <span class="officer-avatar" aria-hidden="true">FA</span>
+                  <div>
+                    <div class="officer-name">F. Adeyemi</div>
+                    <div class="officer-meta">SIA CCTV Operator · BS7858 vetted</div>
+                  </div>
+                </div>
+                <span class="status-badge status-active">Active</span>
+                <div class="officer-expiry">Renews 19 Nov 2026</div>
+              </div>
             </div>
-            <span class="status-badge status-active">Active</span>
-            <div class="officer-expiry">Renews 19 Nov 2026</div>
           </div>
         </div>
       </div>
@@ -105,19 +125,44 @@
         <h2>Everything else is a spreadsheet problem Vetro makes obsolete.</h2>
         <div class="message-grid">
           <div class="card message-card">
-            <h3>One record per officer</h3>
+            <span class="message-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 3H14L19 8V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V5C5 3.9 5.9 3 7 3Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+                <path d="M14 3V8H19" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+                <path d="M9 13H15M9 17H15" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <h4>One record per officer</h4>
             <p>Licence, vetting, qualifications, and documents, in one place — not three spreadsheets and an inbox.</p>
           </div>
           <div class="card message-card">
-            <h3>Checked automatically</h3>
+            <span class="message-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12C3 7 7 3 12 3C15.3 3 18.2 4.8 19.7 7.5M21 12C21 17 17 21 12 21C8.7 21 5.8 19.2 4.3 16.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                <path d="M19.7 3.5V7.5H15.7M4.3 20.5V16.5H8.3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <h4>Checked automatically</h4>
             <p>Vetro checks the public SIA register on a schedule, so nobody has to remember to.</p>
           </div>
           <div class="card message-card">
-            <h3>Audit-ready by default</h3>
+            <span class="message-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L4 5V11C4 16.5 7.4 20.7 12 22C16.6 20.7 20 16.5 20 11V5L12 2Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+                <path d="M9 12L11 14L15.5 9.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <h4>Audit-ready by default</h4>
             <p>Export what an ACS inspector or client asks for in seconds, not an afternoon.</p>
           </div>
           <div class="card message-card">
-            <h3>Priced for the contractors who need it</h3>
+            <span class="message-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 3L21 12L12 21L3 12L12 3Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+              </svg>
+            </span>
+            <h4>Priced for the contractors who need it</h4>
             <p>Built for small and mid-sized Scottish contractors — not another enterprise guard-tracking platform.</p>
           </div>
         </div>
@@ -127,11 +172,13 @@
     <section class="position-section">
       <div class="container">
         <span class="section-label" style="color:#8FB9B8;">Brand position</span>
-        <h2>Provable, not promised.</h2>
+        <h2>Verified, not assumed.</h2>
         <p>
-          Vetro doesn't manage guards, patrols, or rotas. It answers one question with certainty:
-          is this person legally allowed to work today? Built for the operator who has to answer
-          to an ACS audit, a client due-diligence request, or their own conscience at 6am before a shift starts.
+          Every other option in this space asks a contractor to trust a spreadsheet, a filing
+          cabinet, or their own memory. Vetro replaces assumption with a checked, dated,
+          exportable fact — built for the small-to-mid Scottish security contractor running
+          compliance manually today, and the independent consultant who needs to check status
+          across contractors they don't employ.
         </p>
       </div>
     </section>

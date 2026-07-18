@@ -1,5 +1,6 @@
 import { ChangeEvent, useState } from "react";
 import { OfficerDocument, useApi } from "../lib/api.js";
+import { DownloadIcon, FileIcon, UploadIcon } from "./icons.js";
 
 export function DocumentsSection({
   officerId,
@@ -44,15 +45,16 @@ export function DocumentsSection({
 
   return (
     <div className="card">
-      <div className="page-header" style={{ marginBottom: 12 }}>
-        <h2 style={{ fontSize: 16 }}>Documents</h2>
+      <div className="card-header">
+        <h2>Documents</h2>
       </div>
 
       <div className="form-field" style={{ maxWidth: 280 }}>
         <label htmlFor="documentKind">Kind</label>
         <input id="documentKind" value={kind} onChange={(e) => setKind(e.target.value)} />
       </div>
-      <label className="btn btn-secondary" style={{ display: "inline-flex", marginBottom: 16 }}>
+      <label className="btn btn-secondary" style={{ display: "inline-flex", marginBottom: 16, cursor: "pointer" }}>
+        <UploadIcon width={14} height={14} />
         {isUploading ? "Uploading…" : "Upload file"}
         <input type="file" onChange={handleFileChange} disabled={isUploading} style={{ display: "none" }} />
       </label>
@@ -60,7 +62,12 @@ export function DocumentsSection({
       {error && <p className="error-text">{error}</p>}
 
       {documents.length === 0 ? (
-        <p style={{ color: "var(--vetro-text-muted)" }}>No documents on file.</p>
+        <div className="empty-state" style={{ padding: "24px 16px" }}>
+          <span className="empty-icon" style={{ width: 36, height: 36 }}>
+            <FileIcon width={16} height={16} />
+          </span>
+          <p>No documents on file.</p>
+        </div>
       ) : (
         <table className="data-table">
           <thead>
@@ -77,6 +84,7 @@ export function DocumentsSection({
                 <td>{new Date(d.uploadedAt).toLocaleDateString("en-GB")}</td>
                 <td>
                   <button className="btn btn-secondary" onClick={() => handleDownload(d.id)}>
+                    <DownloadIcon width={14} height={14} />
                     Download
                   </button>
                 </td>

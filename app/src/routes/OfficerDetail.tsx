@@ -2,11 +2,16 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DocumentsSection } from "../components/DocumentsSection.js";
 import { StatusBadge } from "../components/StatusBadge.js";
+import { ArrowLeftIcon, PlusIcon } from "../components/icons.js";
 import { Officer, useApi } from "../lib/api.js";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
   return new Date(value).toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function initials(officer: Officer): string {
+  return `${officer.firstName[0] ?? ""}${officer.lastName[0] ?? ""}`.toUpperCase();
 }
 
 export function OfficerDetail() {
@@ -66,23 +71,28 @@ export function OfficerDetail() {
     await load(id);
   }
 
-  if (!officer) return <p>Loading…</p>;
+  if (!officer) return <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>;
 
   return (
     <div>
-      <Link to="/" style={{ fontSize: 13, color: "var(--vetro-text-muted)" }}>
-        ← Back to roster
+      <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--vetro-text-muted)" }}>
+        <ArrowLeftIcon width={14} height={14} />
+        Back to roster
       </Link>
-      <div className="page-header" style={{ marginTop: 12 }}>
-        <h1>
+      <div className="page-header" style={{ marginTop: 12, alignItems: "center" }}>
+        <h1 style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span className="officer-avatar" style={{ width: 40, height: 40, fontSize: 15 }}>
+            {initials(officer)}
+          </span>
           {officer.firstName} {officer.lastName}
         </h1>
       </div>
 
       <div className="card">
-        <div className="page-header" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 16 }}>SIA licences</h2>
+        <div className="card-header">
+          <h2>SIA licences</h2>
           <button className="btn btn-secondary" onClick={() => setShowAddLicence((v) => !v)}>
+            {!showAddLicence && <PlusIcon width={14} height={14} />}
             {showAddLicence ? "Cancel" : "Add licence"}
           </button>
         </div>
@@ -112,7 +122,7 @@ export function OfficerDetail() {
         )}
 
         {officer.licences.length === 0 ? (
-          <p style={{ color: "var(--vetro-text-muted)" }}>No licences on file.</p>
+          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>No licences on file.</p>
         ) : (
           <table className="data-table">
             <thead>
@@ -140,9 +150,10 @@ export function OfficerDetail() {
       </div>
 
       <div className="card">
-        <div className="page-header" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 16 }}>BS7858 vetting</h2>
+        <div className="card-header">
+          <h2>BS7858 vetting</h2>
           <button className="btn btn-secondary" onClick={() => setShowAddVetting((v) => !v)}>
+            {!showAddVetting && <PlusIcon width={14} height={14} />}
             {showAddVetting ? "Cancel" : "Add record"}
           </button>
         </div>
@@ -168,7 +179,7 @@ export function OfficerDetail() {
         )}
 
         {officer.vettingRecords.length === 0 ? (
-          <p style={{ color: "var(--vetro-text-muted)" }}>No vetting on file.</p>
+          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>No vetting on file.</p>
         ) : (
           <table className="data-table">
             <thead>
@@ -196,9 +207,10 @@ export function OfficerDetail() {
       </div>
 
       <div className="card">
-        <div className="page-header" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 16 }}>Qualifications</h2>
+        <div className="card-header">
+          <h2>Qualifications</h2>
           <button className="btn btn-secondary" onClick={() => setShowAddQualification((v) => !v)}>
+            {!showAddQualification && <PlusIcon width={14} height={14} />}
             {showAddQualification ? "Cancel" : "Add qualification"}
           </button>
         </div>
@@ -228,7 +240,7 @@ export function OfficerDetail() {
         )}
 
         {(officer.qualifications ?? []).length === 0 ? (
-          <p style={{ color: "var(--vetro-text-muted)" }}>No qualifications on file.</p>
+          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>No qualifications on file.</p>
         ) : (
           <table className="data-table">
             <thead>
