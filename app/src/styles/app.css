@@ -213,16 +213,20 @@ button {
 }
 
 /* Page hero — full-bleed dark gradient banner behind every page's title,
-   consistent across the app (never a one-off per page). Bleeds past
-   .app-main's own padding via negative margins, then re-adds it as its own
-   padding so the title/actions still line up with the content below. */
+   consistent across the app (never a one-off per page). Sized by
+   `calc(100vw - 232px)` (232px = .app-sidebar's own width) rather than
+   escaping .app-main's padding via negative margins alone, so it reaches
+   the true viewport edge regardless of .app-main's own max-width — the
+   rest of a page's content keeps its narrower reading width, only the
+   hero spans full width. */
 .page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--vetro-space-4);
-  margin: calc(var(--vetro-space-6) * -1) calc(var(--vetro-space-8) * -1) var(--vetro-space-6);
-  padding: var(--vetro-space-6) var(--vetro-space-8) var(--vetro-space-7);
+  width: calc(100vw - 232px);
+  margin: calc(var(--vetro-space-6) * -1) 0 var(--vetro-space-5) calc(var(--vetro-space-8) * -1);
+  padding: var(--vetro-space-4) var(--vetro-space-8);
   background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
   background-image:
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 64px),
@@ -253,7 +257,7 @@ button {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: var(--vetro-space-4);
-  margin-top: -40px;
+  margin-top: -20px;
   margin-bottom: var(--vetro-space-5);
   position: relative;
 }
