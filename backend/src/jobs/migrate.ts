@@ -20,12 +20,24 @@ interface MigrationResult {
   applied: boolean;
 }
 
-export const handler = async (): Promise<{ statusCode: number; body: string }> => {
+interface MigrateEvent {
+  /**
+   * Optional, explicit only — this Lambda has no admin UI behind it yet, so
+   * bootstrapping a tenant is a manual `aws lambda invoke` with a payload,
+   * the same way running the migrations themselves is.
+   */
+  bootstrapContractor?: { name: string; slug: string };
+}
+
+export const handler = async (
+  event: MigrateEvent = {}
+): Promise<{ statusCode: number; body: string }> => {
   const databaseUrl = await resolveDatabaseUrl();
   const client = new Client({ connectionString: databaseUrl });
   await client.connect();
 
   const results: MigrationResult[] = [];
+  let contractor: { id: string; slug: string } | undefined;
 
   try {
     await client.query(`
@@ -76,10 +88,23 @@ export const handler = async (): Promise<{ statusCode: number; body: string }> =
         throw err;
       }
     }
+
+    if (event.bootstrapContractor) {
+      const { name, slug } = event.bootstrapContractor;
+      const { rows } = await client.query<{ id: string; slug: string }>(
+        `INSERT INTO "Contractor" (id, name, slug, "createdAt")
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+         RETURNING id, slug`,
+        [randomUUID(), name, slug]
+      );
+      contractor = rows[0];
+    }
   } finally {
     await client.end();
   }
 
-  console.log(JSON.stringify(results));
-  return { statusCode: 200, body: JSON.stringify(results) };
+  const body = JSON.stringify({ migrations: results, contractor });
+  console.log(body);
+  return { statusCode: 200, body };
 };
