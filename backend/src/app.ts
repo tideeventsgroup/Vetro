@@ -2,11 +2,15 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { admin } from "./routes/admin.js";
 import { auditLog } from "./routes/auditLog.js";
+import { client } from "./routes/client.js";
 import { contractors } from "./routes/contractors.js";
 import { invitations } from "./routes/invitations.js";
 import { me } from "./routes/me.js";
 import { officers } from "./routes/officers.js";
+import { reports } from "./routes/reports.js";
+import { shifts } from "./routes/shifts.js";
 import { signup } from "./routes/signup.js";
+import { sites } from "./routes/sites.js";
 import { team } from "./routes/team.js";
 import { licences } from "./routes/licences.js";
 import { vetting } from "./routes/vetting.js";
@@ -15,7 +19,14 @@ import { qualifications } from "./routes/qualifications.js";
 import { documents } from "./routes/documents.js";
 import { dashboard } from "./routes/dashboard.js";
 import { exports_ } from "./routes/exports.js";
-import { requireAdmin, requireAuth, requireContractor, requireOfficerSelf, requirePlatformAdmin } from "./lib/auth.js";
+import {
+  requireAdmin,
+  requireAuth,
+  requireClientSelf,
+  requireContractor,
+  requireOfficerSelf,
+  requirePlatformAdmin,
+} from "./lib/auth.js";
 import type { AppEnv } from "./lib/hono-env.js";
 
 export const app = new Hono<AppEnv>();
@@ -27,7 +38,15 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    allowHeaders: ["Authorization", "Content-Type", "X-Vetro-Tenant", "X-Vetro-Role", "X-Vetro-Officer-Id", "X-Vetro-Platform-Admin"],
+    allowHeaders: [
+      "Authorization",
+      "Content-Type",
+      "X-Vetro-Tenant",
+      "X-Vetro-Role",
+      "X-Vetro-Officer-Id",
+      "X-Vetro-Site-Id",
+      "X-Vetro-Platform-Admin",
+    ],
   }),
 );
 
@@ -59,6 +78,11 @@ api.route("/admin", admin);
 api.use("/me/*", requireOfficerSelf);
 api.route("/me", me);
 
+// The client self-service portal — scoped entirely by custom:site_id, never
+// by contractorId or an :id param (see routes/client.ts).
+api.use("/client/*", requireClientSelf);
+api.route("/", client);
+
 // Everything else is tenant data, admin-only (an OFFICER self-service login
 // has no business here, only under /me/*), and 403s without a resolved
 // contractorId. Every top-level path these route modules actually define —
@@ -75,6 +99,9 @@ const tenantAdminPrefixes = [
   "/invitations",
   "/team",
   "/audit-log",
+  "/sites",
+  "/shifts",
+  "/reports",
 ];
 for (const prefix of tenantAdminPrefixes) {
   api.use(prefix, requireContractor, requireAdmin);
@@ -91,5 +118,8 @@ api.route("/exports", exports_);
 api.route("/", invitations);
 api.route("/", team);
 api.route("/", auditLog);
+api.route("/", sites);
+api.route("/", shifts);
+api.route("/", reports);
 
 app.route("/", api);

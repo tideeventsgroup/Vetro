@@ -92,6 +92,7 @@ export class ApiStack extends Stack {
           "X-Vetro-Tenant",
           "X-Vetro-Role",
           "X-Vetro-Officer-Id",
+          "X-Vetro-Site-Id",
           "X-Vetro-Platform-Admin",
         ],
         allowMethods: [

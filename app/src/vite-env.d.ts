@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_DEV_TENANT_SLUG: string;
   readonly VITE_DEV_ROLE: string;
   readonly VITE_DEV_OFFICER_ID: string;
+  readonly VITE_DEV_SITE_ID: string;
 }
 
 interface ImportMeta {

@@ -47,6 +47,8 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
     c.set("role", c.req.header("X-Vetro-Role") ?? "ADMIN");
     const officerId = c.req.header("X-Vetro-Officer-Id");
     if (officerId) c.set("officerId", officerId);
+    const siteId = c.req.header("X-Vetro-Site-Id");
+    if (siteId) c.set("siteId", siteId);
     c.set("isPlatformAdmin", c.req.header("X-Vetro-Platform-Admin") === "true");
     if (tenantSlug) {
       c.set("tenantSlug", tenantSlug);
@@ -74,6 +76,8 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
     if (role) c.set("role", role);
     const officerId = payload["custom:officer_id"] as string | undefined;
     if (officerId) c.set("officerId", officerId);
+    const siteId = payload["custom:site_id"] as string | undefined;
+    if (siteId) c.set("siteId", siteId);
     const groups = (payload["cognito:groups"] as string[] | undefined) ?? [];
     c.set("isPlatformAdmin", groups.includes("PlatformAdmins"));
   } catch {
@@ -103,6 +107,14 @@ export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
 export const requireOfficerSelf: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (c.get("role") !== "OFFICER" || !c.get("officerId")) {
     return c.json({ error: "Officer self-service access required" }, 403);
+  }
+  await next();
+};
+
+/** Guards routes that only a site's own client-contact login may use — mount below requireAuth. */
+export const requireClientSelf: MiddlewareHandler<AppEnv> = async (c, next) => {
+  if (c.get("role") !== "CLIENT" || !c.get("siteId")) {
+    return c.json({ error: "Client self-service access required" }, 403);
   }
   await next();
 };

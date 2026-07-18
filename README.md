@@ -3,7 +3,9 @@
 Scotland's Security Workforce, Verified. A compliance record for Scottish
 security contractors — SIA licence status, BS7858 vetting, and
 qualifications held in one auditable place, checked automatically instead
-of chased manually. Built by Tide Events Group Scotland.
+of chased manually — plus site/contract tracking, shift scheduling, and
+client sign-off, so a contract's coverage and its compliance risk live in
+the same place. Built by Tide Events Group Scotland.
 
 ## Layout
 
@@ -62,5 +64,8 @@ platform admin can also create an org on someone's behalf as an alternative
 entry point. Either way, that org's admin invites teammates and invites
 officers to a self-service portal where they submit their own vetting
 details and documents for review — Vetro still never performs the BS7858
-check itself. See `backend/README.md`'s "Onboarding & roles" for the full
-flow and the Cognito role model behind it.
+check itself. A third role, `CLIENT`, scopes a login to one site instead of
+one officer — the contact at that location confirming shifts actually
+happened. See `backend/README.md`'s "Onboarding & roles" and "Scheduling,
+sites, and the client portal" for the full flow and the Cognito role model
+behind it.

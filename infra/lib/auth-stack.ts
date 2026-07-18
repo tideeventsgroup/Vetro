@@ -28,13 +28,16 @@ export class AuthStack extends Stack {
       // by the backend, using IAM-privileged Admin* Cognito calls, never by
       // the client (see writeAttributes below and backend/README.md's
       // "Onboarding & roles"). role: "ADMIN" for contractor admins/office
-      // managers, "OFFICER" for the self-service portal. officer_id is only
-      // set for OFFICER accounts and scopes that login to exactly one
-      // Officer record.
+      // managers, "OFFICER" for the self-service portal, "CLIENT" for a
+      // site's own contact reviewing/confirming shifts there. officer_id is
+      // only set for OFFICER accounts and scopes that login to exactly one
+      // Officer record; site_id is the CLIENT equivalent, scoping a login to
+      // exactly one Site.
       customAttributes: {
         contractor_id: new cognito.StringAttribute({ mutable: true }),
         role: new cognito.StringAttribute({ mutable: true }),
         officer_id: new cognito.StringAttribute({ mutable: true }),
+        site_id: new cognito.StringAttribute({ mutable: true }),
       },
       passwordPolicy: {
         minLength: 12,
@@ -55,7 +58,7 @@ export class AuthStack extends Stack {
       // backend/src/lib/auth.ts reads to resolve tenant, role and officer.
       readAttributes: new cognito.ClientAttributes()
         .withStandardAttributes({ email: true })
-        .withCustomAttributes("contractor_id", "role", "officer_id"),
+        .withCustomAttributes("contractor_id", "role", "officer_id", "site_id"),
       // Deliberately email-only. Leaving this unset defaults to every
       // mutable attribute being client-writable — which would mean any
       // signed-in user could call Cognito's own UpdateUserAttributes

@@ -141,17 +141,60 @@ in `.env.example`), so requests don't need a bearer token locally.
 | GET | `/team` | Admin-only — this org's `ADMIN` accounts |
 | DELETE | `/team/:username` | Admin-only — removes a teammate; 404s if they're not in this org, 400s on self-removal |
 | GET | `/audit-log` | Admin-only — most recent 200 `AuditLogEntry` rows for this tenant |
+| GET | `/sites` | Admin-only — this tenant's sites |
+| GET | `/sites/:id` | Admin-only — site detail incl. its last 50 shifts |
+| POST | `/sites` | Admin-only — create a site |
+| PATCH / DELETE | `/sites/:id` | Admin-only |
+| POST | `/sites/:id/invite-client` | Admin-only — creates a `CLIENT` Cognito account scoped to that one site (`custom:site_id`) |
+| GET | `/shifts` | Admin-only — optional `?siteId=`/`?from=`/`?to=` filters |
+| POST | `/shifts` | Admin-only — validates `siteId`/`officerId` belong to the tenant |
+| PATCH / DELETE | `/shifts/:id` | Admin-only — reassign, reschedule, or change status |
+| GET | `/client/site` | Client self-service — the caller's own site, scoped by `custom:site_id` |
+| GET | `/client/shifts` | Client self-service — shifts scheduled at their own site |
+| PATCH | `/client/shifts/:id/confirm` | Client self-service — confirms a shift as `COMPLETED`/`MISSED`/`LATE` with optional `incidentNotes`, stamps `clientConfirmedAt` |
+| GET | `/reports/sites` | Admin-only — per-site rollup: shift counts by status, officer count, officers with a non-`ACTIVE` licence/vetting record |
 
 All of the above except `/health` and `/contractors/me`+`/contractors`
 require a resolved tenant (403 otherwise) — see "Multi-tenancy" above. Routes
-marked admin-only additionally 403 an `OFFICER` login (`requireAdmin`); `/me/*`
-routes require the reverse (`requireOfficerSelf`) — see "Onboarding & roles".
+marked admin-only additionally 403 an `OFFICER` or `CLIENT` login
+(`requireAdmin`); `/me/*` routes require `requireOfficerSelf`, `/client/*`
+routes require `requireClientSelf` — see "Onboarding & roles".
 
 All writes go through `src/lib/audit.ts` into `AuditLogEntry` — that table is
 the answer to "prove this happened" for an ACS inspector, and `/audit-log`
 above is how an org's own admin reads it back. Entries carry a `contractorId`
 so they can be scoped per-tenant; rows from before that column existed show
 with no tenant attributed.
+
+## Scheduling, sites, and the client portal
+
+A third custom attribute, `custom:role: CLIENT` (plus `custom:site_id`),
+covers the other half of TimeGate+-style workforce management this session
+added on top of the compliance tracking Vetro already did — site/contract
+tracking, shift scheduling, and client sign-off, without taking on payroll or
+automated shift-matching (out of scope; see the `Site`/`Shift` models in
+`prisma/schema.prisma`):
+
+- **`Site`** — one of a contractor's client locations/contracts. `POST
+  /sites/:id/invite-client` (`src/routes/sites.ts`) creates a Cognito account
+  with `custom:role=CLIENT` and `custom:site_id` set to that one site — like
+  an `OFFICER` login, a `CLIENT` login can only ever reach its own scope
+  (`requireClientSelf`, `src/lib/auth.ts`).
+- **`Shift`** — an officer assigned to a site for a time window
+  (`src/routes/shifts.ts`, admin-only). `status` starts `SCHEDULED` and moves
+  to `CONFIRMED`/`COMPLETED`/`MISSED`/`LATE`.
+- **The client portal** (`/client/*`, `src/routes/client.ts`) is that
+  contact's confirmation step — TimeGate+'s "client signoff" idea. They see
+  shifts scheduled at their own site and confirm what actually happened
+  (`COMPLETED`/`MISSED`/`LATE`, with `incidentNotes` for anything but a clean
+  completion); confirming stamps `clientConfirmedAt`. They never see the
+  contractor's roster, other sites, or officer compliance data — the client
+  portal answers "did the guard turn up," nothing else.
+- **`/reports/sites`** (`src/routes/reports.ts`) is the exception-based
+  rollup TimeGate+ calls out explicitly: shift counts by status per site,
+  officer count, and how many of those officers currently have a non-`ACTIVE`
+  licence or vetting record — the same "N submissions awaiting review" idea
+  on the dashboard, one level up, per contract.
 
 ## Expiry checking
 

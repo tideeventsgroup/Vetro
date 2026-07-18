@@ -160,3 +160,33 @@ export function TrashIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function MapPinIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 21C12 21 19 15 19 10C19 5.9 15.6 2.5 12 2.5C8.4 2.5 5 5.9 5 10C5 15 12 21 12 21Z" />
+      <circle cx="12" cy="10" r="2.75" />
+    </Icon>
+  );
+}
+
+export function CalendarIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10H21" />
+      <path d="M8 3V6M16 3V6" />
+    </Icon>
+  );
+}
+
+export function BarChartIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 21V13" />
+      <path d="M12 21V6" />
+      <path d="M20 21V10" />
+      <path d="M3 21H21" />
+    </Icon>
+  );
+}
+

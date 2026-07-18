@@ -1,5 +1,5 @@
 import { useAuth } from "./auth.js";
-import { getDevOfficerId, getDevRole } from "./dev.js";
+import { getDevOfficerId, getDevRole, getDevSiteId } from "./dev.js";
 import { getTenantSlug } from "./tenant.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -107,6 +107,40 @@ export interface DashboardSummary {
   vetting: Partial<Record<ComplianceStatus, number>>;
 }
 
+export interface Site {
+  id: string;
+  contractorId: string;
+  name: string;
+  address: string | null;
+  clientContactName: string | null;
+  clientContactEmail: string | null;
+  createdAt: string;
+}
+
+export type ShiftStatus = "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "MISSED" | "LATE";
+
+export interface Shift {
+  id: string;
+  contractorId: string;
+  siteId: string;
+  officerId: string | null;
+  startTime: string;
+  endTime: string;
+  status: ShiftStatus;
+  clientConfirmedAt: string | null;
+  incidentNotes: string | null;
+  site?: Site;
+  officer?: Officer | null;
+}
+
+export interface SiteReport {
+  id: string;
+  name: string;
+  shiftCounts: Record<ShiftStatus, number>;
+  officerCount: number;
+  officersAtRisk: number;
+}
+
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -121,6 +155,7 @@ class VetroApiClient {
     const tenantSlug = getTenantSlug();
     const devRole = getDevRole();
     const devOfficerId = getDevOfficerId();
+    const devSiteId = getDevSiteId();
     const response = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
@@ -129,6 +164,7 @@ class VetroApiClient {
         ...(tenantSlug ? { "X-Vetro-Tenant": tenantSlug } : {}),
         ...(devRole ? { "X-Vetro-Role": devRole } : {}),
         ...(devOfficerId ? { "X-Vetro-Officer-Id": devOfficerId } : {}),
+        ...(devSiteId ? { "X-Vetro-Site-Id": devSiteId } : {}),
         ...init?.headers,
       },
     });
@@ -319,6 +355,76 @@ class VetroApiClient {
   async getMyDocumentDownloadUrl(id: string): Promise<string> {
     const { downloadUrl } = await this.request<{ downloadUrl: string }>(`/me/documents/${id}/download-url`);
     return downloadUrl;
+  }
+
+  listSites(): Promise<Site[]> {
+    return this.request("/sites");
+  }
+
+  getSite(id: string): Promise<Site & { shifts: Shift[] }> {
+    return this.request(`/sites/${id}`);
+  }
+
+  createSite(input: { name: string; address?: string; clientContactName?: string; clientContactEmail?: string }) {
+    return this.request<Site>("/sites", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  updateSite(
+    id: string,
+    input: Partial<{ name: string; address: string; clientContactName: string; clientContactEmail: string }>
+  ) {
+    return this.request<Site>(`/sites/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  }
+
+  deleteSite(id: string): Promise<void> {
+    return this.request(`/sites/${id}`, { method: "DELETE" });
+  }
+
+  inviteClient(siteId: string, email?: string): Promise<{ status: string; email: string }> {
+    return this.request(`/sites/${siteId}/invite-client`, { method: "POST", body: JSON.stringify({ email }) });
+  }
+
+  listShifts(filter?: { siteId?: string; from?: string; to?: string }): Promise<Shift[]> {
+    const params = new URLSearchParams();
+    if (filter?.siteId) params.set("siteId", filter.siteId);
+    if (filter?.from) params.set("from", filter.from);
+    if (filter?.to) params.set("to", filter.to);
+    const qs = params.toString();
+    return this.request(`/shifts${qs ? `?${qs}` : ""}`);
+  }
+
+  createShift(input: { siteId: string; officerId?: string; startTime: string; endTime: string }) {
+    return this.request<Shift>("/shifts", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  updateShift(id: string, input: Partial<{ officerId: string | null; startTime: string; endTime: string; status: ShiftStatus }>) {
+    return this.request<Shift>(`/shifts/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  }
+
+  deleteShift(id: string): Promise<void> {
+    return this.request(`/shifts/${id}`, { method: "DELETE" });
+  }
+
+  listSiteReports(range?: { from?: string; to?: string }): Promise<SiteReport[]> {
+    const params = new URLSearchParams();
+    if (range?.from) params.set("from", range.from);
+    if (range?.to) params.set("to", range.to);
+    const qs = params.toString();
+    return this.request(`/reports/sites${qs ? `?${qs}` : ""}`);
+  }
+
+  // Client self-service portal — scoped server-side to the caller's own
+  // siteId claim, never to an :id in the URL (see backend/src/routes/client.ts).
+  getClientSite(): Promise<Site> {
+    return this.request("/client/site");
+  }
+
+  listClientShifts(): Promise<Shift[]> {
+    return this.request("/client/shifts");
+  }
+
+  confirmClientShift(id: string, input: { status: "COMPLETED" | "MISSED" | "LATE"; incidentNotes?: string }) {
+    return this.request<Shift>(`/client/shifts/${id}/confirm`, { method: "PATCH", body: JSON.stringify(input) });
   }
 
   async downloadExport(): Promise<Blob> {

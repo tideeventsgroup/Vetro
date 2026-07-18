@@ -23,6 +23,14 @@ enum SubmissionStatus {
   REJECTED
 }
 
+enum ShiftStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  MISSED
+  LATE
+}
+
 // The tenant boundary. `slug` is the subdomain — clyde-coast.vetro.co.uk —
 // and is how a request is scoped, either via the Cognito user's
 // custom:contractor_id claim or, in local dev, the X-Vetro-Tenant header
@@ -32,7 +40,54 @@ model Contractor {
   name      String
   slug      String    @unique
   officers  Officer[]
+  sites     Site[]
+  shifts    Shift[]
   createdAt DateTime  @default(now())
+}
+
+// A client's site/contract — what officers are actually scheduled against.
+// clientContactName/Email are who gets invited as the CLIENT self-service
+// login for this one site (custom:site_id scopes that login to just this
+// row — see backend/src/lib/auth.ts's requireClientSelf).
+model Site {
+  id                 String     @id @default(cuid())
+  contractorId       String
+  contractor         Contractor @relation(fields: [contractorId], references: [id])
+  name               String
+  address            String?
+  clientContactName  String?
+  clientContactEmail String?
+  shifts             Shift[]
+  createdAt          DateTime   @default(now())
+
+  @@index([contractorId])
+}
+
+// A scheduled slot at a site, optionally assigned to an officer. Status is
+// set by hand here (unlike SiaLicence/VettingRecord, there's no external
+// register to check against) — SCHEDULED/CONFIRMED come from the admin who
+// built the roster, COMPLETED/MISSED/LATE come from the client's own
+// confirmation (routes/client.ts) once the shift has actually happened.
+model Shift {
+  id                String      @id @default(cuid())
+  contractorId      String
+  contractor        Contractor  @relation(fields: [contractorId], references: [id])
+  siteId            String
+  site              Site        @relation(fields: [siteId], references: [id])
+  officerId         String?
+  officer           Officer?    @relation(fields: [officerId], references: [id])
+  startTime         DateTime
+  endTime           DateTime
+  status            ShiftStatus @default(SCHEDULED)
+  clientConfirmedAt DateTime?
+  incidentNotes     String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([contractorId])
+  @@index([siteId])
+  @@index([officerId])
+  @@index([startTime])
 }
 
 model Officer {
@@ -48,6 +103,7 @@ model Officer {
   qualifications     Qualification[]
   documents          Document[]
   vettingSubmissions VettingSubmission[]
+  shifts             Shift[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
