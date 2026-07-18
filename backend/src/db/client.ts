@@ -7,7 +7,7 @@ let clientPromise: Promise<PrismaClient> | undefined;
 // proxy endpoint and secret ARN are wired in by infra/lib/api-stack.ts and
 // the password is resolved once per cold start rather than baked into the
 // Lambda's plaintext environment.
-async function resolveDatabaseUrl(): Promise<string> {
+export async function resolveDatabaseUrl(): Promise<string> {
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
 
   const secretArn = process.env.DB_SECRET_ARN;

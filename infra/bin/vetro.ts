@@ -7,6 +7,7 @@ import { ApiStack } from "../lib/api-stack";
 import { ScheduleStack } from "../lib/schedule-stack";
 import { DomainStack } from "../lib/domain-stack";
 import { FrontendStack } from "../lib/frontend-stack";
+import { MigrateStack } from "../lib/migrate-stack";
 
 const app = new App();
 
@@ -47,6 +48,14 @@ new ScheduleStack(app, "VetroScheduleStack", {
   proxy: data.proxy,
   dbSecret: data.dbSecret,
   scheduleLambdaSecurityGroup: data.scheduleLambdaSecurityGroup,
+});
+
+new MigrateStack(app, "VetroMigrateStack", {
+  env,
+  vpc: network.vpc,
+  proxy: data.proxy,
+  dbSecret: data.dbSecret,
+  apiLambdaSecurityGroup: data.apiLambdaSecurityGroup,
 });
 
 if (domainConfigured) {
