@@ -4,20 +4,34 @@ import { AddOfficerModal } from "../components/AddOfficerModal.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 import { DownloadIcon, PlusIcon, RosterIcon, ShieldCheckIcon } from "../components/icons.js";
 import { Contractor, DashboardSummary, Officer, useApi } from "../lib/api.js";
+import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 import { worstStatus } from "../lib/status.js";
 
+const SKIP_AUTH = import.meta.env.VITE_SKIP_AUTH === "true";
+
 function initials(officer: Officer): string {
   return `${officer.firstName[0] ?? ""}${officer.lastName[0] ?? ""}`.toUpperCase();
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export function Dashboard() {
   const api = useApi();
   const navigate = useNavigate();
   const tenant = useTenantSlug();
+  const { refreshClaims } = useAuth();
 
   const [contractor, setContractor] = useState<Contractor | undefined>(undefined);
   const [newContractorName, setNewContractorName] = useState("");
+  const [newContractorSlug, setNewContractorSlug] = useState("");
+  const [slugEdited, setSlugEdited] = useState(false);
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [summary, setSummary] = useState<DashboardSummary | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,11 +63,38 @@ export function Dashboard() {
     setSummary(summaryRow);
   }
 
+  function handleNameChange(value: string) {
+    setNewContractorName(value);
+    if (!slugEdited) setNewContractorSlug(slugify(value));
+  }
+
+  // Reachable by any signed-in account with no organization yet — most
+  // often one that started self-serve signup (see routes/Signup.tsx) but
+  // never finished the org-creation step (closed the tab, hit an error).
+  // SKIP_AUTH dev mode keeps the old dev-only /contractors route (slug
+  // comes from the subdomain/path there, not this form) since there's no
+  // real Cognito account to grant custom:contractor_id/role to locally.
   async function handleCreateContractor() {
     if (!newContractorName.trim()) return;
-    const created = await api.createContractor(newContractorName.trim());
-    setContractor(created);
-    await loadRoster();
+    setError(undefined);
+    try {
+      if (SKIP_AUTH) {
+        const created = await api.createContractor(newContractorName.trim());
+        setContractor(created);
+        await loadRoster();
+        return;
+      }
+
+      const created = await api.createOrganizationSelfSignup({
+        name: newContractorName.trim(),
+        slug: newContractorSlug || slugify(newContractorName),
+      });
+      // The current token predates this grant — refresh so custom:contractor_id/role are on it.
+      await refreshClaims();
+      navigate(`/${created.slug}`, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create organisation");
+    }
   }
 
   async function handleAddOfficer(input: { firstName: string; lastName: string; email?: string }) {
@@ -79,18 +120,32 @@ export function Dashboard() {
         <span className="empty-icon">
           <ShieldCheckIcon />
         </span>
-        <h2 style={{ fontSize: 18, marginBottom: 8 }}>No officers added yet</h2>
+        <h2 style={{ fontSize: 18, marginBottom: 8 }}>Set up your organisation</h2>
         <p style={{ color: "var(--vetro-text-muted)" }}>
-          Name your organisation to start automatic checks.
+          You're signed in, but not attached to an organisation yet — finish setting one up to
+          start automatic checks.
         </p>
+        {error && <p className="error-text">{error}</p>}
         <div className="form-field">
           <label htmlFor="contractorName">Organisation name</label>
-          <input
-            id="contractorName"
-            value={newContractorName}
-            onChange={(e) => setNewContractorName(e.target.value)}
-          />
+          <input id="contractorName" value={newContractorName} onChange={(e) => handleNameChange(e.target.value)} />
         </div>
+        {!SKIP_AUTH && (
+          <div className="form-field">
+            <label htmlFor="contractorSlug">Your Vetro URL</label>
+            <input
+              id="contractorSlug"
+              value={newContractorSlug}
+              onChange={(e) => {
+                setSlugEdited(true);
+                setNewContractorSlug(slugify(e.target.value));
+              }}
+            />
+            <p className="subtle-meta">
+              {window.location.origin}/{newContractorSlug || "your-org"}
+            </p>
+          </div>
+        )}
         <button className="btn btn-primary" onClick={handleCreateContractor}>
           Continue
         </button>
