@@ -30,15 +30,7 @@ export function ProtectedLayout() {
   if (role === "CLIENT") return <Navigate to={`/${tenant}/client`} replace />;
 
   return (
-    <div className="app-shell">
-      <button
-        type="button"
-        className="mobile-nav-toggle"
-        aria-label="Toggle navigation"
-        onClick={() => setMobileNavOpen((v) => !v)}
-      >
-        <MenuIcon />
-      </button>
+    <div className="app-shell has-tab-bar">
       {mobileNavOpen && <div className="app-sidebar-scrim" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`app-sidebar${mobileNavOpen ? " open" : ""}`}>
         <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
@@ -90,6 +82,28 @@ export function ProtectedLayout() {
       <main className="app-main">
         <Outlet />
       </main>
+      <nav className="mobile-tab-bar">
+        <NavLink to={`/${tenant}`} end className="mobile-tab">
+          <RosterIcon />
+          <span>Roster</span>
+        </NavLink>
+        <NavLink to={`/${tenant}/vetting-queue`} className="mobile-tab">
+          <ShieldCheckIcon />
+          <span>Vetting</span>
+        </NavLink>
+        <NavLink to={`/${tenant}/schedule`} className="mobile-tab">
+          <CalendarIcon />
+          <span>Schedule</span>
+        </NavLink>
+        <NavLink to={`/${tenant}/reports`} className="mobile-tab">
+          <BarChartIcon />
+          <span>Reports</span>
+        </NavLink>
+        <button type="button" className="mobile-tab" onClick={() => setMobileNavOpen(true)}>
+          <MenuIcon />
+          <span>More</span>
+        </button>
+      </nav>
     </div>
   );
 }

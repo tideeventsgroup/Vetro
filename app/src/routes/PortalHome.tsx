@@ -1,9 +1,12 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DocumentsSection } from "../components/DocumentsSection.js";
+import { StepIndicator } from "../components/StepIndicator.js";
 import { StatusBadge, SubmissionStatusBadge } from "../components/StatusBadge.js";
 import { PlusIcon, ShieldCheckIcon, TrashIcon } from "../components/icons.js";
 import { Officer, useApi } from "../lib/api.js";
 import { worstStatus } from "../lib/status.js";
+
+const WIZARD_STEPS = ["Addresses", "Employment", "References", "Review"];
 
 interface AddressRow {
   address: string;
@@ -42,6 +45,15 @@ export function PortalHome() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [submitted, setSubmitted] = useState(false);
+  const [step, setStep] = useState(0);
+
+  function goNext() {
+    setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
+  }
+
+  function goBack() {
+    setStep((s) => Math.max(s - 1, 0));
+  }
 
   const latestSubmission = useMemo(() => {
     const submissions = officer?.vettingSubmissions ?? [];
@@ -59,8 +71,7 @@ export function PortalHome() {
     setOfficer(await api.getMyOfficer());
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     setError(undefined);
     if (!consentGiven) {
       setError("You must give consent before submitting.");
@@ -79,6 +90,7 @@ export function PortalHome() {
       setEmployment([{ employer: "", role: "", from: "", to: "" }]);
       setReferences([{ name: "", relationship: "", contact: "" }]);
       setConsentGiven(false);
+      setStep(0);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not submit vetting details");
@@ -209,7 +221,14 @@ export function PortalHome() {
         )}
         {error && <p className="error-text">{error}</p>}
 
-        <form onSubmit={handleSubmit}>
+        <StepIndicator steps={WIZARD_STEPS} currentIndex={step} />
+        <p className="step-caption">
+          Step {step + 1} of {WIZARD_STEPS.length}: {WIZARD_STEPS[step]}
+        </p>
+
+        <div>
+        {step === 0 && (
+        <>
           <h3 style={{ fontSize: 14, marginBottom: 8 }}>Address history (last 5 years)</h3>
           {addresses.map((row, i) => (
             <div className="repeater-row" key={i}>
@@ -263,7 +282,11 @@ export function PortalHome() {
             <PlusIcon width={14} height={14} />
             Add address
           </button>
+        </>
+        )}
 
+        {step === 1 && (
+        <>
           <h3 style={{ fontSize: 14, marginBottom: 8 }}>Employment history (last 5 years)</h3>
           {employment.map((row, i) => (
             <div className="repeater-row" key={i}>
@@ -328,7 +351,11 @@ export function PortalHome() {
             <PlusIcon width={14} height={14} />
             Add employer
           </button>
+        </>
+        )}
 
+        {step === 2 && (
+        <>
           <h3 style={{ fontSize: 14, marginBottom: 8 }}>References</h3>
           {references.map((row, i) => (
             <div className="repeater-row" key={i}>
@@ -384,6 +411,58 @@ export function PortalHome() {
             <PlusIcon width={14} height={14} />
             Add reference
           </button>
+        </>
+        )}
+
+        {step === 3 && (
+        <>
+          <div className="review-summary">
+            <div className="review-summary-group">
+              <h4>Addresses</h4>
+              {addresses.filter((a) => a.address.trim()).length === 0 ? (
+                <p className="subtle-meta">None entered.</p>
+              ) : (
+                addresses
+                  .filter((a) => a.address.trim())
+                  .map((a, i) => (
+                    <div className="review-summary-row" key={i}>
+                      <strong>{a.address}</strong> — {a.from || "?"} to {a.to || "present"}
+                    </div>
+                  ))
+              )}
+            </div>
+            <div className="review-summary-group">
+              <h4>Employment</h4>
+              {employment.filter((e2) => e2.employer.trim()).length === 0 ? (
+                <p className="subtle-meta">None entered.</p>
+              ) : (
+                employment
+                  .filter((e2) => e2.employer.trim())
+                  .map((e2, i) => (
+                    <div className="review-summary-row" key={i}>
+                      <strong>{e2.employer}</strong>
+                      {e2.role ? ` — ${e2.role}` : ""} ({e2.from || "?"} to {e2.to || "present"})
+                    </div>
+                  ))
+              )}
+            </div>
+            <div className="review-summary-group">
+              <h4>References</h4>
+              {references.filter((r) => r.name.trim()).length === 0 ? (
+                <p className="subtle-meta">None entered.</p>
+              ) : (
+                references
+                  .filter((r) => r.name.trim())
+                  .map((r, i) => (
+                    <div className="review-summary-row" key={i}>
+                      <strong>{r.name}</strong>
+                      {r.relationship ? ` — ${r.relationship}` : ""}
+                      {r.contact ? ` (${r.contact})` : ""}
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
 
           <label className="consent-box">
             <input
@@ -393,11 +472,28 @@ export function PortalHome() {
             />
             I consent to Vetro recording these details for my employer to review as part of BS7858 vetting.
           </label>
+        </>
+        )}
 
-          <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting…" : "Submit for review"}
-          </button>
-        </form>
+        <div className="wizard-nav">
+          {step > 0 ? (
+            <button type="button" className="btn btn-secondary" onClick={goBack}>
+              Back
+            </button>
+          ) : (
+            <span />
+          )}
+          {step < WIZARD_STEPS.length - 1 ? (
+            <button type="button" className="btn btn-primary" onClick={goNext}>
+              Next
+            </button>
+          ) : (
+            <button type="button" className="btn btn-primary" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Submitting…" : "Submit for review"}
+            </button>
+          )}
+        </div>
+        </div>
       </div>
 
       <DocumentsSection

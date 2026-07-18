@@ -466,6 +466,125 @@ button {
   flex-shrink: 0;
 }
 
+/* Vetting submission wizard (PortalHome) — one section at a time instead of
+   one long scroll, since it's the same address/employment/reference/consent
+   form BS7858 vetting always asks for, just staged. */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--vetro-space-3);
+}
+
+.step-indicator-item {
+  display: flex;
+  align-items: center;
+  gap: var(--vetro-space-2);
+  flex-shrink: 0;
+}
+
+.step-indicator-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: var(--vetro-fw-semibold);
+  flex-shrink: 0;
+  background: var(--vetro-surface);
+  border: 2px solid var(--vetro-border);
+  color: var(--vetro-text-muted);
+  transition: background-color var(--vetro-duration) var(--vetro-ease),
+    border-color var(--vetro-duration) var(--vetro-ease), color var(--vetro-duration) var(--vetro-ease);
+}
+
+.step-indicator-item.done .step-indicator-circle {
+  background: var(--vetro-teal);
+  border-color: var(--vetro-teal);
+  color: var(--vetro-white);
+}
+
+.step-indicator-item.current .step-indicator-circle {
+  border-color: var(--vetro-teal);
+  color: var(--vetro-teal-dark);
+  background: var(--vetro-teal-light);
+}
+
+.step-indicator-label {
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-medium);
+  color: var(--vetro-text-muted);
+  white-space: nowrap;
+}
+
+.step-indicator-item.current .step-indicator-label,
+.step-indicator-item.done .step-indicator-label {
+  color: var(--vetro-text);
+}
+
+.step-indicator-line {
+  flex: 1;
+  height: 2px;
+  background: var(--vetro-border);
+  margin: 0 var(--vetro-space-2);
+  min-width: 16px;
+}
+
+.step-indicator-line.done {
+  background: var(--vetro-teal);
+}
+
+.step-caption {
+  color: var(--vetro-text-muted);
+  font-size: var(--vetro-fs-body-sm);
+  margin-bottom: var(--vetro-space-4);
+}
+
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--vetro-space-3);
+  margin-top: var(--vetro-space-2);
+}
+
+.review-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-2);
+  margin-bottom: var(--vetro-space-4);
+}
+
+.review-summary-group h4 {
+  font-size: 13px;
+  color: var(--vetro-text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--vetro-ls-label);
+  margin-bottom: var(--vetro-space-2);
+}
+
+.review-summary-row {
+  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text-secondary);
+  padding: var(--vetro-space-2) 0;
+  border-bottom: 1px solid var(--vetro-border);
+}
+
+.review-summary-row:last-child {
+  border-bottom: none;
+}
+
+.review-summary-row strong {
+  color: var(--vetro-ink);
+  font-weight: var(--vetro-fw-medium);
+}
+
+@media (max-width: 600px) {
+  .step-indicator-label {
+    display: none;
+  }
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -913,6 +1032,10 @@ button {
   display: none;
 }
 
+.mobile-tab-bar {
+  display: none;
+}
+
 @media (max-width: 860px) {
   .login-shell { grid-template-columns: 1fr; }
   .login-brand-panel { display: none; }
@@ -949,11 +1072,11 @@ button {
     align-items: center;
     justify-content: center;
     position: fixed;
-    top: 14px;
+    top: calc(14px + env(safe-area-inset-top));
     left: var(--vetro-space-3);
     z-index: 56;
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
     border-radius: var(--vetro-radius-md);
     background: rgba(255, 255, 255, 0.16);
     color: var(--vetro-white);
@@ -969,7 +1092,7 @@ button {
   .page-header {
     width: 100vw;
     margin: calc(var(--vetro-space-6) * -1) 0 var(--vetro-space-4) calc(var(--vetro-space-4) * -1);
-    padding: 14px var(--vetro-space-4) 14px 58px;
+    padding: calc(14px + env(safe-area-inset-top)) var(--vetro-space-4) 14px 58px;
     flex-wrap: wrap;
   }
 
@@ -991,5 +1114,73 @@ button {
     display: table;
     width: 100%;
     table-layout: auto;
+  }
+
+  /* Bigger tap targets everywhere on mobile — 44px is the platform minimum
+     (Apple HIG / Material), the desktop sizing below that is fine with a
+     precise pointer but not a thumb. */
+  .btn {
+    min-height: 44px;
+  }
+
+  .app-nav a,
+  .app-sidebar-footer a {
+    min-height: 44px;
+  }
+
+  /* Admin shell: the bottom tab bar replaces the floating hamburger (the
+     tab bar's own "More" button opens the same drawer), so there's no
+     button reserving space over the page header here. */
+  .has-tab-bar .mobile-nav-toggle {
+    display: none;
+  }
+
+  .has-tab-bar .page-header {
+    padding-left: var(--vetro-space-4);
+  }
+
+  .has-tab-bar .app-main {
+    padding-bottom: calc(var(--vetro-space-8) + 56px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 56;
+    justify-content: space-around;
+    background: var(--vetro-ink);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px var(--vetro-space-2) calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 56px;
+    min-height: 44px;
+    padding: 4px 6px;
+    border-radius: var(--vetro-radius-md);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #8A96A3;
+    font-size: 10px;
+    font-weight: var(--vetro-fw-medium);
+    text-decoration: none;
+  }
+
+  .mobile-tab .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-tab.active {
+    color: var(--vetro-white);
   }
 }
