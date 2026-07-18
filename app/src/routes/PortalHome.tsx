@@ -40,6 +40,8 @@ export function PortalHome() {
 
   if (!officer) return <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>;
 
+  const vettingCompleted = officer.vettingRecords.length > 0;
+
   return (
     <div>
       <div className="page-header">
@@ -51,22 +53,39 @@ export function PortalHome() {
         </div>
       </div>
 
-      {!latestSubmission && (
-        <div className="welcome-banner">
-          <span className="welcome-banner-icon">
-            <ShieldCheckIcon />
-          </span>
-          <div className="welcome-banner-text">
-            <h3>Welcome, {officer.firstName}!</h3>
-            <p>You're not onboarded yet — complete your vetting now to finish setting up your record.</p>
+      {!vettingCompleted &&
+        (!latestSubmission ? (
+          <div className="welcome-banner">
+            <span className="welcome-banner-icon">
+              <ShieldCheckIcon />
+            </span>
+            <div className="welcome-banner-text">
+              <h3>Welcome, {officer.firstName}!</h3>
+              <p>
+                You're not onboarded yet — complete your vetting now to unlock shifts, incidents, patrols,
+                and the visitor log.
+              </p>
+            </div>
+            <div className="welcome-banner-actions">
+              <Link to={`/${tenant}/portal/vetting`} className="btn btn-primary">
+                Complete vetting now
+              </Link>
+            </div>
           </div>
-          <div className="welcome-banner-actions">
-            <Link to={`/${tenant}/portal/vetting`} className="btn btn-primary">
-              Complete vetting now
-            </Link>
+        ) : (
+          <div className="welcome-banner">
+            <span className="welcome-banner-icon">
+              <ShieldCheckIcon />
+            </span>
+            <div className="welcome-banner-text">
+              <h3>Vetting submitted</h3>
+              <p>
+                Your admin is reviewing what you submitted — shifts, incidents, patrols, and the visitor
+                log unlock once it's approved.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        ))}
 
       <div className="summary-grid">
         <div className="summary-tile">

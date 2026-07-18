@@ -185,6 +185,27 @@ button {
   text-decoration: none;
 }
 
+/* Locked nav items (PortalLayout, before vetting is complete) — same shape
+   as a real nav link so the sidebar doesn't jump around once it unlocks,
+   just muted and non-interactive with a trailing lock glyph. */
+.app-nav-locked {
+  display: flex;
+  align-items: center;
+  gap: var(--vetro-space-3);
+  color: #5B6770;
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-medium);
+  padding: 9px var(--vetro-space-3);
+  border-radius: var(--vetro-radius-md);
+  border-left: 2px solid transparent;
+  cursor: not-allowed;
+}
+
+.app-nav-locked .icon:last-child {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
 .app-sidebar-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: var(--vetro-space-3);
@@ -1262,5 +1283,10 @@ button {
 
   .mobile-tab.active {
     color: var(--vetro-white);
+  }
+
+  .mobile-tab-locked {
+    color: #4A555F;
+    cursor: not-allowed;
   }
 }

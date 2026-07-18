@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { Hono } from "hono";
+import type { MiddlewareHandler } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
 import { createDownloadUrl, createUploadUrl } from "../lib/documents.js";
@@ -34,6 +35,29 @@ async function officerBelongsAtSite(
 ): Promise<boolean> {
   const shift = await db.shift.findFirst({ where: { officerId, siteId } });
   return Boolean(shift);
+}
+
+// "Completed" means an admin has approved at least one VettingRecord for
+// this officer (see routes/vettingSubmissions.ts) — not merely having
+// submitted, and not un-done by a later expiry (that's what the
+// ACTIVE/EXPIRING/EXPIRED status badges already communicate, a separate
+// concern from having been vetted at all). Gates every operational feature
+// below (shifts, incidents, patrols, visitor log) — an unvetted officer has
+// no business checking rotas or filing site records yet. Deliberately does
+// NOT gate /officer, /vetting-submissions, or /documents, since those are
+// exactly what an officer needs to actually get vetted.
+const requireVettingCompleted: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const db = await getDb();
+  const count = await db.vettingRecord.count({ where: { officerId: c.get("officerId")! } });
+  if (count === 0) {
+    return c.json({ error: "Complete vetting before accessing this feature" }, 403);
+  }
+  await next();
+};
+
+for (const prefix of ["/shifts", "/incidents", "/checkpoints", "/visitor-log", "/sites"]) {
+  me.use(prefix, requireVettingCompleted);
+  me.use(`${prefix}/*`, requireVettingCompleted);
 }
 
 me.get("/officer", async (c) => {

@@ -33,6 +33,15 @@ export function HomeIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function LockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V7.5C8 5 9.8 3 12 3C14.2 3 16 5 16 7.5V11" />
+    </Icon>
+  );
+}
+
 export function RosterIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
