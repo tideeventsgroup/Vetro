@@ -13,9 +13,14 @@ enum ComplianceStatus {
   EXPIRED
 }
 
+// The tenant boundary. `slug` is the subdomain — clyde-coast.vetro.co.uk —
+// and is how a request is scoped, either via the Cognito user's
+// custom:contractor_id claim or, in local dev, the X-Vetro-Tenant header
+// (see backend/src/lib/auth.ts).
 model Contractor {
   id        String    @id @default(cuid())
   name      String
+  slug      String    @unique
   officers  Officer[]
   createdAt DateTime  @default(now())
 }

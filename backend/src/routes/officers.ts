@@ -7,9 +7,8 @@ export const officers = new Hono<AppEnv>();
 
 officers.get("/", async (c) => {
   const db = await getDb();
-  const contractorId = c.req.query("contractorId");
   const rows = await db.officer.findMany({
-    where: contractorId ? { contractorId } : undefined,
+    where: { contractorId: c.get("contractorId") },
     include: { licences: true, vettingRecords: true },
     orderBy: { lastName: "asc" },
   });
@@ -22,21 +21,20 @@ officers.get("/:id", async (c) => {
     where: { id: c.req.param("id") },
     include: { licences: true, vettingRecords: true, qualifications: true, documents: true },
   });
-  if (!row) return c.json({ error: "Officer not found" }, 404);
+  if (!row || row.contractorId !== c.get("contractorId")) return c.json({ error: "Officer not found" }, 404);
   return c.json(row);
 });
 
 officers.post("/", async (c) => {
   const db = await getDb();
   const body = await c.req.json<{
-    contractorId: string;
     firstName: string;
     lastName: string;
     email?: string;
     phone?: string;
   }>();
 
-  const created = await db.officer.create({ data: body });
+  const created = await db.officer.create({ data: { ...body, contractorId: c.get("contractorId")! } });
   await recordAudit({
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "officer.created",
@@ -49,6 +47,11 @@ officers.post("/", async (c) => {
 officers.patch("/:id", async (c) => {
   const db = await getDb();
   const id = c.req.param("id");
+  const existing = await db.officer.findUnique({ where: { id } });
+  if (!existing || existing.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Officer not found" }, 404);
+  }
+
   const body = await c.req.json<Partial<{ firstName: string; lastName: string; email: string; phone: string }>>();
   const updated = await db.officer.update({ where: { id }, data: body });
   await recordAudit({
@@ -63,6 +66,11 @@ officers.patch("/:id", async (c) => {
 officers.delete("/:id", async (c) => {
   const db = await getDb();
   const id = c.req.param("id");
+  const existing = await db.officer.findUnique({ where: { id } });
+  if (!existing || existing.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Officer not found" }, 404);
+  }
+
   await db.officer.delete({ where: { id } });
   await recordAudit({
     actorEmail: c.get("actorEmail") ?? "unknown",

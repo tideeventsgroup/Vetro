@@ -24,10 +24,10 @@ export function Dashboard() {
   async function loadContractor() {
     setIsLoading(true);
     try {
-      const contractors = await api.listContractors();
-      if (contractors[0]) {
-        setContractor(contractors[0]);
-        await loadRoster(contractors[0].id);
+      const current = await api.getCurrentContractor();
+      if (current) {
+        setContractor(current);
+        await loadRoster();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load Vetro");
@@ -36,11 +36,8 @@ export function Dashboard() {
     }
   }
 
-  async function loadRoster(contractorId: string) {
-    const [officerRows, summaryRow] = await Promise.all([
-      api.listOfficers(contractorId),
-      api.getDashboardSummary(contractorId),
-    ]);
+  async function loadRoster() {
+    const [officerRows, summaryRow] = await Promise.all([api.listOfficers(), api.getDashboardSummary()]);
     setOfficers(officerRows);
     setSummary(summaryRow);
   }
@@ -49,18 +46,16 @@ export function Dashboard() {
     if (!newContractorName.trim()) return;
     const created = await api.createContractor(newContractorName.trim());
     setContractor(created);
-    await loadRoster(created.id);
+    await loadRoster();
   }
 
   async function handleAddOfficer(input: { firstName: string; lastName: string; email?: string }) {
-    if (!contractor) return;
-    await api.createOfficer({ contractorId: contractor.id, ...input });
-    await loadRoster(contractor.id);
+    await api.createOfficer(input);
+    await loadRoster();
   }
 
   async function handleExport() {
-    if (!contractor) return;
-    const blob = await api.downloadExport(contractor.id);
+    const blob = await api.downloadExport();
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

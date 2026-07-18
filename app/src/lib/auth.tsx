@@ -11,7 +11,9 @@ const SKIP_AUTH = import.meta.env.VITE_SKIP_AUTH === "true";
 interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
-  accessToken?: string;
+  // The ID token, not the access token — the backend reads the tenant
+  // assignment (custom:contractor_id) off it; see backend/src/lib/auth.ts.
+  idToken?: string;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -27,7 +29,7 @@ function getUserPool(): CognitoUserPool {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(!SKIP_AUTH);
-  const [accessToken, setAccessToken] = useState<string | undefined>(undefined);
+  const [idToken, setIdToken] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState(SKIP_AUTH);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     currentUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
       if (!err && session?.isValid()) {
-        setAccessToken(session.getAccessToken().getJwtToken());
+        setIdToken(session.getIdToken().getJwtToken());
         setIsAuthenticated(true);
       }
       setIsLoading(false);
@@ -52,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       isAuthenticated,
       isLoading,
-      accessToken,
+      idToken,
       login: (email, password) =>
         new Promise((resolve, reject) => {
           if (SKIP_AUTH) {
@@ -64,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const user = new CognitoUser({ Username: email, Pool: getUserPool() });
           user.authenticateUser(new AuthenticationDetails({ Username: email, Password: password }), {
             onSuccess: (session) => {
-              setAccessToken(session.getAccessToken().getJwtToken());
+              setIdToken(session.getIdToken().getJwtToken());
               setIsAuthenticated(true);
               resolve();
             },
@@ -74,10 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout: () => {
         if (!SKIP_AUTH) getUserPool().getCurrentUser()?.signOut();
         setIsAuthenticated(false);
-        setAccessToken(undefined);
+        setIdToken(undefined);
       },
     }),
-    [isAuthenticated, isLoading, accessToken]
+    [isAuthenticated, isLoading, idToken]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

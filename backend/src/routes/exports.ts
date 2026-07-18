@@ -1,19 +1,19 @@
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
+import type { AppEnv } from "../lib/hono-env.js";
 
-export const exports_ = new Hono();
+export const exports_ = new Hono<AppEnv>();
 
 function toCsvRow(values: (string | number | null | undefined)[]): string {
   return values.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",");
 }
 
 // What an ACS inspector or client due-diligence request actually asks for:
-// one row per officer per credential, current status, no login required to read it.
+// one row per officer per credential, current status.
 exports_.get("/officers.csv", async (c) => {
   const db = await getDb();
-  const contractorId = c.req.query("contractorId");
   const officerRows = await db.officer.findMany({
-    where: contractorId ? { contractorId } : undefined,
+    where: { contractorId: c.get("contractorId") },
     include: { licences: true, vettingRecords: true },
     orderBy: { lastName: "asc" },
   });

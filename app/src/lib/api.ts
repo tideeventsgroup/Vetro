@@ -1,4 +1,5 @@
 import { useAuth } from "./auth.js";
+import { getTenantSlug } from "./tenant.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -58,6 +59,7 @@ export interface Officer {
 export interface Contractor {
   id: string;
   name: string;
+  slug: string;
 }
 
 export interface DashboardSummary {
@@ -76,11 +78,13 @@ class VetroApiClient {
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
     const token = this.getToken();
+    const tenantSlug = getTenantSlug();
     const response = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(tenantSlug ? { "X-Vetro-Tenant": tenantSlug } : {}),
         ...init?.headers,
       },
     });
@@ -94,24 +98,24 @@ class VetroApiClient {
     return response.json() as Promise<T>;
   }
 
-  listContractors(): Promise<Contractor[]> {
-    return this.request("/contractors");
+  /** The tenant for the subdomain this page is running on, or null if none exists yet. */
+  async getCurrentContractor(): Promise<Contractor | null> {
+    return this.request("/contractors/me");
   }
 
   createContractor(name: string): Promise<Contractor> {
     return this.request("/contractors", { method: "POST", body: JSON.stringify({ name }) });
   }
 
-  listOfficers(contractorId?: string): Promise<Officer[]> {
-    const query = contractorId ? `?contractorId=${encodeURIComponent(contractorId)}` : "";
-    return this.request(`/officers${query}`);
+  listOfficers(): Promise<Officer[]> {
+    return this.request("/officers");
   }
 
   getOfficer(id: string): Promise<Officer> {
     return this.request(`/officers/${id}`);
   }
 
-  createOfficer(input: { contractorId: string; firstName: string; lastName: string; email?: string; phone?: string }) {
+  createOfficer(input: { firstName: string; lastName: string; email?: string; phone?: string }) {
     return this.request<Officer>("/officers", { method: "POST", body: JSON.stringify(input) });
   }
 
@@ -189,20 +193,18 @@ class VetroApiClient {
     return this.request(`/documents/${id}`, { method: "DELETE" });
   }
 
-  getDashboardSummary(contractorId?: string): Promise<DashboardSummary> {
-    const query = contractorId ? `?contractorId=${encodeURIComponent(contractorId)}` : "";
-    return this.request(`/dashboard/summary${query}`);
+  getDashboardSummary(): Promise<DashboardSummary> {
+    return this.request("/dashboard/summary");
   }
 
-  exportUrl(contractorId?: string): string {
-    const query = contractorId ? `?contractorId=${encodeURIComponent(contractorId)}` : "";
-    return `${API_URL}/exports/officers.csv${query}`;
-  }
-
-  async downloadExport(contractorId?: string): Promise<Blob> {
+  async downloadExport(): Promise<Blob> {
     const token = this.getToken();
-    const response = await fetch(this.exportUrl(contractorId), {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    const tenantSlug = getTenantSlug();
+    const response = await fetch(`${API_URL}/exports/officers.csv`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(tenantSlug ? { "X-Vetro-Tenant": tenantSlug } : {}),
+      },
     });
     if (!response.ok) throw new ApiError(response.status, await response.text());
     return response.blob();
@@ -210,6 +212,6 @@ class VetroApiClient {
 }
 
 export function useApi(): VetroApiClient {
-  const { accessToken } = useAuth();
-  return new VetroApiClient(() => accessToken);
+  const { idToken } = useAuth();
+  return new VetroApiClient(() => idToken);
 }

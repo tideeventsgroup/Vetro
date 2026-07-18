@@ -8,6 +8,11 @@ export const qualifications = new Hono<AppEnv>();
 qualifications.post("/officers/:officerId/qualifications", async (c) => {
   const db = await getDb();
   const officerId = c.req.param("officerId");
+  const officer = await db.officer.findUnique({ where: { id: officerId } });
+  if (!officer || officer.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Officer not found" }, 404);
+  }
+
   const body = await c.req.json<{
     name: string;
     issuedBy?: string;
@@ -38,6 +43,11 @@ qualifications.post("/officers/:officerId/qualifications", async (c) => {
 qualifications.patch("/qualifications/:id", async (c) => {
   const db = await getDb();
   const id = c.req.param("id");
+  const existing = await db.qualification.findUnique({ where: { id }, include: { officer: true } });
+  if (!existing || existing.officer.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Qualification not found" }, 404);
+  }
+
   const body = await c.req.json<Partial<{ name: string; issuedBy: string; expiryDate: string }>>();
 
   const updated = await db.qualification.update({
@@ -61,6 +71,11 @@ qualifications.patch("/qualifications/:id", async (c) => {
 qualifications.delete("/qualifications/:id", async (c) => {
   const db = await getDb();
   const id = c.req.param("id");
+  const existing = await db.qualification.findUnique({ where: { id }, include: { officer: true } });
+  if (!existing || existing.officer.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Qualification not found" }, 404);
+  }
+
   await db.qualification.delete({ where: { id } });
   await recordAudit({
     actorEmail: c.get("actorEmail") ?? "unknown",

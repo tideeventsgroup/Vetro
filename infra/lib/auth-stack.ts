@@ -18,6 +18,12 @@ export class AuthStack extends Stack {
       standardAttributes: {
         email: { required: true, mutable: false },
       },
+      // The tenant assignment. Set via AdminUpdateUserAttributes when a
+      // contractor's account is set up — there's no self-serve flow that
+      // lets a user set their own (see backend/README.md's "Multi-tenancy").
+      customAttributes: {
+        contractor_id: new cognito.StringAttribute({ mutable: true }),
+      },
       passwordPolicy: {
         minLength: 12,
         requireLowercase: true,
@@ -32,7 +38,12 @@ export class AuthStack extends Stack {
     this.userPoolClient = this.userPool.addClient("VetroWebClient", {
       authFlows: { userPassword: true, userSrp: true },
       generateSecret: false,
-      accessTokenValidity: undefined,
+      // custom:contractor_id has to be explicitly readable by the client to
+      // show up as an ID token claim at all — this is what
+      // backend/src/lib/auth.ts reads to resolve the tenant.
+      readAttributes: new cognito.ClientAttributes()
+        .withStandardAttributes({ email: true })
+        .withCustomAttributes("contractor_id"),
     });
   }
 }

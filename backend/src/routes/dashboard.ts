@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
+import type { AppEnv } from "../lib/hono-env.js";
 
-export const dashboard = new Hono();
+export const dashboard = new Hono<AppEnv>();
 
 dashboard.get("/summary", async (c) => {
   const db = await getDb();
-  const contractorId = c.req.query("contractorId");
-  const where = contractorId ? { officer: { contractorId } } : {};
+  const where = { officer: { contractorId: c.get("contractorId") } };
 
   const [licenceCounts, vettingCounts] = await Promise.all([
     db.siaLicence.groupBy({ by: ["status"], where, _count: true }),
