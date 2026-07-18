@@ -1,8 +1,9 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { DocumentsSection } from "../components/DocumentsSection.js";
 import { StatusBadge, SubmissionStatusBadge } from "../components/StatusBadge.js";
-import { PlusIcon, ShieldCheckIcon } from "../components/icons.js";
+import { PlusIcon, ShieldCheckIcon, TrashIcon } from "../components/icons.js";
 import { Officer, useApi } from "../lib/api.js";
+import { worstStatus } from "../lib/status.js";
 
 interface AddressRow {
   address: string;
@@ -41,6 +42,14 @@ export function PortalHome() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [submitted, setSubmitted] = useState(false);
+
+  const latestSubmission = useMemo(() => {
+    const submissions = officer?.vettingSubmissions ?? [];
+    if (submissions.length === 0) return undefined;
+    return [...submissions].sort(
+      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    )[0];
+  }, [officer]);
 
   useEffect(() => {
     void load();
@@ -88,6 +97,37 @@ export function PortalHome() {
             {officer.firstName} {officer.lastName}
           </h1>
           <p>Your own record — submit your vetting details and documents for review.</p>
+        </div>
+      </div>
+
+      <div className="summary-grid">
+        <div className="summary-tile">
+          <div>
+            <div className="label" style={{ marginBottom: 6 }}>
+              Overall status
+            </div>
+            <StatusBadge status={worstStatus(officer)} />
+          </div>
+        </div>
+        <div className="summary-tile">
+          <div>
+            <div className="count">{officer.licences.length}</div>
+            <div className="label">Licences on file</div>
+          </div>
+        </div>
+        <div className="summary-tile">
+          <div>
+            <div className="label" style={{ marginBottom: 6 }}>
+              Latest vetting submission
+            </div>
+            {latestSubmission ? (
+              <SubmissionStatusBadge status={latestSubmission.status} />
+            ) : (
+              <span className="subtle-meta" style={{ margin: 0 }}>
+                Not submitted yet
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -172,36 +212,46 @@ export function PortalHome() {
         <form onSubmit={handleSubmit}>
           <h3 style={{ fontSize: 14, marginBottom: 8 }}>Address history (last 5 years)</h3>
           {addresses.map((row, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-              <div className="form-field" style={{ marginBottom: 0, flex: 2, minWidth: 200 }}>
-                <label>Address</label>
-                <input
-                  value={row.address}
-                  onChange={(e) =>
-                    setAddresses((rows) => rows.map((r, idx) => (idx === i ? { ...r, address: e.target.value } : r)))
-                  }
-                />
+            <div className="repeater-row" key={i}>
+              <div className="repeater-row-fields">
+                <div className="form-field" style={{ marginBottom: 0, flex: 2, minWidth: 200 }}>
+                  <label>Address</label>
+                  <input
+                    value={row.address}
+                    onChange={(e) =>
+                      setAddresses((rows) => rows.map((r, idx) => (idx === i ? { ...r, address: e.target.value } : r)))
+                    }
+                  />
+                </div>
+                <div className="form-field" style={{ marginBottom: 0, minWidth: 130 }}>
+                  <label>From</label>
+                  <input
+                    type="month"
+                    value={row.from}
+                    onChange={(e) =>
+                      setAddresses((rows) => rows.map((r, idx) => (idx === i ? { ...r, from: e.target.value } : r)))
+                    }
+                  />
+                </div>
+                <div className="form-field" style={{ marginBottom: 0, minWidth: 130 }}>
+                  <label>To</label>
+                  <input
+                    type="month"
+                    value={row.to}
+                    onChange={(e) =>
+                      setAddresses((rows) => rows.map((r, idx) => (idx === i ? { ...r, to: e.target.value } : r)))
+                    }
+                  />
+                </div>
               </div>
-              <div className="form-field" style={{ marginBottom: 0, minWidth: 130 }}>
-                <label>From</label>
-                <input
-                  type="month"
-                  value={row.from}
-                  onChange={(e) =>
-                    setAddresses((rows) => rows.map((r, idx) => (idx === i ? { ...r, from: e.target.value } : r)))
-                  }
-                />
-              </div>
-              <div className="form-field" style={{ marginBottom: 0, minWidth: 130 }}>
-                <label>To</label>
-                <input
-                  type="month"
-                  value={row.to}
-                  onChange={(e) =>
-                    setAddresses((rows) => rows.map((r, idx) => (idx === i ? { ...r, to: e.target.value } : r)))
-                  }
-                />
-              </div>
+              <button
+                type="button"
+                className="btn btn-secondary repeater-remove"
+                aria-label="Remove address"
+                onClick={() => setAddresses((rows) => rows.filter((_, idx) => idx !== i))}
+              >
+                <TrashIcon width={14} height={14} />
+              </button>
             </div>
           ))}
           <button
@@ -216,45 +266,57 @@ export function PortalHome() {
 
           <h3 style={{ fontSize: 14, marginBottom: 8 }}>Employment history (last 5 years)</h3>
           {employment.map((row, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-              <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
-                <label>Employer</label>
-                <input
-                  value={row.employer}
-                  onChange={(e) =>
-                    setEmployment((rows) => rows.map((r, idx) => (idx === i ? { ...r, employer: e.target.value } : r)))
-                  }
-                />
+            <div className="repeater-row" key={i}>
+              <div className="repeater-row-fields">
+                <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
+                  <label>Employer</label>
+                  <input
+                    value={row.employer}
+                    onChange={(e) =>
+                      setEmployment((rows) =>
+                        rows.map((r, idx) => (idx === i ? { ...r, employer: e.target.value } : r))
+                      )
+                    }
+                  />
+                </div>
+                <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
+                  <label>Role</label>
+                  <input
+                    value={row.role}
+                    onChange={(e) =>
+                      setEmployment((rows) => rows.map((r, idx) => (idx === i ? { ...r, role: e.target.value } : r)))
+                    }
+                  />
+                </div>
+                <div className="form-field" style={{ marginBottom: 0, minWidth: 130 }}>
+                  <label>From</label>
+                  <input
+                    type="month"
+                    value={row.from}
+                    onChange={(e) =>
+                      setEmployment((rows) => rows.map((r, idx) => (idx === i ? { ...r, from: e.target.value } : r)))
+                    }
+                  />
+                </div>
+                <div className="form-field" style={{ marginBottom: 0, minWidth: 130 }}>
+                  <label>To</label>
+                  <input
+                    type="month"
+                    value={row.to}
+                    onChange={(e) =>
+                      setEmployment((rows) => rows.map((r, idx) => (idx === i ? { ...r, to: e.target.value } : r)))
+                    }
+                  />
+                </div>
               </div>
-              <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
-                <label>Role</label>
-                <input
-                  value={row.role}
-                  onChange={(e) =>
-                    setEmployment((rows) => rows.map((r, idx) => (idx === i ? { ...r, role: e.target.value } : r)))
-                  }
-                />
-              </div>
-              <div className="form-field" style={{ marginBottom: 0, minWidth: 130 }}>
-                <label>From</label>
-                <input
-                  type="month"
-                  value={row.from}
-                  onChange={(e) =>
-                    setEmployment((rows) => rows.map((r, idx) => (idx === i ? { ...r, from: e.target.value } : r)))
-                  }
-                />
-              </div>
-              <div className="form-field" style={{ marginBottom: 0, minWidth: 130 }}>
-                <label>To</label>
-                <input
-                  type="month"
-                  value={row.to}
-                  onChange={(e) =>
-                    setEmployment((rows) => rows.map((r, idx) => (idx === i ? { ...r, to: e.target.value } : r)))
-                  }
-                />
-              </div>
+              <button
+                type="button"
+                className="btn btn-secondary repeater-remove"
+                aria-label="Remove employer"
+                onClick={() => setEmployment((rows) => rows.filter((_, idx) => idx !== i))}
+              >
+                <TrashIcon width={14} height={14} />
+              </button>
             </div>
           ))}
           <button
@@ -269,36 +331,48 @@ export function PortalHome() {
 
           <h3 style={{ fontSize: 14, marginBottom: 8 }}>References</h3>
           {references.map((row, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-              <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
-                <label>Name</label>
-                <input
-                  value={row.name}
-                  onChange={(e) =>
-                    setReferences((rows) => rows.map((r, idx) => (idx === i ? { ...r, name: e.target.value } : r)))
-                  }
-                />
+            <div className="repeater-row" key={i}>
+              <div className="repeater-row-fields">
+                <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
+                  <label>Name</label>
+                  <input
+                    value={row.name}
+                    onChange={(e) =>
+                      setReferences((rows) => rows.map((r, idx) => (idx === i ? { ...r, name: e.target.value } : r)))
+                    }
+                  />
+                </div>
+                <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
+                  <label>Relationship</label>
+                  <input
+                    value={row.relationship}
+                    onChange={(e) =>
+                      setReferences((rows) =>
+                        rows.map((r, idx) => (idx === i ? { ...r, relationship: e.target.value } : r))
+                      )
+                    }
+                  />
+                </div>
+                <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
+                  <label>Contact</label>
+                  <input
+                    value={row.contact}
+                    onChange={(e) =>
+                      setReferences((rows) =>
+                        rows.map((r, idx) => (idx === i ? { ...r, contact: e.target.value } : r))
+                      )
+                    }
+                  />
+                </div>
               </div>
-              <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
-                <label>Relationship</label>
-                <input
-                  value={row.relationship}
-                  onChange={(e) =>
-                    setReferences((rows) =>
-                      rows.map((r, idx) => (idx === i ? { ...r, relationship: e.target.value } : r))
-                    )
-                  }
-                />
-              </div>
-              <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
-                <label>Contact</label>
-                <input
-                  value={row.contact}
-                  onChange={(e) =>
-                    setReferences((rows) => rows.map((r, idx) => (idx === i ? { ...r, contact: e.target.value } : r)))
-                  }
-                />
-              </div>
+              <button
+                type="button"
+                className="btn btn-secondary repeater-remove"
+                aria-label="Remove reference"
+                onClick={() => setReferences((rows) => rows.filter((_, idx) => idx !== i))}
+              >
+                <TrashIcon width={14} height={14} />
+              </button>
             </div>
           ))}
           <button
@@ -311,12 +385,11 @@ export function PortalHome() {
             Add reference
           </button>
 
-          <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, marginBottom: 16 }}>
+          <label className="consent-box">
             <input
               type="checkbox"
               checked={consentGiven}
               onChange={(e) => setConsentGiven(e.target.checked)}
-              style={{ marginTop: 3 }}
             />
             I consent to Vetro recording these details for my employer to review as part of BS7858 vetting.
           </label>

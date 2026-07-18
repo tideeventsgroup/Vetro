@@ -422,6 +422,50 @@ button {
   box-shadow: var(--vetro-shadow-focus);
 }
 
+/* Repeater rows (PortalHome's address/employment/reference history) — each
+   entry as its own bordered row with a remove button, instead of a bare
+   flex row with no way to undo an "Add" click. */
+.repeater-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--vetro-space-3);
+  background: var(--vetro-bg);
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-md);
+  padding: var(--vetro-space-3);
+  margin-bottom: var(--vetro-space-3);
+}
+
+.repeater-row-fields {
+  display: flex;
+  gap: var(--vetro-space-3);
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.repeater-remove {
+  flex-shrink: 0;
+  color: var(--vetro-status-red);
+}
+
+.consent-box {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--vetro-space-3);
+  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text-secondary);
+  background: var(--vetro-bg);
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-md);
+  padding: var(--vetro-space-3) var(--vetro-space-4);
+  margin-bottom: var(--vetro-space-4);
+}
+
+.consent-box input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;

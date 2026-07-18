@@ -1,16 +1,39 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ShiftStatusBadge } from "../components/StatusBadge.js";
 import { CheckIcon, MapPinIcon, XIcon } from "../components/icons.js";
-import { Shift, Site, useApi } from "../lib/api.js";
+import { Shift, ShiftStatus, Site, useApi } from "../lib/api.js";
 
-function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString("en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function formatDay(value: string): string {
+  return new Date(value).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+}
+
+function formatTime(value: string): string {
+  return new Date(value).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+
+const BORDER_COLORS: Record<ShiftStatus, string> = {
+  SCHEDULED: "var(--vetro-ink-300)",
+  CONFIRMED: "var(--vetro-teal)",
+  COMPLETED: "var(--vetro-status-green)",
+  MISSED: "var(--vetro-status-red)",
+  LATE: "var(--vetro-status-amber)",
+};
+
+// Same day-grouped board as Schedule.tsx (kept as its own local copy since
+// it's the only other call site) — a site's own contact sees the same
+// "who's where, when" shape, just scoped to their one site and with confirm
+// actions instead of full shift management.
+function groupByDay(shifts: Shift[]): Array<[string, Shift[]]> {
+  const groups = new Map<string, Shift[]>();
+  for (const shift of shifts) {
+    const key = new Date(shift.startTime).toDateString();
+    const existing = groups.get(key);
+    if (existing) existing.push(shift);
+    else groups.set(key, [shift]);
+  }
+  return [...groups.entries()].sort(
+    (a, b) => new Date(a[1][0].startTime).getTime() - new Date(b[1][0].startTime).getTime()
+  );
 }
 
 // A site's own contact — scoped entirely to their one Site (custom:site_id,
@@ -62,6 +85,21 @@ export function ClientHome() {
     }
   }
 
+  const days = useMemo(() => groupByDay(shiftsList), [shiftsList]);
+
+  const tally = useMemo(() => {
+    const now = Date.now();
+    let upcoming = 0;
+    let completed = 0;
+    let needsAttention = 0;
+    for (const shift of shiftsList) {
+      if (shift.status === "COMPLETED") completed++;
+      else if (shift.status === "MISSED" || shift.status === "LATE") needsAttention++;
+      else if (new Date(shift.startTime).getTime() >= now) upcoming++;
+    }
+    return { upcoming, completed, needsAttention };
+  }, [shiftsList]);
+
   if (isLoading) return <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>;
 
   return (
@@ -69,48 +107,72 @@ export function ClientHome() {
       <div className="page-header">
         <div>
           <h1>{site?.name ?? "Your site"}</h1>
-          <p>Shifts scheduled here — confirm what actually happened.</p>
+          <p>
+            {site?.address ? (
+              <>
+                <MapPinIcon width={13} height={13} /> {site.address}
+              </>
+            ) : (
+              "Shifts scheduled here — confirm what actually happened."
+            )}
+          </p>
+        </div>
+      </div>
+
+      <div className="summary-grid">
+        <div className="summary-tile">
+          <div>
+            <div className="count">{tally.upcoming}</div>
+            <div className="label">Upcoming</div>
+          </div>
+        </div>
+        <div className="summary-tile">
+          <div>
+            <div className="count" style={{ color: "#1C7A45" }}>
+              {tally.completed}
+            </div>
+            <div className="label">Completed</div>
+          </div>
+        </div>
+        <div className="summary-tile">
+          <div>
+            <div className="count" style={{ color: tally.needsAttention > 0 ? "var(--vetro-status-red)" : undefined }}>
+              {tally.needsAttention}
+            </div>
+            <div className="label">Missed or late</div>
+          </div>
         </div>
       </div>
 
       {error && <p className="error-text">{error}</p>}
 
-      {site?.address && (
-        <p className="subtle-meta" style={{ marginBottom: 16 }}>
-          <MapPinIcon width={14} height={14} /> {site.address}
-        </p>
-      )}
-
-      {shiftsList.length === 0 ? (
+      {days.length === 0 ? (
         <div className="card empty-state">
           <p>No shifts scheduled here yet.</p>
         </div>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Officer</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shiftsList.map((shift) => (
-              <Fragment key={shift.id}>
-                <tr className="clickable" onClick={() => toggleExpand(shift)}>
-                  <td>{shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "Unassigned"}</td>
-                  <td>{formatDateTime(shift.startTime)}</td>
-                  <td>{formatDateTime(shift.endTime)}</td>
-                  <td>
-                    <ShiftStatusBadge status={shift.status} />
-                  </td>
-                </tr>
-                {expandedId === shift.id && (
-                  <tr>
-                    <td colSpan={4} style={{ background: "var(--vetro-bg)" }}>
-                      <div style={{ padding: "12px 4px", display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-                        <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}>
+        <div className="schedule-board">
+          {days.map(([dateKey, dayShifts]) => (
+            <div className="schedule-day" key={dateKey}>
+              <h3 className="schedule-day-heading">{formatDay(dayShifts[0].startTime)}</h3>
+              <div className="schedule-day-shifts">
+                {dayShifts.map((shift) => (
+                  <div className="shift-card" key={shift.id} style={{ borderLeftColor: BORDER_COLORS[shift.status] }}>
+                    <div className="shift-card-header">
+                      <div>
+                        <div className="shift-card-site">
+                          {shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "Unassigned"}
+                        </div>
+                        <div className="shift-card-officer">
+                          {formatTime(shift.startTime)} – {formatTime(shift.endTime)}
+                        </div>
+                      </div>
+                      <ShiftStatusBadge status={shift.status} />
+                    </div>
+
+                    {expandedId === shift.id ? (
+                      <div className="shift-card-confirm">
+                        <div className="form-field" style={{ marginBottom: 8 }}>
                           <label htmlFor={`notes-${shift.id}`}>Notes (if missed or late)</label>
                           <input
                             id={`notes-${shift.id}`}
@@ -118,25 +180,36 @@ export function ClientHome() {
                             onChange={(e) => setIncidentNotes(e.target.value)}
                           />
                         </div>
-                        <button className="btn btn-primary" onClick={() => handleConfirm(shift, "COMPLETED")}>
-                          <CheckIcon width={14} height={14} />
-                          Completed
-                        </button>
-                        <button className="btn btn-secondary" onClick={() => handleConfirm(shift, "LATE")}>
-                          Late
-                        </button>
-                        <button className="btn btn-secondary" onClick={() => handleConfirm(shift, "MISSED")}>
-                          <XIcon width={14} height={14} />
-                          Missed
+                        <div className="shift-card-footer">
+                          <button className="btn btn-primary" onClick={() => handleConfirm(shift, "COMPLETED")}>
+                            <CheckIcon width={14} height={14} />
+                            Completed
+                          </button>
+                          <button className="btn btn-secondary" onClick={() => handleConfirm(shift, "LATE")}>
+                            Late
+                          </button>
+                          <button className="btn btn-secondary" onClick={() => handleConfirm(shift, "MISSED")}>
+                            <XIcon width={14} height={14} />
+                            Missed
+                          </button>
+                          <button className="btn btn-secondary" onClick={() => toggleExpand(shift)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="shift-card-footer">
+                        <button className="btn btn-secondary" onClick={() => toggleExpand(shift)}>
+                          Confirm what happened
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
