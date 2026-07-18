@@ -37,6 +37,12 @@ in `.env.example`), so requests don't need a bearer token locally.
 | PATCH | `/licences/:id` | |
 | POST | `/officers/:officerId/vetting` | Add BS7858 vetting record |
 | PATCH | `/vetting/:id` | |
+| POST | `/officers/:officerId/qualifications` | |
+| PATCH / DELETE | `/qualifications/:id` | |
+| POST | `/officers/:officerId/documents/upload-url` | Returns a presigned S3 PUT URL |
+| POST | `/officers/:officerId/documents` | Confirms an upload, creates the `Document` row |
+| GET | `/documents/:id/download-url` | Returns a presigned S3 GET URL |
+| DELETE | `/documents/:id` | |
 | GET | `/dashboard/summary?contractorId=` | Status counts, powers the dashboard preview |
 | GET | `/exports/officers.csv?contractorId=` | Audit-ready export |
 

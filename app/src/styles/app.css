@@ -1,0 +1,263 @@
+@import '../../../src/styles/tokens.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--vetro-font-sans);
+  font-size: var(--vetro-fs-body);
+  color: var(--vetro-text);
+  background: var(--vetro-surface-muted);
+}
+
+h1, h2, h3 {
+  font-weight: var(--vetro-fw-bold);
+  color: var(--vetro-ink);
+  margin: 0;
+}
+
+a { color: var(--vetro-accent); text-decoration: none; }
+a:hover { color: var(--vetro-accent-hover); }
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--vetro-ink);
+  color: var(--vetro-white);
+  padding: var(--vetro-space-5) var(--vetro-space-4);
+}
+
+.app-sidebar .vetro-wordmark {
+  color: var(--vetro-white);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: var(--vetro-space-2);
+  margin-bottom: var(--vetro-space-7);
+}
+
+.app-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-2);
+}
+
+.app-nav a {
+  color: #C9D2D8;
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-semibold);
+  padding: var(--vetro-space-2) var(--vetro-space-3);
+  border-radius: var(--vetro-radius-sm);
+}
+
+.app-nav a:hover,
+.app-nav a.active {
+  color: var(--vetro-white);
+  background: rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+}
+
+.app-main {
+  flex: 1;
+  padding: var(--vetro-space-6) var(--vetro-space-7);
+  max-width: 1120px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--vetro-space-6);
+}
+
+.page-header p {
+  color: var(--vetro-text-muted);
+  margin: var(--vetro-space-1) 0 0;
+}
+
+/* Summary tiles */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--vetro-space-4);
+  margin-bottom: var(--vetro-space-6);
+}
+
+.summary-tile {
+  background: var(--vetro-surface);
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-md);
+  padding: var(--vetro-space-4);
+}
+
+.summary-tile .count {
+  font-size: var(--vetro-fs-h1);
+  font-weight: var(--vetro-fw-bold);
+  color: var(--vetro-ink);
+}
+
+.summary-tile .label {
+  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text-muted);
+}
+
+/* Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--vetro-surface);
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-md);
+  overflow: hidden;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: var(--vetro-fs-label);
+  text-transform: uppercase;
+  letter-spacing: var(--vetro-ls-label);
+  color: var(--vetro-text-muted);
+  padding: var(--vetro-space-3) var(--vetro-space-4);
+  border-bottom: 1px solid var(--vetro-border);
+}
+
+.data-table td {
+  padding: var(--vetro-space-3) var(--vetro-space-4);
+  border-bottom: 1px solid var(--vetro-border);
+  font-size: var(--vetro-fs-body-sm);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr.clickable:hover {
+  background: var(--vetro-surface-muted);
+  cursor: pointer;
+}
+
+/* Forms */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-1);
+  margin-bottom: var(--vetro-space-4);
+}
+
+.form-field label {
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-semibold);
+  color: var(--vetro-ink);
+}
+
+.form-field input,
+.form-field select {
+  font-family: var(--vetro-font-sans);
+  font-size: var(--vetro-fs-body-sm);
+  padding: 8px 12px;
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-sm);
+  color: var(--vetro-text);
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: 2px solid var(--vetro-teal);
+  outline-offset: -1px;
+}
+
+/* Buttons (subset of the marketing site's, duplicated to keep /app self-contained) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--vetro-space-2);
+  padding: 10px 18px;
+  border-radius: var(--vetro-radius-sm);
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-semibold);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary { background: var(--vetro-teal); color: var(--vetro-white); }
+.btn-primary:hover { background: var(--vetro-teal-dark); }
+.btn-secondary { background: transparent; color: var(--vetro-ink); border-color: var(--vetro-border); }
+.btn-secondary:hover { border-color: var(--vetro-ink); }
+
+/* Status badges (duplicated from marketing site's main.css) */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vetro-space-1);
+  font-size: var(--vetro-fs-label);
+  font-weight: var(--vetro-fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--vetro-ls-label);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-active { color: var(--vetro-status-green); background: color-mix(in srgb, var(--vetro-status-green) 12%, white); }
+.status-expiring { color: var(--vetro-status-amber); background: color-mix(in srgb, var(--vetro-status-amber) 12%, white); }
+.status-expired { color: var(--vetro-status-red); background: color-mix(in srgb, var(--vetro-status-red) 12%, white); }
+
+.card {
+  background: var(--vetro-surface);
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-lg);
+  padding: var(--vetro-space-5);
+  margin-bottom: var(--vetro-space-5);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 41, 51, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-panel {
+  width: 360px;
+  margin: 0;
+}
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--vetro-surface-muted);
+}
+
+.login-card {
+  width: 360px;
+}
+
+.error-text {
+  color: var(--vetro-status-red);
+  font-size: var(--vetro-fs-body-sm);
+  margin: 0 0 var(--vetro-space-4);
+}
