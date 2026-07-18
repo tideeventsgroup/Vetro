@@ -32,6 +32,9 @@ sites.post("/sites", async (c) => {
     address?: string;
     clientContactName?: string;
     clientContactEmail?: string;
+    latitude?: number;
+    longitude?: number;
+    geofenceRadiusM?: number;
   }>();
   if (!body.name?.trim()) return c.json({ error: "name is required" }, 400);
 
@@ -55,7 +58,15 @@ sites.patch("/sites/:id", async (c) => {
   }
 
   const body = await c.req.json<
-    Partial<{ name: string; address: string; clientContactName: string; clientContactEmail: string }>
+    Partial<{
+      name: string;
+      address: string;
+      clientContactName: string;
+      clientContactEmail: string;
+      latitude: number | null;
+      longitude: number | null;
+      geofenceRadiusM: number | null;
+    }>
   >();
   const updated = await db.site.update({ where: { id }, data: body });
   await recordAudit({

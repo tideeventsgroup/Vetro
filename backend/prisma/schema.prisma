@@ -72,6 +72,12 @@ model Site {
   address            String?
   clientContactName  String?
   clientContactEmail String?
+  // Geofence centre + radius for GPS-verified clock-in/out. All three are
+  // optional together — a site with no coordinates set skips geofence
+  // enforcement entirely rather than blocking clock-in on missing data.
+  latitude           Float?
+  longitude          Float?
+  geofenceRadiusM    Int?
   shifts             Shift[]
   incidents          Incident[]
   checkpoints        Checkpoint[]
@@ -100,7 +106,15 @@ model Shift {
   clientConfirmedAt DateTime?
   incidentNotes     String?
   clockInAt         DateTime?
+  clockInLat        Float?
+  clockInLng        Float?
+  clockInAccuracyM  Float?
+  clockInDistanceM  Float?
   clockOutAt        DateTime?
+  clockOutLat       Float?
+  clockOutLng       Float?
+  clockOutAccuracyM Float?
+  clockOutDistanceM Float?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 

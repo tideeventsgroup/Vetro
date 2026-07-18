@@ -3,6 +3,34 @@ import { MailIcon, MapPinIcon, PlusIcon } from "../components/icons.js";
 import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
 import { Site, useApi } from "../lib/api.js";
 
+// Fills the two coordinate inputs from the browser's own location — the
+// fastest way for whoever's setting up a site to get an accurate geofence
+// centre without looking up coordinates by hand.
+function useCurrentLocation(latInputId: string, lngInputId: string) {
+  const [status, setStatus] = useState<string | undefined>(undefined);
+
+  function fill() {
+    if (!("geolocation" in navigator)) {
+      setStatus("Location isn't available in this browser");
+      return;
+    }
+    setStatus("Locating…");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latInput = document.getElementById(latInputId) as HTMLInputElement | null;
+        const lngInput = document.getElementById(lngInputId) as HTMLInputElement | null;
+        if (latInput) latInput.value = position.coords.latitude.toFixed(6);
+        if (lngInput) lngInput.value = position.coords.longitude.toFixed(6);
+        setStatus(undefined);
+      },
+      () => setStatus("Could not read your location — enter coordinates manually"),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+
+  return { fill, status };
+}
+
 export function Sites() {
   const api = useApi();
   const [sites, setSites] = useState<Site[]>([]);
@@ -13,6 +41,9 @@ export function Sites() {
   const [inviteStatus, setInviteStatus] = useState<string | undefined>(undefined);
   const [invitedPassword, setInvitedPassword] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
+  const [geofenceStatus, setGeofenceStatus] = useState<string | undefined>(undefined);
+  const addSiteLocation = useCurrentLocation("newSiteLat", "newSiteLng");
+  const editLocation = useCurrentLocation("editSiteLat", "editSiteLng");
 
   useEffect(() => {
     void load();
@@ -32,14 +63,40 @@ export function Sites() {
   async function handleAddSite(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    const lat = String(form.get("latitude") || "");
+    const lng = String(form.get("longitude") || "");
+    const radius = String(form.get("geofenceRadiusM") || "");
     await api.createSite({
       name: String(form.get("name")),
       address: String(form.get("address") || "") || undefined,
       clientContactName: String(form.get("clientContactName") || "") || undefined,
       clientContactEmail: String(form.get("clientContactEmail") || "") || undefined,
+      latitude: lat ? Number(lat) : undefined,
+      longitude: lng ? Number(lng) : undefined,
+      geofenceRadiusM: radius ? Number(radius) : undefined,
     });
     setShowAddSite(false);
     await load();
+  }
+
+  async function handleSaveGeofence(e: FormEvent<HTMLFormElement>, siteId: string) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const lat = String(form.get("latitude") || "");
+    const lng = String(form.get("longitude") || "");
+    const radius = String(form.get("geofenceRadiusM") || "");
+    setGeofenceStatus(undefined);
+    try {
+      await api.updateSite(siteId, {
+        latitude: lat ? Number(lat) : null,
+        longitude: lng ? Number(lng) : null,
+        geofenceRadiusM: radius ? Number(radius) : null,
+      });
+      setGeofenceStatus("Geofence saved");
+      await load();
+    } catch (err) {
+      setGeofenceStatus(err instanceof Error ? err.message : "Could not save geofence");
+    }
   }
 
   function toggleExpand(site: Site) {
@@ -102,6 +159,31 @@ export function Sites() {
               <label htmlFor="clientContactEmail">Client contact email (optional)</label>
               <input id="clientContactEmail" name="clientContactEmail" type="email" />
             </div>
+
+            <p style={{ fontSize: 13, color: "var(--vetro-text-muted)", marginBottom: 8 }}>
+              Set a geofence to require officers to be physically on site to clock in/out. Leave blank to
+              skip GPS verification for this site.
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                <label htmlFor="newSiteLat">Latitude</label>
+                <input id="newSiteLat" name="latitude" type="number" step="any" />
+              </div>
+              <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                <label htmlFor="newSiteLng">Longitude</label>
+                <input id="newSiteLng" name="longitude" type="number" step="any" />
+              </div>
+              <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                <label htmlFor="newSiteRadius">Radius (metres)</label>
+                <input id="newSiteRadius" name="geofenceRadiusM" type="number" min="1" placeholder="e.g. 100" />
+              </div>
+            </div>
+            <button type="button" className="btn btn-secondary" onClick={addSiteLocation.fill} style={{ marginBottom: 12 }}>
+              <MapPinIcon width={14} height={14} />
+              Use my current location
+            </button>
+            {addSiteLocation.status && <p className="subtle-meta">{addSiteLocation.status}</p>}
+
             <button className="btn btn-primary" type="submit">
               Save site
             </button>
@@ -154,6 +236,58 @@ export function Sites() {
                     </div>
                     {inviteStatus && <p className="subtle-meta">{inviteStatus}</p>}
                     {invitedPassword && <TemporaryPasswordReveal password={invitedPassword} />}
+
+                    <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid var(--vetro-border)" }} />
+                    <p style={{ fontSize: 13, marginBottom: 12, color: "var(--vetro-text-muted)" }}>
+                      {site.geofenceRadiusM
+                        ? `Geofence: ${site.geofenceRadiusM}m radius — officers must be on site to clock in/out.`
+                        : "No geofence set — clock-in/out isn't GPS-verified for this site."}
+                    </p>
+                    <form onSubmit={(e) => handleSaveGeofence(e, site.id)}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                          <label htmlFor="editSiteLat">Latitude</label>
+                          <input
+                            id="editSiteLat"
+                            name="latitude"
+                            type="number"
+                            step="any"
+                            defaultValue={site.latitude ?? ""}
+                          />
+                        </div>
+                        <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                          <label htmlFor="editSiteLng">Longitude</label>
+                          <input
+                            id="editSiteLng"
+                            name="longitude"
+                            type="number"
+                            step="any"
+                            defaultValue={site.longitude ?? ""}
+                          />
+                        </div>
+                        <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                          <label htmlFor="editSiteRadius">Radius (metres)</label>
+                          <input
+                            id="editSiteRadius"
+                            name="geofenceRadiusM"
+                            type="number"
+                            min="1"
+                            defaultValue={site.geofenceRadiusM ?? ""}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button type="button" className="btn btn-secondary" onClick={editLocation.fill}>
+                          <MapPinIcon width={14} height={14} />
+                          Use my current location
+                        </button>
+                        <button type="submit" className="btn btn-primary">
+                          Save geofence
+                        </button>
+                      </div>
+                    </form>
+                    {editLocation.status && <p className="subtle-meta">{editLocation.status}</p>}
+                    {geofenceStatus && <p className="subtle-meta">{geofenceStatus}</p>}
                   </div>
                 )}
               </div>

@@ -4,6 +4,7 @@ import type { MiddlewareHandler } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
 import { createDownloadUrl, createUploadUrl } from "../lib/documents.js";
+import { haversineDistanceM } from "../lib/geo.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
 // The officer self-service portal: an officer's own login, scoped to their
@@ -121,17 +122,58 @@ me.patch("/shifts/:id/confirm", async (c) => {
 // can be set: the client's own confirmation (client.ts) is the record of
 // record for whether a shift happened at all, clock times are additional
 // detail on top of that, not a gate in front of it.
+interface ClockGpsBody {
+  lat?: number;
+  lng?: number;
+  accuracyM?: number;
+}
+
+// A site only enforces its geofence once an admin has actually set
+// coordinates + a radius for it — sites without that configured never block
+// clock-in on missing GPS, so this stays opt-in per site.
+function checkGeofence(
+  site: { latitude: number | null; longitude: number | null; geofenceRadiusM: number | null },
+  gps: ClockGpsBody
+): { distanceM: number | null; error?: string } {
+  const geofenced =
+    site.latitude !== null && site.longitude !== null && site.geofenceRadiusM !== null;
+  if (!geofenced) return { distanceM: null };
+
+  if (gps.lat === undefined || gps.lng === undefined) {
+    return { distanceM: null, error: "Location is required to clock in/out at this site" };
+  }
+
+  const distanceM = haversineDistanceM(site.latitude!, site.longitude!, gps.lat, gps.lng);
+  if (distanceM > site.geofenceRadiusM!) {
+    return {
+      distanceM,
+      error: `Too far from site to clock in — you're ${Math.round(distanceM)}m away, must be within ${site.geofenceRadiusM}m`,
+    };
+  }
+  return { distanceM };
+}
+
 me.patch("/shifts/:id/clock-in", async (c) => {
   const db = await getDb();
   const id = c.req.param("id");
   const officerId = c.get("officerId")!;
-  const existing = await db.shift.findUnique({ where: { id } });
+  const existing = await db.shift.findUnique({ where: { id }, include: { site: true } });
   if (!existing || existing.officerId !== officerId) return c.json({ error: "Shift not found" }, 404);
   if (existing.clockInAt) return c.json({ error: "Already clocked in" }, 400);
 
+  const gps = await c.req.json<ClockGpsBody>().catch(() => ({}) as ClockGpsBody);
+  const { distanceM, error } = checkGeofence(existing.site, gps);
+  if (error) return c.json({ error }, 403);
+
   const updated = await db.shift.update({
     where: { id },
-    data: { clockInAt: new Date() },
+    data: {
+      clockInAt: new Date(),
+      clockInLat: gps.lat ?? null,
+      clockInLng: gps.lng ?? null,
+      clockInAccuracyM: gps.accuracyM ?? null,
+      clockInDistanceM: distanceM,
+    },
     include: { site: true },
   });
 
@@ -150,14 +192,24 @@ me.patch("/shifts/:id/clock-out", async (c) => {
   const db = await getDb();
   const id = c.req.param("id");
   const officerId = c.get("officerId")!;
-  const existing = await db.shift.findUnique({ where: { id } });
+  const existing = await db.shift.findUnique({ where: { id }, include: { site: true } });
   if (!existing || existing.officerId !== officerId) return c.json({ error: "Shift not found" }, 404);
   if (!existing.clockInAt) return c.json({ error: "Clock in before clocking out" }, 400);
   if (existing.clockOutAt) return c.json({ error: "Already clocked out" }, 400);
 
+  const gps = await c.req.json<ClockGpsBody>().catch(() => ({}) as ClockGpsBody);
+  const { distanceM, error } = checkGeofence(existing.site, gps);
+  if (error) return c.json({ error }, 403);
+
   const updated = await db.shift.update({
     where: { id },
-    data: { clockOutAt: new Date() },
+    data: {
+      clockOutAt: new Date(),
+      clockOutLat: gps.lat ?? null,
+      clockOutLng: gps.lng ?? null,
+      clockOutAccuracyM: gps.accuracyM ?? null,
+      clockOutDistanceM: distanceM,
+    },
     include: { site: true },
   });
 

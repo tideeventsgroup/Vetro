@@ -114,6 +114,9 @@ export interface Site {
   address: string | null;
   clientContactName: string | null;
   clientContactEmail: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geofenceRadiusM: number | null;
   createdAt: string;
 }
 
@@ -130,9 +133,23 @@ export interface Shift {
   clientConfirmedAt: string | null;
   incidentNotes: string | null;
   clockInAt: string | null;
+  clockInLat: number | null;
+  clockInLng: number | null;
+  clockInAccuracyM: number | null;
+  clockInDistanceM: number | null;
   clockOutAt: string | null;
+  clockOutLat: number | null;
+  clockOutLng: number | null;
+  clockOutAccuracyM: number | null;
+  clockOutDistanceM: number | null;
   site?: Site;
   officer?: Officer | null;
+}
+
+export interface ClockGps {
+  lat?: number;
+  lng?: number;
+  accuracyM?: number;
 }
 
 export type IncidentCategory =
@@ -436,12 +453,18 @@ class VetroApiClient {
     return this.request(`/me/shifts/${id}/confirm`, { method: "PATCH" });
   }
 
-  clockInMyShift(id: string): Promise<Shift> {
-    return this.request(`/me/shifts/${id}/clock-in`, { method: "PATCH" });
+  clockInMyShift(id: string, gps?: ClockGps): Promise<Shift> {
+    return this.request(`/me/shifts/${id}/clock-in`, {
+      method: "PATCH",
+      body: JSON.stringify(gps ?? {}),
+    });
   }
 
-  clockOutMyShift(id: string): Promise<Shift> {
-    return this.request(`/me/shifts/${id}/clock-out`, { method: "PATCH" });
+  clockOutMyShift(id: string, gps?: ClockGps): Promise<Shift> {
+    return this.request(`/me/shifts/${id}/clock-out`, {
+      method: "PATCH",
+      body: JSON.stringify(gps ?? {}),
+    });
   }
 
   // The sites this officer has ever had a shift at — used to populate
@@ -520,13 +543,29 @@ class VetroApiClient {
     return this.request(`/sites/${id}`);
   }
 
-  createSite(input: { name: string; address?: string; clientContactName?: string; clientContactEmail?: string }) {
+  createSite(input: {
+    name: string;
+    address?: string;
+    clientContactName?: string;
+    clientContactEmail?: string;
+    latitude?: number;
+    longitude?: number;
+    geofenceRadiusM?: number;
+  }) {
     return this.request<Site>("/sites", { method: "POST", body: JSON.stringify(input) });
   }
 
   updateSite(
     id: string,
-    input: Partial<{ name: string; address: string; clientContactName: string; clientContactEmail: string }>
+    input: Partial<{
+      name: string;
+      address: string;
+      clientContactName: string;
+      clientContactEmail: string;
+      latitude: number | null;
+      longitude: number | null;
+      geofenceRadiusM: number | null;
+    }>
   ) {
     return this.request<Site>(`/sites/${id}`, { method: "PATCH", body: JSON.stringify(input) });
   }

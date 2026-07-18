@@ -1,7 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { ShiftStatusBadge } from "../components/StatusBadge.js";
 import { CheckIcon, ClockIcon, MapPinIcon } from "../components/icons.js";
-import { Shift, ShiftStatus, useApi } from "../lib/api.js";
+import { ClockGps, Shift, ShiftStatus, useApi } from "../lib/api.js";
+
+// Best-effort GPS read for a clock-in/out — resolves with undefined rather
+// than rejecting when location is unsupported, denied, or slow, since most
+// sites don't enforce a geofence and shouldn't be blocked by missing GPS.
+function getGpsPosition(): Promise<ClockGps | undefined> {
+  return new Promise((resolve) => {
+    if (!("geolocation" in navigator)) {
+      resolve(undefined);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracyM: position.coords.accuracy,
+        }),
+      () => resolve(undefined),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  });
+}
 
 function formatDay(value: string): string {
   return new Date(value).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
@@ -79,7 +101,8 @@ export function MyShifts() {
     setBusyId(shift.id);
     setError(undefined);
     try {
-      await api.clockInMyShift(shift.id);
+      const gps = await getGpsPosition();
+      await api.clockInMyShift(shift.id, gps);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not clock in");
@@ -92,7 +115,8 @@ export function MyShifts() {
     setBusyId(shift.id);
     setError(undefined);
     try {
-      await api.clockOutMyShift(shift.id);
+      const gps = await getGpsPosition();
+      await api.clockOutMyShift(shift.id, gps);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not clock out");
@@ -188,6 +212,7 @@ export function MyShifts() {
                         {shift.clockOutAt
                           ? `Worked ${formatTime(shift.clockInAt)} – ${formatTime(shift.clockOutAt)}`
                           : `Clocked in at ${formatTime(shift.clockInAt)}`}
+                        {shift.clockInDistanceM !== null && " · GPS verified on site"}
                       </p>
                     )}
                     {shift.status === "SCHEDULED" && (
