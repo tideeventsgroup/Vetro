@@ -10,10 +10,11 @@ import { Construct } from "constructs";
 import * as path from "path";
 
 export interface FrontendStackProps extends StackProps {
-  domainName: string;
-  hostedZoneId: string;
+  /** All three required together for the *.{domainName} wildcard; omit all three to deploy on the plain CloudFront domain instead. */
+  domainName?: string;
+  hostedZoneId?: string;
   /** From DomainStack, which lives in us-east-1 regardless of this stack's region. */
-  certificate: acm.ICertificate;
+  certificate?: acm.ICertificate;
 }
 
 /**
@@ -23,15 +24,17 @@ export interface FrontendStackProps extends StackProps {
  * (app/src/lib/tenant.ts) and the API enforces isolation per-request (see
  * backend/README.md). That's what makes "multi-tenant" here an application
  * concern, not an infrastructure one.
+ *
+ * Without a domain configured, this still deploys — just on the default
+ * *.cloudfront.net domain, which has no subdomain to read a tenant from.
+ * app/src/lib/tenant.ts falls back to VITE_DEV_TENANT_SLUG in that case,
+ * so it's a real but single-tenant preview until a domain exists.
  */
 export class FrontendStack extends Stack {
   constructor(scope: Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
 
-    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, "HostedZone", {
-      hostedZoneId: props.hostedZoneId,
-      zoneName: props.domainName,
-    });
+    const domainConfigured = Boolean(props.domainName && props.hostedZoneId && props.certificate);
 
     const siteBucket = new s3.Bucket(this, "SiteBucket", {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -51,15 +54,23 @@ export class FrontendStack extends Stack {
         { httpStatus: 403, responseHttpStatus: 200, responsePagePath: "/index.html" },
         { httpStatus: 404, responseHttpStatus: 200, responsePagePath: "/index.html" },
       ],
-      domainNames: [`*.${props.domainName}`],
-      certificate: props.certificate,
+      ...(domainConfigured
+        ? { domainNames: [`*.${props.domainName}`], certificate: props.certificate }
+        : {}),
     });
 
-    new route53.ARecord(this, "WildcardAliasRecord", {
-      zone: hostedZone,
-      recordName: `*.${props.domainName}`,
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
-    });
+    if (domainConfigured) {
+      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, "HostedZone", {
+        hostedZoneId: props.hostedZoneId!,
+        zoneName: props.domainName!,
+      });
+
+      new route53.ARecord(this, "WildcardAliasRecord", {
+        zone: hostedZone,
+        recordName: `*.${props.domainName}`,
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
+      });
+    }
 
     new s3deploy.BucketDeployment(this, "DeploySite", {
       sources: [s3deploy.Source.asset(path.join(__dirname, "../../app/dist"))],

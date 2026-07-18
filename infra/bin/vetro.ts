@@ -58,22 +58,24 @@ new MigrateStack(app, "VetroMigrateStack", {
   apiLambdaSecurityGroup: data.apiLambdaSecurityGroup,
 });
 
-if (domainConfigured) {
-  // us-east-1 regardless of the main app region: both a hard CloudFront
-  // requirement (the cert) and just a simplifying choice (the rest of
-  // FrontendStack, which has no reason to live anywhere else).
-  const domainEnv = { account: env.account, region: "us-east-1" };
+// us-east-1 regardless of the main app region: both a hard CloudFront
+// requirement (the cert, when there is one) and just a simplifying choice
+// for the rest of FrontendStack, which has no reason to live anywhere else.
+const domainEnv = { account: env.account, region: "us-east-1" };
 
-  const domain = new DomainStack(app, "VetroDomainStack", {
-    env: domainEnv,
-    domainName: domainName!,
-    hostedZoneId: hostedZoneId!,
-  });
+const domain = domainConfigured
+  ? new DomainStack(app, "VetroDomainStack", {
+      env: domainEnv,
+      domainName: domainName!,
+      hostedZoneId: hostedZoneId!,
+    })
+  : undefined;
 
-  new FrontendStack(app, "VetroFrontendStack", {
-    env: domainEnv,
-    domainName: domainName!,
-    hostedZoneId: hostedZoneId!,
-    certificate: domain.wildcardCertificate,
-  });
-}
+// Deploys either way — on *.{domainName} once that's configured, or on the
+// plain CloudFront domain as a single-tenant preview until then.
+new FrontendStack(app, "VetroFrontendStack", {
+  env: domainEnv,
+  domainName,
+  hostedZoneId,
+  certificate: domain?.wildcardCertificate,
+});
