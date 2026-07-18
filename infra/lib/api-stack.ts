@@ -26,6 +26,8 @@ export interface ApiStackProps extends StackProps {
   /** Both required together to enable api.{domainName} — omit to leave the plain API Gateway URL as-is. */
   domainName?: string;
   hostedZoneId?: string;
+  /** `{slug}` placeholder — the invite email's sign-in link (see bin/vetro.ts and lib/cognito.ts's buildInviteClientMetadata). */
+  loginUrlTemplate: string;
 }
 
 export class ApiStack extends Stack {
@@ -41,6 +43,7 @@ export class ApiStack extends Stack {
       COGNITO_USER_POOL_ID: props.userPool.userPoolId,
       COGNITO_CLIENT_ID: props.userPoolClient.userPoolClientId,
       DOCUMENTS_BUCKET: props.documentsBucket.bucketName,
+      APP_LOGIN_URL_TEMPLATE: props.loginUrlTemplate,
     };
 
     const bundling = prismaLambdaBundling();

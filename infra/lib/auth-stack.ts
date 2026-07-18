@@ -1,6 +1,9 @@
 import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
+import * as path from "path";
 
 export class AuthStack extends Stack {
   public readonly userPool: cognito.UserPool;
@@ -8,6 +11,20 @@ export class AuthStack extends Stack {
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
+
+    const backendRoot = path.join(__dirname, "../../backend");
+
+    // Fills in the org name and a sign-in link on the AdminCreateUser invite
+    // email (see backend/src/triggers/customMessage.ts) — everything it
+    // needs arrives via ClientMetadata on the AdminCreateUser call, so this
+    // needs no VPC/DB access of its own.
+    const customMessageFn = new NodejsFunction(this, "CustomMessageFunction", {
+      entry: path.join(backendRoot, "src/triggers/customMessage.ts"),
+      projectRoot: backendRoot,
+      depsLockFilePath: path.join(backendRoot, "package-lock.json"),
+      handler: "handler",
+      runtime: lambda.Runtime.NODEJS_20_X,
+    });
 
     // One pool for contractor admins / office managers — the people
     // "doing the checking", per the brand guidelines' voice principles.
@@ -48,6 +65,7 @@ export class AuthStack extends Stack {
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: RemovalPolicy.RETAIN,
+      lambdaTriggers: { customMessage: customMessageFn },
     });
 
     this.userPoolClient = this.userPool.addClient("VetroWebClient", {

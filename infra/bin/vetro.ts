@@ -25,6 +25,19 @@ const domainName: string | undefined = app.node.tryGetContext("domainName");
 const hostedZoneId: string | undefined = app.node.tryGetContext("hostedZoneId");
 const domainConfigured = Boolean(domainName && hostedZoneId);
 
+// The sign-in link the invite email's CustomMessage trigger puts in for a
+// given org (backend/src/triggers/customMessage.ts) — `{slug}` is filled in
+// per-invite from the Contractor row. Subdomain routing once the custom
+// domain is live; until then, falls back to the known CloudFront default
+// domain's path-based tenant routing (see app/src/lib/tenant.ts). Override
+// the fallback with `-c appBaseUrl=https://...` if that CloudFront domain
+// ever changes before the custom domain is ready.
+const appBaseUrl: string | undefined = app.node.tryGetContext("appBaseUrl");
+const DEFAULT_APP_BASE_URL = "https://d174513nsstzu9.cloudfront.net";
+const loginUrlTemplate = domainConfigured
+  ? `https://{slug}.${domainName}/login`
+  : `${appBaseUrl ?? DEFAULT_APP_BASE_URL}/{slug}/login`;
+
 const network = new NetworkStack(app, "VetroNetworkStack", { env });
 const data = new DataStack(app, "VetroDataStack", { env, vpc: network.vpc });
 const auth = new AuthStack(app, "VetroAuthStack", { env });
@@ -40,6 +53,7 @@ new ApiStack(app, "VetroApiStack", {
   userPoolClient: auth.userPoolClient,
   domainName,
   hostedZoneId,
+  loginUrlTemplate,
 });
 
 new ScheduleStack(app, "VetroScheduleStack", {

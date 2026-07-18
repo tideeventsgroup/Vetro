@@ -88,6 +88,22 @@ way the invitee gets their password: `createCognitoUser` generates it itself
 it in the response, so the inviting admin can hand it over directly if the
 email doesn't arrive.
 
+When the email *does* go out, Cognito's default text is a generic "here's
+your username and temporary password" with no mention of Vetro, which org
+invited them, or where to sign in. Fixing that doesn't need SES: a
+`CustomMessage` Lambda trigger (`infra/lib/auth-stack.ts`'s
+`CustomMessageFunction`, handler in `src/triggers/customMessage.ts`) rewrites
+the email's subject/body for `AdminCreateUser` invites specifically, filling
+in the org's name and a sign-in link. Both arrive via `ClientMetadata` on the
+`AdminCreateUserCommand` call (`buildInviteClientMetadata` in
+`src/lib/cognito.ts`, called from all three invite routes) rather than a DB
+lookup inside the trigger — it needs no VPC/DB access of its own. The link
+itself is `APP_LOGIN_URL_TEMPLATE` (an env var set in `infra/bin/vetro.ts`,
+`{slug}` filled in per-invite): subdomain-based once the custom domain is
+configured, otherwise the CloudFront default domain's path-based tenant
+routing. Every other trigger source (self-serve signup's verification code,
+forgot password) is left alone — Cognito uses its own default text there.
+
 The officer self-service portal (`/me/*`, gated by `requireOfficerSelf`) is
 deliberately narrow: an officer can view their own record and submit their
 own vetting details (address history, employment history, references,

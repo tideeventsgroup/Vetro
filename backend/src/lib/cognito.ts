@@ -57,10 +57,16 @@ function generateTemporaryPassword(): string {
  * directly if email doesn't arrive. The caller sets whichever custom:*
  * attributes decide what the account can do once it logs in
  * (contractor_id, role, officer_id) — this module has no opinion on that.
+ *
+ * clientMetadata (see buildInviteClientMetadata) is how the org name and a
+ * sign-in link reach the CustomMessage Lambda trigger
+ * (infra/lib/auth-stack.ts, backend/src/triggers/customMessage.ts) that
+ * fills in the invite email's text — this module just passes it through.
  */
 export async function createCognitoUser(params: {
   email: string;
   attributes: Record<string, string>;
+  clientMetadata?: Record<string, string>;
 }): Promise<{ temporaryPassword: string }> {
   const temporaryPassword = generateTemporaryPassword();
   try {
@@ -75,6 +81,7 @@ export async function createCognitoUser(params: {
         ],
         TemporaryPassword: temporaryPassword,
         DesiredDeliveryMediums: ["EMAIL"],
+        ClientMetadata: params.clientMetadata,
       }),
     );
   } catch (err) {
@@ -84,6 +91,20 @@ export async function createCognitoUser(params: {
     throw err;
   }
   return { temporaryPassword };
+}
+
+/**
+ * The org name + sign-in link to hand to createCognitoUser's clientMetadata.
+ * APP_LOGIN_URL_TEMPLATE (set in infra/lib/api-stack.ts from either the
+ * custom domain or the CloudFront fallback — see bin/vetro.ts) has a
+ * `{slug}` placeholder for the tenant; omitted entirely if that env var
+ * isn't set; customMessage.ts already handles orgName/loginUrl being absent.
+ */
+export function buildInviteClientMetadata(contractor: { name: string; slug: string }): Record<string, string> {
+  const metadata: Record<string, string> = { orgName: contractor.name };
+  const template = process.env.APP_LOGIN_URL_TEMPLATE;
+  if (template) metadata.loginUrl = template.replace("{slug}", contractor.slug);
+  return metadata;
 }
 
 export async function addUserToGroup(email: string, groupName: string): Promise<void> {

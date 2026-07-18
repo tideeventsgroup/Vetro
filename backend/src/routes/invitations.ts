@@ -1,6 +1,7 @@
 import { Hono } from "hono";
+import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
-import { CognitoUserExistsError, createCognitoUser } from "../lib/cognito.js";
+import { buildInviteClientMetadata, CognitoUserExistsError, createCognitoUser } from "../lib/cognito.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
 export const invitations = new Hono<AppEnv>();
@@ -13,12 +14,15 @@ invitations.post("/invitations", async (c) => {
   if (!body.email) return c.json({ error: "email is required" }, 400);
 
   const contractorId = c.get("contractorId")!;
+  const db = await getDb();
+  const contractor = await db.contractor.findUniqueOrThrow({ where: { id: contractorId } });
 
   let temporaryPassword: string;
   try {
     ({ temporaryPassword } = await createCognitoUser({
       email: body.email,
       attributes: { "custom:contractor_id": contractorId, "custom:role": "ADMIN" },
+      clientMetadata: buildInviteClientMetadata(contractor),
     }));
   } catch (err) {
     if (err instanceof CognitoUserExistsError) return c.json({ error: err.message }, 409);
