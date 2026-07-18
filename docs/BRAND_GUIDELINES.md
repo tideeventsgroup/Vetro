@@ -7,17 +7,17 @@ Verified, not assumed.
 
 ## 1. Brand Overview
 
-Vetro is a compliance record for Scottish security contractors — SIA licence status, BS7858 vetting, and qualifications held in one auditable place, checked automatically instead of chased manually. Built by Tide Events Group Scotland, sold as its own product and its own brand.
+Vetro is the operational system Scottish security contractors run their business on — scheduling, GPS-verified clock-in, patrol and checkpoint verification, incident reporting, and client-facing reporting — with SIA licence status, BS7858 vetting, and qualifications held as a first-class integrated module inside it, checked automatically instead of chased manually. Built by Tide Events Group Scotland, sold as its own product and its own brand.
 
-**What Vetro is:** A workforce compliance system. One profile per officer. Automated checks against the SIA public register. Audit-ready output on demand.
+**What Vetro is:** A security management system — the record of where officers are, when they worked, what they found on patrol, and what happened on shift — with compliance (licences, vetting, qualifications) built into the same system rather than living in a separate tool.
 
-**What Vetro is not:** A patrol, GPS, or rota platform (that's Phase 2, not the brand story yet). Not a vetting provider itself — Vetro tracks and verifies status, it doesn't carry out BS7858 screening.
+**What Vetro is not:** An enterprise platform priced for 2,000-officer operations — Vetro stays flat-fee and sized for the small-to-mid Scottish contractor. Not a vetting provider itself — Vetro tracks and verifies status, it doesn't carry out BS7858 screening.
 
 ## 2. Brand Position
 
-**Verified, not assumed.** Every other option in this space asks a contractor to trust a spreadsheet, a filing cabinet, or their own memory. Vetro replaces assumption with a checked, dated, exportable fact.
+**Verified, not assumed.** Every other option in this space asks a contractor to trust a spreadsheet, a filing cabinet, a text thread, or their own memory. Vetro replaces assumption with a checked, dated, exportable fact — whether that fact is "this licence is active" or "this officer clocked in at this site."
 
-Built for the small-to-mid Scottish security contractor currently running compliance manually, and for the independent consultant who needs to check status across contractors they don't employ.
+Built for the small-to-mid Scottish security contractor currently running scheduling and compliance manually, and for the independent consultant who needs to check status across contractors they don't employ. No other platform in this category treats vetting/BS7858 as a first-class integrated module rather than a bolted-on licence-expiry alert — that stays Vetro's edge even as the product grows into the full operational system.
 
 ---
 
@@ -77,10 +77,11 @@ Status colours are functional only — reserved for licence/vetting state indica
 
 ## 5. Key Messages
 
-- One record per officer — licence, vetting, qualifications, documents, in one place
+- One system for scheduling, GPS-verified attendance, patrols, incidents, and client reporting — replacing the spreadsheet-and-texting patchwork
+- Compliance built in, not bolted on — one record per officer for licence, vetting, qualifications, and documents
 - Checked automatically, not chased manually
 - Audit-ready by default — export what an ACS inspector or client asks for in seconds
-- Built for small and mid-sized Scottish contractors, priced like it
+- Built for small and mid-sized Scottish contractors, priced flat-fee — not per-guard enterprise pricing built for a 2,000-person operation
 - Verified, not assumed — the standing line, usable as a strapline anywhere the full tagline treatment doesn't fit
 
 ## 6. Brand in Practice
@@ -114,7 +115,7 @@ Built by Tide Events Group Scotland
 - Don't recolour the V mark, add a gradient, or add a background shape/container around it — it stands on its own
 - Don't stretch, skew, or rotate the logo
 - Don't use fear-based compliance messaging ("risk," "exposure," "liability") as the lead — lead with certainty and time saved instead
-- Don't add scheduling/rota language to the brand story until Phase 2 is actually built
+- Don't lead with per-guard enterprise pricing framing or feature lists built for large operations — the whole pitch is a full system sized and priced for small Scottish contractors
 
 ---
 
@@ -127,7 +128,7 @@ Built by Tide Events Group Scotland
 `No officers added yet. Upload a CSV or add your first officer to start automatic checks.`
 
 **One-line pitch for pilot conversations:**
-`Vetro checks your officers' SIA licences and BS7858 vetting automatically, so you always know who's actually cleared to work — no more spreadsheets, no more chasing.`
+`Vetro schedules your officers, verifies they clocked in at the right site, and checks their SIA licences and BS7858 vetting automatically — one system instead of a spreadsheet, a text thread, and a filing cabinet.`
 
 ---
 
