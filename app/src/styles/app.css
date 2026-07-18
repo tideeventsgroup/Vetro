@@ -403,7 +403,8 @@ button {
 }
 
 .form-field input,
-.form-field select {
+.form-field select,
+.form-field textarea {
   font-family: var(--vetro-font-sans);
   font-size: var(--vetro-fs-body-sm);
   padding: 9px 12px;
@@ -414,13 +415,20 @@ button {
   transition: border-color var(--vetro-duration) var(--vetro-ease), box-shadow var(--vetro-duration) var(--vetro-ease);
 }
 
+.form-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
 .form-field input:hover,
-.form-field select:hover {
+.form-field select:hover,
+.form-field textarea:hover {
   border-color: var(--vetro-border-strong);
 }
 
 .form-field input:focus,
-.form-field select:focus {
+.form-field select:focus,
+.form-field textarea:focus {
   outline: none;
   border-color: var(--vetro-teal);
   box-shadow: var(--vetro-shadow-focus);

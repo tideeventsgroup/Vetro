@@ -129,8 +129,69 @@ export interface Shift {
   status: ShiftStatus;
   clientConfirmedAt: string | null;
   incidentNotes: string | null;
+  clockInAt: string | null;
+  clockOutAt: string | null;
   site?: Site;
   officer?: Officer | null;
+}
+
+export type IncidentCategory =
+  | "THEFT"
+  | "VANDALISM"
+  | "TRESPASSING"
+  | "MEDICAL"
+  | "FIRE_SAFETY"
+  | "EQUIPMENT_FAULT"
+  | "SUSPICIOUS_ACTIVITY"
+  | "OTHER";
+
+export interface Incident {
+  id: string;
+  contractorId: string;
+  siteId: string;
+  officerId: string;
+  category: IncidentCategory;
+  description: string;
+  occurredAt: string;
+  photoKeys: string[];
+  createdAt: string;
+  site?: Site;
+  officer?: Officer;
+}
+
+export interface Checkpoint {
+  id: string;
+  contractorId: string;
+  siteId: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  site?: Site;
+}
+
+export interface CheckpointScan {
+  id: string;
+  contractorId: string;
+  checkpointId: string;
+  officerId: string;
+  scannedAt: string;
+  checkpoint?: Checkpoint;
+  officer?: Officer;
+}
+
+export interface VisitorLogEntry {
+  id: string;
+  contractorId: string;
+  siteId: string;
+  officerId: string;
+  visitorName: string;
+  company: string | null;
+  purpose: string | null;
+  hostName: string | null;
+  signedInAt: string;
+  signedOutAt: string | null;
+  site?: Site;
+  officer?: Officer;
 }
 
 export interface SiteReport {
@@ -375,6 +436,82 @@ class VetroApiClient {
     return this.request(`/me/shifts/${id}/confirm`, { method: "PATCH" });
   }
 
+  clockInMyShift(id: string): Promise<Shift> {
+    return this.request(`/me/shifts/${id}/clock-in`, { method: "PATCH" });
+  }
+
+  clockOutMyShift(id: string): Promise<Shift> {
+    return this.request(`/me/shifts/${id}/clock-out`, { method: "PATCH" });
+  }
+
+  // The sites this officer has ever had a shift at — used to populate
+  // site-pickers below without exposing the contractor's full site list to
+  // an OFFICER login (see backend/src/routes/me.ts).
+  listMySites(): Promise<Site[]> {
+    return this.request("/me/sites");
+  }
+
+  listMyIncidents(): Promise<Incident[]> {
+    return this.request("/me/incidents");
+  }
+
+  async uploadMyIncidentPhoto(file: File): Promise<string> {
+    const { uploadUrl, s3Key } = await this.request<{ uploadUrl: string; s3Key: string }>(
+      "/me/incidents/upload-url",
+      { method: "POST", body: JSON.stringify({ fileName: file.name, contentType: file.type || "application/octet-stream" }) }
+    );
+    const putResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!putResponse.ok) throw new ApiError(putResponse.status, "Upload to storage failed");
+    return s3Key;
+  }
+
+  reportIncident(input: {
+    siteId: string;
+    category: IncidentCategory;
+    description: string;
+    occurredAt: string;
+    photoKeys?: string[];
+  }): Promise<Incident> {
+    return this.request("/me/incidents", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  async getMyIncidentPhotoUrl(incidentId: string, key: string): Promise<string> {
+    const { downloadUrl } = await this.request<{ downloadUrl: string }>(
+      `/me/incidents/${incidentId}/photo-url?key=${encodeURIComponent(key)}`
+    );
+    return downloadUrl;
+  }
+
+  listMyCheckpoints(siteId: string): Promise<{ checkpoints: Checkpoint[]; scans: CheckpointScan[] }> {
+    return this.request(`/me/checkpoints?siteId=${encodeURIComponent(siteId)}`);
+  }
+
+  scanMyCheckpoint(checkpointId: string): Promise<CheckpointScan> {
+    return this.request(`/me/checkpoints/${checkpointId}/scan`, { method: "POST" });
+  }
+
+  listMyVisitorLog(siteId: string): Promise<VisitorLogEntry[]> {
+    return this.request(`/me/visitor-log?siteId=${encodeURIComponent(siteId)}`);
+  }
+
+  signInVisitor(input: {
+    siteId: string;
+    visitorName: string;
+    company?: string;
+    purpose?: string;
+    hostName?: string;
+  }): Promise<VisitorLogEntry> {
+    return this.request("/me/visitor-log", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  signOutVisitor(id: string): Promise<VisitorLogEntry> {
+    return this.request(`/me/visitor-log/${id}/sign-out`, { method: "PATCH" });
+  }
+
   listSites(): Promise<Site[]> {
     return this.request("/sites");
   }
@@ -432,6 +569,57 @@ class VetroApiClient {
     if (range?.to) params.set("to", range.to);
     const qs = params.toString();
     return this.request(`/reports/sites${qs ? `?${qs}` : ""}`);
+  }
+
+  listIncidents(filter?: { siteId?: string; category?: IncidentCategory; from?: string; to?: string }): Promise<Incident[]> {
+    const params = new URLSearchParams();
+    if (filter?.siteId) params.set("siteId", filter.siteId);
+    if (filter?.category) params.set("category", filter.category);
+    if (filter?.from) params.set("from", filter.from);
+    if (filter?.to) params.set("to", filter.to);
+    const qs = params.toString();
+    return this.request(`/incidents${qs ? `?${qs}` : ""}`);
+  }
+
+  getIncident(id: string): Promise<Incident> {
+    return this.request(`/incidents/${id}`);
+  }
+
+  async getIncidentPhotoUrl(incidentId: string, key: string): Promise<string> {
+    const { downloadUrl } = await this.request<{ downloadUrl: string }>(
+      `/incidents/${incidentId}/photo-url?key=${encodeURIComponent(key)}`
+    );
+    return downloadUrl;
+  }
+
+  listCheckpoints(siteId?: string): Promise<Checkpoint[]> {
+    return this.request(`/checkpoints${siteId ? `?siteId=${encodeURIComponent(siteId)}` : ""}`);
+  }
+
+  createCheckpoint(input: { siteId: string; name: string; description?: string }): Promise<Checkpoint> {
+    return this.request("/checkpoints", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  deleteCheckpoint(id: string): Promise<void> {
+    return this.request(`/checkpoints/${id}`, { method: "DELETE" });
+  }
+
+  listPatrolLog(filter?: { siteId?: string; from?: string; to?: string }): Promise<CheckpointScan[]> {
+    const params = new URLSearchParams();
+    if (filter?.siteId) params.set("siteId", filter.siteId);
+    if (filter?.from) params.set("from", filter.from);
+    if (filter?.to) params.set("to", filter.to);
+    const qs = params.toString();
+    return this.request(`/patrol-log${qs ? `?${qs}` : ""}`);
+  }
+
+  listVisitorLog(filter?: { siteId?: string; from?: string; to?: string }): Promise<VisitorLogEntry[]> {
+    const params = new URLSearchParams();
+    if (filter?.siteId) params.set("siteId", filter.siteId);
+    if (filter?.from) params.set("from", filter.from);
+    if (filter?.to) params.set("to", filter.to);
+    const qs = params.toString();
+    return this.request(`/visitor-log${qs ? `?${qs}` : ""}`);
   }
 
   // Client self-service portal — scoped server-side to the caller's own

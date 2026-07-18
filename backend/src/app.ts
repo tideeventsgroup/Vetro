@@ -2,8 +2,10 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { admin } from "./routes/admin.js";
 import { auditLog } from "./routes/auditLog.js";
+import { checkpoints } from "./routes/checkpoints.js";
 import { client } from "./routes/client.js";
 import { contractors } from "./routes/contractors.js";
+import { incidents } from "./routes/incidents.js";
 import { invitations } from "./routes/invitations.js";
 import { me } from "./routes/me.js";
 import { officers } from "./routes/officers.js";
@@ -19,6 +21,7 @@ import { qualifications } from "./routes/qualifications.js";
 import { documents } from "./routes/documents.js";
 import { dashboard } from "./routes/dashboard.js";
 import { exports_ } from "./routes/exports.js";
+import { visitorLog } from "./routes/visitorLog.js";
 import {
   requireAdmin,
   requireAuth,
@@ -102,6 +105,10 @@ const tenantAdminPrefixes = [
   "/sites",
   "/shifts",
   "/reports",
+  "/incidents",
+  "/checkpoints",
+  "/patrol-log",
+  "/visitor-log",
 ];
 for (const prefix of tenantAdminPrefixes) {
   api.use(prefix, requireContractor, requireAdmin);
@@ -121,5 +128,8 @@ api.route("/", auditLog);
 api.route("/", sites);
 api.route("/", shifts);
 api.route("/", reports);
+api.route("/", incidents);
+api.route("/", checkpoints);
+api.route("/", visitorLog);
 
 app.route("/", api);

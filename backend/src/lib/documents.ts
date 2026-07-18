@@ -18,12 +18,17 @@ function requireBucket(): string {
   return bucket;
 }
 
+// `prefix` groups uploads by what they belong to — "officers/<id>" for a
+// document, "incidents/<officerId>" for an incident photo — the record
+// referencing the resulting s3Key doesn't exist yet at upload time (same
+// two-step presigned flow either way: get a URL, PUT the file, then create
+// the row with the key it returned).
 export async function createUploadUrl(params: {
-  officerId: string;
+  prefix: string;
   fileName: string;
   contentType: string;
 }): Promise<{ uploadUrl: string; s3Key: string }> {
-  const s3Key = `officers/${params.officerId}/${randomUUID()}-${params.fileName}`;
+  const s3Key = `${params.prefix}/${randomUUID()}-${params.fileName}`;
   const command = new PutObjectCommand({
     Bucket: requireBucket(),
     Key: s3Key,

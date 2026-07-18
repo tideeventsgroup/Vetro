@@ -31,18 +31,33 @@ enum ShiftStatus {
   LATE
 }
 
+enum IncidentCategory {
+  THEFT
+  VANDALISM
+  TRESPASSING
+  MEDICAL
+  FIRE_SAFETY
+  EQUIPMENT_FAULT
+  SUSPICIOUS_ACTIVITY
+  OTHER
+}
+
 // The tenant boundary. `slug` is the subdomain — clyde-coast.vetro.co.uk —
 // and is how a request is scoped, either via the Cognito user's
 // custom:contractor_id claim or, in local dev, the X-Vetro-Tenant header
 // (see backend/src/lib/auth.ts).
 model Contractor {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  officers  Officer[]
-  sites     Site[]
-  shifts    Shift[]
-  createdAt DateTime  @default(now())
+  id                String            @id @default(cuid())
+  name              String
+  slug              String            @unique
+  officers          Officer[]
+  sites             Site[]
+  shifts            Shift[]
+  incidents         Incident[]
+  checkpoints       Checkpoint[]
+  checkpointScans   CheckpointScan[]
+  visitorLogEntries VisitorLogEntry[]
+  createdAt         DateTime          @default(now())
 }
 
 // A client's site/contract — what officers are actually scheduled against.
@@ -50,15 +65,18 @@ model Contractor {
 // login for this one site (custom:site_id scopes that login to just this
 // row — see backend/src/lib/auth.ts's requireClientSelf).
 model Site {
-  id                 String     @id @default(cuid())
+  id                 String            @id @default(cuid())
   contractorId       String
-  contractor         Contractor @relation(fields: [contractorId], references: [id])
+  contractor         Contractor        @relation(fields: [contractorId], references: [id])
   name               String
   address            String?
   clientContactName  String?
   clientContactEmail String?
   shifts             Shift[]
-  createdAt          DateTime   @default(now())
+  incidents          Incident[]
+  checkpoints        Checkpoint[]
+  visitorLogEntries  VisitorLogEntry[]
+  createdAt          DateTime          @default(now())
 
   @@index([contractorId])
 }
@@ -81,6 +99,8 @@ model Shift {
   status            ShiftStatus @default(SCHEDULED)
   clientConfirmedAt DateTime?
   incidentNotes     String?
+  clockInAt         DateTime?
+  clockOutAt        DateTime?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -91,19 +111,22 @@ model Shift {
 }
 
 model Officer {
-  id             String          @id @default(cuid())
-  contractorId   String
-  contractor     Contractor      @relation(fields: [contractorId], references: [id])
-  firstName      String
-  lastName       String
-  email          String?
-  phone          String?
+  id                 String              @id @default(cuid())
+  contractorId       String
+  contractor         Contractor          @relation(fields: [contractorId], references: [id])
+  firstName          String
+  lastName           String
+  email              String?
+  phone              String?
   licences           SiaLicence[]
   vettingRecords     VettingRecord[]
   qualifications     Qualification[]
   documents          Document[]
   vettingSubmissions VettingSubmission[]
   shifts             Shift[]
+  incidents          Incident[]
+  checkpointScans    CheckpointScan[]
+  visitorLogEntries  VisitorLogEntry[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -188,6 +211,90 @@ model Document {
   uploadedAt DateTime @default(now())
 
   @@index([officerId])
+}
+
+// Filed by whichever officer was on-site — the one feature every guard
+// management product (Silvertrac, Trackforce, TimeGate+) treats as core,
+// and doubles as extra evidence for an ACS inspection alongside the
+// compliance record. photoKeys are S3 keys from the same presigned-upload
+// flow as Document (lib/documents.ts), just under an "incidents/" prefix.
+model Incident {
+  id           String           @id @default(cuid())
+  contractorId String
+  contractor   Contractor       @relation(fields: [contractorId], references: [id])
+  siteId       String
+  site         Site             @relation(fields: [siteId], references: [id])
+  officerId    String
+  officer      Officer          @relation(fields: [officerId], references: [id])
+  category     IncidentCategory
+  description  String
+  occurredAt   DateTime
+  photoKeys    String[]
+  createdAt    DateTime         @default(now())
+
+  @@index([contractorId])
+  @@index([siteId])
+  @@index([officerId])
+  @@index([occurredAt])
+}
+
+// A patrol route is just a named set of checkpoints at a site — no GPS
+// geofencing or NFC hardware assumed, an officer taps "Scan" from their
+// phone when they physically reach each one, same as Vetro's other
+// self-service actions.
+model Checkpoint {
+  id           String           @id @default(cuid())
+  contractorId String
+  contractor   Contractor       @relation(fields: [contractorId], references: [id])
+  siteId       String
+  site         Site             @relation(fields: [siteId], references: [id])
+  name         String
+  description  String?
+  scans        CheckpointScan[]
+  createdAt    DateTime         @default(now())
+
+  @@index([contractorId])
+  @@index([siteId])
+}
+
+model CheckpointScan {
+  id           String     @id @default(cuid())
+  contractorId String
+  contractor   Contractor @relation(fields: [contractorId], references: [id])
+  checkpointId String
+  checkpoint   Checkpoint @relation(fields: [checkpointId], references: [id])
+  officerId    String
+  officer      Officer    @relation(fields: [officerId], references: [id])
+  scannedAt    DateTime   @default(now())
+
+  @@index([contractorId])
+  @@index([checkpointId])
+  @@index([officerId])
+  @@index([scannedAt])
+}
+
+// A site-level sign-in/out register — common wherever a site itself
+// controls who's allowed past reception, recorded by whichever officer is
+// on duty rather than the visitor self-serving it.
+model VisitorLogEntry {
+  id           String     @id @default(cuid())
+  contractorId String
+  contractor   Contractor @relation(fields: [contractorId], references: [id])
+  siteId       String
+  site         Site       @relation(fields: [siteId], references: [id])
+  officerId    String
+  officer      Officer    @relation(fields: [officerId], references: [id])
+  visitorName  String
+  company      String?
+  purpose      String?
+  hostName     String?
+  signedInAt   DateTime   @default(now())
+  signedOutAt  DateTime?
+
+  @@index([contractorId])
+  @@index([siteId])
+  @@index([officerId])
+  @@index([signedInAt])
 }
 
 // Every write an ACS inspector or client export might need to prove happened.

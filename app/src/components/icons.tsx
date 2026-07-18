@@ -187,6 +187,26 @@ export function MapPinIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function WarningIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3L21.5 20H2.5L12 3Z" />
+      <path d="M12 9.5V14" />
+      <circle cx="12" cy="17.25" r="0.25" fill="currentColor" />
+    </Icon>
+  );
+}
+
+export function RouteIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <circle cx="5.5" cy="6" r="2" />
+      <circle cx="18.5" cy="18" r="2" />
+      <path d="M7.5 6H14C16.5 6 16.5 12 14 12H10C7.5 12 7.5 18 10 18H16.5" />
+    </Icon>
+  );
+}
+
 export function CalendarIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

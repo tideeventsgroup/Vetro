@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ShiftStatusBadge } from "../components/StatusBadge.js";
-import { CheckIcon, MapPinIcon } from "../components/icons.js";
+import { CheckIcon, ClockIcon, MapPinIcon } from "../components/icons.js";
 import { Shift, ShiftStatus, useApi } from "../lib/api.js";
 
 function formatDay(value: string): string {
@@ -44,7 +44,7 @@ export function MyShifts() {
   const api = useApi();
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined);
+  const [busyId, setBusyId] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function MyShifts() {
   }
 
   async function handleConfirm(shift: Shift) {
-    setConfirmingId(shift.id);
+    setBusyId(shift.id);
     setError(undefined);
     try {
       await api.confirmMyShift(shift.id);
@@ -71,7 +71,33 @@ export function MyShifts() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not confirm this shift");
     } finally {
-      setConfirmingId(undefined);
+      setBusyId(undefined);
+    }
+  }
+
+  async function handleClockIn(shift: Shift) {
+    setBusyId(shift.id);
+    setError(undefined);
+    try {
+      await api.clockInMyShift(shift.id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not clock in");
+    } finally {
+      setBusyId(undefined);
+    }
+  }
+
+  async function handleClockOut(shift: Shift) {
+    setBusyId(shift.id);
+    setError(undefined);
+    try {
+      await api.clockOutMyShift(shift.id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not clock out");
+    } finally {
+      setBusyId(undefined);
     }
   }
 
@@ -156,16 +182,49 @@ export function MyShifts() {
                     <div className="shift-card-time">
                       {formatTime(shift.startTime)} – {formatTime(shift.endTime)}
                     </div>
+                    {shift.clockInAt && (
+                      <p className="subtle-meta" style={{ margin: 0 }}>
+                        <ClockIcon width={12} height={12} />
+                        {shift.clockOutAt
+                          ? `Worked ${formatTime(shift.clockInAt)} – ${formatTime(shift.clockOutAt)}`
+                          : `Clocked in at ${formatTime(shift.clockInAt)}`}
+                      </p>
+                    )}
                     {shift.status === "SCHEDULED" && (
                       <div className="shift-card-footer">
                         <button
                           className="btn btn-primary"
                           onClick={() => handleConfirm(shift)}
-                          disabled={confirmingId === shift.id}
+                          disabled={busyId === shift.id}
                           style={{ width: "100%" }}
                         >
                           <CheckIcon width={14} height={14} />
-                          {confirmingId === shift.id ? "Confirming…" : "Confirm shift"}
+                          {busyId === shift.id ? "Confirming…" : "Confirm shift"}
+                        </button>
+                      </div>
+                    )}
+                    {shift.status === "CONFIRMED" && !shift.clockInAt && (
+                      <div className="shift-card-footer">
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => handleClockIn(shift)}
+                          disabled={busyId === shift.id}
+                          style={{ width: "100%" }}
+                        >
+                          <ClockIcon width={14} height={14} />
+                          {busyId === shift.id ? "Clocking in…" : "Clock in"}
+                        </button>
+                      </div>
+                    )}
+                    {shift.clockInAt && !shift.clockOutAt && (
+                      <div className="shift-card-footer">
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => handleClockOut(shift)}
+                          disabled={busyId === shift.id}
+                          style={{ width: "100%" }}
+                        >
+                          {busyId === shift.id ? "Clocking out…" : "Clock out"}
                         </button>
                       </div>
                     )}

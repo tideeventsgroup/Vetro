@@ -10,10 +10,12 @@ import {
   MapPinIcon,
   MenuIcon,
   RosterIcon,
+  RouteIcon,
   SettingsIcon,
   ShieldCheckIcon,
   SignOutIcon,
   UsersIcon,
+  WarningIcon,
 } from "../components/icons.js";
 
 export function ProtectedLayout() {
@@ -51,6 +53,18 @@ export function ProtectedLayout() {
             <CalendarIcon />
             Schedule
           </NavLink>
+          <NavLink to={`/${tenant}/incidents`}>
+            <WarningIcon />
+            Incidents
+          </NavLink>
+          <NavLink to={`/${tenant}/patrols`}>
+            <RouteIcon />
+            Patrols
+          </NavLink>
+          <NavLink to={`/${tenant}/visitor-log`}>
+            <UsersIcon />
+            Visitor log
+          </NavLink>
           <NavLink to={`/${tenant}/reports`}>
             <BarChartIcon />
             Reports
@@ -87,13 +101,13 @@ export function ProtectedLayout() {
           <RosterIcon />
           <span>Roster</span>
         </NavLink>
-        <NavLink to={`/${tenant}/vetting-queue`} className="mobile-tab">
-          <ShieldCheckIcon />
-          <span>Vetting</span>
-        </NavLink>
         <NavLink to={`/${tenant}/schedule`} className="mobile-tab">
           <CalendarIcon />
           <span>Schedule</span>
+        </NavLink>
+        <NavLink to={`/${tenant}/incidents`} className="mobile-tab">
+          <WarningIcon />
+          <span>Incidents</span>
         </NavLink>
         <NavLink to={`/${tenant}/reports`} className="mobile-tab">
           <BarChartIcon />

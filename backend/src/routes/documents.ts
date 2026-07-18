@@ -23,7 +23,7 @@ documents.post("/officers/:officerId/documents/upload-url", async (c) => {
 
   const body = await c.req.json<{ fileName: string; contentType: string }>();
   const { uploadUrl, s3Key } = await createUploadUrl({
-    officerId,
+    prefix: `officers/${officerId}`,
     fileName: body.fileName,
     contentType: body.contentType,
   });

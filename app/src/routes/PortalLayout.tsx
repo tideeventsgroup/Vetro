@@ -1,7 +1,16 @@
 import { useState } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
-import { CalendarIcon, HomeIcon, MenuIcon, ShieldCheckIcon, SignOutIcon } from "../components/icons.js";
+import {
+  CalendarIcon,
+  HomeIcon,
+  MenuIcon,
+  RouteIcon,
+  ShieldCheckIcon,
+  SignOutIcon,
+  UsersIcon,
+  WarningIcon,
+} from "../components/icons.js";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 
@@ -29,6 +38,18 @@ export function PortalLayout() {
           <NavLink to={`/${tenant}/portal/shifts`}>
             <CalendarIcon />
             My shifts
+          </NavLink>
+          <NavLink to={`/${tenant}/portal/incidents`}>
+            <WarningIcon />
+            Incidents
+          </NavLink>
+          <NavLink to={`/${tenant}/portal/patrols`}>
+            <RouteIcon />
+            Patrols
+          </NavLink>
+          <NavLink to={`/${tenant}/portal/visitor-log`}>
+            <UsersIcon />
+            Visitor log
           </NavLink>
           <NavLink to={`/${tenant}/portal/vetting`}>
             <ShieldCheckIcon />
@@ -58,13 +79,13 @@ export function PortalLayout() {
           <CalendarIcon />
           <span>Shifts</span>
         </NavLink>
-        <NavLink to={`/${tenant}/portal/vetting`} className="mobile-tab">
-          <ShieldCheckIcon />
-          <span>Vetting</span>
+        <NavLink to={`/${tenant}/portal/incidents`} className="mobile-tab">
+          <WarningIcon />
+          <span>Incidents</span>
         </NavLink>
         <button type="button" className="mobile-tab" onClick={() => setMobileNavOpen(true)}>
           <MenuIcon />
-          <span>Account</span>
+          <span>More</span>
         </button>
       </nav>
     </div>

@@ -4,10 +4,15 @@ import { AuditLog } from "./routes/AuditLog.js";
 import { ClientHome } from "./routes/ClientHome.js";
 import { ClientLayout } from "./routes/ClientLayout.js";
 import { Dashboard } from "./routes/Dashboard.js";
+import { Incidents } from "./routes/Incidents.js";
 import { Login } from "./routes/Login.js";
-import { NoTenant } from "./routes/NoTenant.js";
+import { MyIncidents } from "./routes/MyIncidents.js";
+import { MyPatrols } from "./routes/MyPatrols.js";
 import { MyShifts } from "./routes/MyShifts.js";
+import { MyVisitorLog } from "./routes/MyVisitorLog.js";
+import { NoTenant } from "./routes/NoTenant.js";
 import { OfficerDetail } from "./routes/OfficerDetail.js";
+import { Patrols } from "./routes/Patrols.js";
 import { PortalHome } from "./routes/PortalHome.js";
 import { PortalLayout } from "./routes/PortalLayout.js";
 import { ProtectedLayout } from "./routes/ProtectedLayout.js";
@@ -19,6 +24,7 @@ import { Sites } from "./routes/Sites.js";
 import { Team } from "./routes/Team.js";
 import { VettingQueue } from "./routes/VettingQueue.js";
 import { VettingWizard } from "./routes/VettingWizard.js";
+import { VisitorLog } from "./routes/VisitorLog.js";
 
 // Everything past sign-in lives under /:tenant — clyde-coast.vetro.co.uk's
 // per-org subdomain, once a custom domain exists, becomes .../clyde-coast
@@ -43,6 +49,9 @@ export function App() {
               <Route path="vetting-queue" element={<VettingQueue />} />
               <Route path="sites" element={<Sites />} />
               <Route path="schedule" element={<Schedule />} />
+              <Route path="incidents" element={<Incidents />} />
+              <Route path="patrols" element={<Patrols />} />
+              <Route path="visitor-log" element={<VisitorLog />} />
               <Route path="reports" element={<Reports />} />
               <Route path="team" element={<Team />} />
               <Route path="settings" element={<Settings />} />
@@ -51,6 +60,9 @@ export function App() {
             <Route path="portal" element={<PortalLayout />}>
               <Route index element={<PortalHome />} />
               <Route path="shifts" element={<MyShifts />} />
+              <Route path="incidents" element={<MyIncidents />} />
+              <Route path="patrols" element={<MyPatrols />} />
+              <Route path="visitor-log" element={<MyVisitorLog />} />
               <Route path="vetting" element={<VettingWizard />} />
             </Route>
             <Route element={<ClientLayout />}>
