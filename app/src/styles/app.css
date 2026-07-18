@@ -221,12 +221,12 @@ button {
    hero spans full width. */
 .page-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--vetro-space-4);
   width: calc(100vw - 232px);
-  margin: calc(var(--vetro-space-6) * -1) 0 var(--vetro-space-5) calc(var(--vetro-space-8) * -1);
-  padding: var(--vetro-space-4) var(--vetro-space-8);
+  margin: calc(var(--vetro-space-6) * -1) 0 var(--vetro-space-4) calc(var(--vetro-space-8) * -1);
+  padding: 14px var(--vetro-space-8);
   background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
   background-image:
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 64px),
@@ -235,13 +235,14 @@ button {
 }
 
 .page-header h1 {
-  font-size: var(--vetro-fs-h1);
+  font-size: var(--vetro-fs-h3);
   color: var(--vetro-white);
 }
 
 .page-header p {
   color: #B8C2CC;
-  margin: var(--vetro-space-1) 0 0;
+  font-size: var(--vetro-fs-body-sm);
+  margin: 1px 0 0;
 }
 
 .page-actions {
@@ -257,7 +258,7 @@ button {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: var(--vetro-space-4);
-  margin-top: -20px;
+  margin-top: -14px;
   margin-bottom: var(--vetro-space-5);
   position: relative;
 }

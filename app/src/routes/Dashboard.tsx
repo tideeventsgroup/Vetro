@@ -22,11 +22,21 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+// There's no separate "display name" anywhere for an ADMIN/teammate account
+// (only officers have firstName/lastName) — the email's local part is the
+// closest thing to one, so "kyle.robb@..." greets as "Welcome back, Kyle".
+function friendlyName(email: string | undefined): string | undefined {
+  if (!email) return undefined;
+  const local = email.split("@")[0];
+  const first = local?.split(/[._-]/)[0];
+  return first ? first[0]!.toUpperCase() + first.slice(1) : undefined;
+}
+
 export function Dashboard() {
   const api = useApi();
   const navigate = useNavigate();
   const tenant = useTenantSlug();
-  const { refreshClaims } = useAuth();
+  const { refreshClaims, email } = useAuth();
 
   const [contractor, setContractor] = useState<Contractor | undefined>(undefined);
   const [newContractorName, setNewContractorName] = useState("");
@@ -166,8 +176,10 @@ export function Dashboard() {
     <div>
       <div className="page-header">
         <div>
-          <h1>{contractor.name}</h1>
-          <p>One record per officer — checked automatically, not chased manually.</p>
+          <h1>{friendlyName(email) ? `Welcome back, ${friendlyName(email)}` : contractor.name}</h1>
+          <p>
+            {contractor.name} — checked automatically, not chased manually.
+          </p>
         </div>
         <div className="page-actions">
           <button className="btn btn-secondary" onClick={handleExport}>
