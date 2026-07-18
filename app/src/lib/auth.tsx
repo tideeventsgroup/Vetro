@@ -10,6 +10,19 @@ import { getDevOfficerId, getDevRole } from "./dev.js";
 
 const SKIP_AUTH = import.meta.env.VITE_SKIP_AUTH === "true";
 
+// Every AdminCreateUser-created account (teammate/officer/client invites —
+// see backend/src/lib/cognito.ts) starts in FORCE_CHANGE_PASSWORD status, so
+// their first login always hits Cognito's NEW_PASSWORD_REQUIRED challenge
+// instead of succeeding outright. login() rejects with this (carrying the
+// mid-challenge CognitoUser) instead of completing the sign-in; the caller
+// re-prompts for a new password and finishes with completeNewPassword.
+export class NewPasswordRequiredError extends Error {
+  constructor(public user: CognitoUser) {
+    super("A new password is required");
+    this.name = "NewPasswordRequiredError";
+  }
+}
+
 interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -33,7 +46,10 @@ interface AuthContextValue {
    * would still see the stale (possibly undefined) pre-call value.
    */
   getIdToken: () => string | undefined;
+  /** Rejects with NewPasswordRequiredError for an invited account's first login — see completeNewPassword. */
   login: (email: string, password: string) => Promise<void>;
+  /** Finishes the challenge login() rejected with, setting the account's real password. */
+  completeNewPassword: (user: CognitoUser, newPassword: string) => Promise<void>;
   logout: () => void;
   /** Creates the raw Cognito account — email + password, nothing else (see infra/lib/auth-stack.ts's writeAttributes note). */
   signUp: (email: string, password: string) => Promise<void>;
@@ -131,7 +147,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               resolve();
             },
             onFailure: (err) => reject(err),
+            newPasswordRequired: () => reject(new NewPasswordRequiredError(user)),
           });
+        }),
+      completeNewPassword: (user, newPassword) =>
+        new Promise((resolve, reject) => {
+          user.completeNewPasswordChallenge(
+            newPassword,
+            {},
+            {
+              onSuccess: (session) => {
+                setIdToken(session.getIdToken().getJwtToken());
+                const claims = claimsFromSession(session);
+                setRole(claims.role);
+                setOfficerId(claims.officerId);
+                setIsAuthenticated(true);
+                resolve();
+              },
+              onFailure: (err) => reject(err),
+            },
+          );
         }),
       logout: () => {
         if (!SKIP_AUTH) getUserPool().getCurrentUser()?.signOut();

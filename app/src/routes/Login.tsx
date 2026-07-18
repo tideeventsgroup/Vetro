@@ -1,18 +1,24 @@
+import { CognitoUser } from "amazon-cognito-identity-js";
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/auth.js";
+import { NewPasswordRequiredError, useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 import { ShieldCheckIcon } from "../components/icons.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 
 export function Login() {
-  const { login } = useAuth();
+  const { login, completeNewPassword } = useAuth();
   const navigate = useNavigate();
   const tenant = useTenantSlug();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Set once an invited account's first login hits Cognito's
+  // NEW_PASSWORD_REQUIRED challenge (see NewPasswordRequiredError) — switches
+  // the form below to asking for a permanent password instead of signing in.
+  const [pendingUser, setPendingUser] = useState<CognitoUser | undefined>(undefined);
+  const [newPassword, setNewPassword] = useState("");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -22,7 +28,26 @@ export function Login() {
       await login(email, password);
       navigate(`/${tenant}`, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed");
+      if (err instanceof NewPasswordRequiredError) {
+        setPendingUser(err.user);
+      } else {
+        setError(err instanceof Error ? err.message : "Sign in failed");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleSetNewPassword(e: FormEvent) {
+    e.preventDefault();
+    if (!pendingUser) return;
+    setError(undefined);
+    setIsSubmitting(true);
+    try {
+      await completeNewPassword(pendingUser, newPassword);
+      navigate(`/${tenant}`, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not set new password");
     } finally {
       setIsSubmitting(false);
     }
@@ -52,39 +77,68 @@ export function Login() {
           <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)" }}>
             <ShieldCheckIcon />
           </span>
-          <h2>Sign in</h2>
-          <p className="lede">Sign in to your officer record.</p>
-          <form onSubmit={handleSubmit}>
-            {error && <p className="error-text">{error}</p>}
-            <div className="form-field">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="username"
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-            <button className="btn btn-primary" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
-              {isSubmitting ? "Signing in…" : "Sign in"}
-            </button>
-          </form>
-          <p className="subtle-meta" style={{ marginTop: 16 }}>
-            New to Vetro? <Link to="/signup">Create an organisation</Link>
-          </p>
+          {pendingUser ? (
+            <>
+              <h2>Set a new password</h2>
+              <p className="lede">This is a temporary password — choose a permanent one to finish signing in.</p>
+              <form onSubmit={handleSetNewPassword}>
+                {error && <p className="error-text">{error}</p>}
+                <div className="form-field">
+                  <label htmlFor="newPassword">New password</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    required
+                    minLength={12}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <button className="btn btn-primary" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
+                  {isSubmitting ? "Setting password…" : "Set password and sign in"}
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <h2>Sign in</h2>
+              <p className="lede">Sign in to your officer record.</p>
+              <form onSubmit={handleSubmit}>
+                {error && <p className="error-text">{error}</p>}
+                <div className="form-field">
+                  <label htmlFor="email">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="username"
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="password">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+                <button className="btn btn-primary" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
+                  {isSubmitting ? "Signing in…" : "Sign in"}
+                </button>
+              </form>
+            </>
+          )}
+          {!pendingUser && (
+            <p className="subtle-meta" style={{ marginTop: 16 }}>
+              New to Vetro? <Link to="/signup">Create an organisation</Link>
+            </p>
+          )}
         </div>
       </div>
     </div>

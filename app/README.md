@@ -39,10 +39,17 @@ against the same running dev server (both tenants are in `prisma/seed.ts`).
 `src/lib/auth.tsx` uses `amazon-cognito-identity-js` directly (not full
 Amplify) against the user pool created in `infra/lib/auth-stack.ts`, and
 reads the **ID** token (not the access token) since that's where Cognito
-puts custom attributes like `custom:contractor_id`. Real login has not been
-exercised end-to-end in this repo yet — that requires an actual deployed
-user pool with a user in it and that attribute set — only the
-`VITE_SKIP_AUTH` path has been.
+puts custom attributes like `custom:contractor_id`.
+
+Every invited account (teammate/officer/client — all created via
+`AdminCreateUser`, see `backend/README.md`'s "Onboarding & roles") starts in
+`FORCE_CHANGE_PASSWORD` status, so its first login always hits Cognito's
+`NEW_PASSWORD_REQUIRED` challenge instead of succeeding outright — a
+self-serve `/signup` account never sees this, since it sets its real
+password at signup time. `login()` rejects with `NewPasswordRequiredError`
+(carrying the mid-challenge `CognitoUser`) rather than completing sign-in;
+`Login.tsx` catches that specifically and swaps to a "set a new password"
+form, finishing with `completeNewPassword`.
 
 ## What's here vs. not yet
 
