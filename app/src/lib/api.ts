@@ -135,6 +135,60 @@ class VetroApiClient {
     });
   }
 
+  createQualification(
+    officerId: string,
+    input: { name: string; issuedBy?: string; issueDate?: string; expiryDate?: string }
+  ) {
+    return this.request<Qualification>(`/officers/${officerId}/qualifications`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  }
+
+  deleteQualification(id: string): Promise<void> {
+    return this.request(`/qualifications/${id}`, { method: "DELETE" });
+  }
+
+  requestDocumentUploadUrl(
+    officerId: string,
+    input: { fileName: string; contentType: string }
+  ): Promise<{ uploadUrl: string; s3Key: string }> {
+    return this.request(`/officers/${officerId}/documents/upload-url`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  }
+
+  confirmDocumentUpload(officerId: string, input: { kind: string; s3Key: string }) {
+    return this.request<OfficerDocument>(`/officers/${officerId}/documents`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  }
+
+  async uploadDocument(officerId: string, file: File, kind: string): Promise<OfficerDocument> {
+    const { uploadUrl, s3Key } = await this.requestDocumentUploadUrl(officerId, {
+      fileName: file.name,
+      contentType: file.type || "application/octet-stream",
+    });
+    const putResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!putResponse.ok) throw new ApiError(putResponse.status, "Upload to storage failed");
+    return this.confirmDocumentUpload(officerId, { kind, s3Key });
+  }
+
+  async getDocumentDownloadUrl(id: string): Promise<string> {
+    const { downloadUrl } = await this.request<{ downloadUrl: string }>(`/documents/${id}/download-url`);
+    return downloadUrl;
+  }
+
+  deleteDocument(id: string): Promise<void> {
+    return this.request(`/documents/${id}`, { method: "DELETE" });
+  }
+
   getDashboardSummary(contractorId?: string): Promise<DashboardSummary> {
     const query = contractorId ? `?contractorId=${encodeURIComponent(contractorId)}` : "";
     return this.request(`/dashboard/summary${query}`);

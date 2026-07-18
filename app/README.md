@@ -28,11 +28,14 @@ has been.
 
 ## What's here vs. not yet
 
-- Officer roster, officer detail, adding officers/licences/vetting records,
-  and the CSV export all work against the real API.
-- Qualifications and document upload have backend routes
-  (`backend/src/routes/qualifications.ts`, `documents.ts`) but no UI here
-  yet — the next piece of frontend work.
+- Officer roster, officer detail, adding officers/licences/vetting/
+  qualification records, and the CSV export all work against the real API
+  — verified against a real Postgres in a real browser.
+- Document upload (`src/components/DocumentsSection.tsx`) is built —
+  presigned-URL request, direct S3 PUT, confirm call — but **not verified
+  end-to-end**: it needs a deployed `DOCUMENTS_BUCKET`, which doesn't exist
+  locally. Expect it to 500 in local dev; that's the backend correctly
+  refusing to guess a bucket name, not a frontend bug.
 - No contractor switcher: the dashboard uses whichever contractor comes
   back first from `GET /contractors`, which is fine for one contractor per
   login but will need real tenant-to-user mapping (probably a Cognito

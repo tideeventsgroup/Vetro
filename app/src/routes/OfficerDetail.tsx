@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { DocumentsSection } from "../components/DocumentsSection.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 import { Officer, useApi } from "../lib/api.js";
 
@@ -14,6 +15,7 @@ export function OfficerDetail() {
   const [officer, setOfficer] = useState<Officer | undefined>(undefined);
   const [showAddLicence, setShowAddLicence] = useState(false);
   const [showAddVetting, setShowAddVetting] = useState(false);
+  const [showAddQualification, setShowAddQualification] = useState(false);
 
   useEffect(() => {
     if (id) void load(id);
@@ -47,6 +49,20 @@ export function OfficerDetail() {
       expiryDate: String(form.get("expiryDate") || "") || undefined,
     });
     setShowAddVetting(false);
+    await load(id);
+  }
+
+  async function handleAddQualification(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!id) return;
+    const form = new FormData(e.currentTarget);
+    await api.createQualification(id, {
+      name: String(form.get("name")),
+      issuedBy: String(form.get("issuedBy") || "") || undefined,
+      issueDate: String(form.get("qualIssueDate") || "") || undefined,
+      expiryDate: String(form.get("qualExpiryDate") || "") || undefined,
+    });
+    setShowAddQualification(false);
     await load(id);
   }
 
@@ -178,6 +194,66 @@ export function OfficerDetail() {
           </table>
         )}
       </div>
+
+      <div className="card">
+        <div className="page-header" style={{ marginBottom: 12 }}>
+          <h2 style={{ fontSize: 16 }}>Qualifications</h2>
+          <button className="btn btn-secondary" onClick={() => setShowAddQualification((v) => !v)}>
+            {showAddQualification ? "Cancel" : "Add qualification"}
+          </button>
+        </div>
+
+        {showAddQualification && (
+          <form onSubmit={handleAddQualification} style={{ marginBottom: 16 }}>
+            <div className="form-field">
+              <label htmlFor="name">Name</label>
+              <input id="name" name="name" placeholder="First Aid at Work" required />
+            </div>
+            <div className="form-field">
+              <label htmlFor="issuedBy">Issued by (optional)</label>
+              <input id="issuedBy" name="issuedBy" />
+            </div>
+            <div className="form-field">
+              <label htmlFor="qualIssueDate">Issue date (optional)</label>
+              <input id="qualIssueDate" name="qualIssueDate" type="date" />
+            </div>
+            <div className="form-field">
+              <label htmlFor="qualExpiryDate">Expiry date (optional)</label>
+              <input id="qualExpiryDate" name="qualExpiryDate" type="date" />
+            </div>
+            <button className="btn btn-primary" type="submit">
+              Save qualification
+            </button>
+          </form>
+        )}
+
+        {(officer.qualifications ?? []).length === 0 ? (
+          <p style={{ color: "var(--vetro-text-muted)" }}>No qualifications on file.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Issued by</th>
+                <th>Expires</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(officer.qualifications ?? []).map((q) => (
+                <tr key={q.id}>
+                  <td>{q.name}</td>
+                  <td>{q.issuedBy ?? "—"}</td>
+                  <td>{formatDate(q.expiryDate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {id && (
+        <DocumentsSection officerId={id} documents={officer.documents ?? []} onChange={() => load(id)} />
+      )}
     </div>
   );
 }
