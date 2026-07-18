@@ -1,7 +1,7 @@
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
-import { RosterIcon, SignOutIcon, UsersIcon } from "../components/icons.js";
+import { ClockIcon, RosterIcon, SettingsIcon, ShieldCheckIcon, SignOutIcon, UsersIcon } from "../components/icons.js";
 
 export function ProtectedLayout() {
   const { isAuthenticated, isLoading, logout, role } = useAuth();
@@ -22,9 +22,21 @@ export function ProtectedLayout() {
             <RosterIcon />
             Roster
           </NavLink>
+          <NavLink to={`/${tenant}/vetting-queue`}>
+            <ShieldCheckIcon />
+            Vetting queue
+          </NavLink>
           <NavLink to={`/${tenant}/team`}>
             <UsersIcon />
             Team
+          </NavLink>
+          <NavLink to={`/${tenant}/audit-log`}>
+            <ClockIcon />
+            Audit log
+          </NavLink>
+          <NavLink to={`/${tenant}/settings`}>
+            <SettingsIcon />
+            Settings
           </NavLink>
         </nav>
         <div className="app-sidebar-footer">

@@ -20,6 +20,7 @@ invitations.post("/invitations", async (c) => {
   });
 
   await recordAudit({
+    contractorId,
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "teammate.invited",
     entityType: "Contractor",

@@ -60,6 +60,28 @@ export interface VettingSubmission {
   submittedAt: string;
 }
 
+export interface VettingSubmissionForReview extends VettingSubmission {
+  officer: { id: string; firstName: string; lastName: string };
+}
+
+export interface TeamMember {
+  username: string;
+  email: string;
+  status: string;
+  role?: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  contractorId: string | null;
+  actorEmail: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  metadata: unknown;
+  createdAt: string;
+}
+
 export interface Officer {
   id: string;
   contractorId: string;
@@ -132,6 +154,10 @@ class VetroApiClient {
   /** Self-serve signup's org-creation step — see routes/Signup.tsx. */
   createOrganizationSelfSignup(input: { name: string; slug: string }): Promise<Contractor> {
     return this.request("/signup/organization", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  renameOrganization(name: string): Promise<Contractor> {
+    return this.request("/contractors/me", { method: "PATCH", body: JSON.stringify({ name }) });
   }
 
   listOfficers(): Promise<Officer[]> {
@@ -226,6 +252,31 @@ class VetroApiClient {
 
   inviteTeammate(email: string): Promise<{ status: string; email: string }> {
     return this.request("/invitations", { method: "POST", body: JSON.stringify({ email }) });
+  }
+
+  listTeam(): Promise<TeamMember[]> {
+    return this.request("/team");
+  }
+
+  removeTeammate(username: string): Promise<void> {
+    return this.request(`/team/${encodeURIComponent(username)}`, { method: "DELETE" });
+  }
+
+  listAuditLog(): Promise<AuditLogEntry[]> {
+    return this.request("/audit-log");
+  }
+
+  // The admin-facing review queue for officer self-service vetting
+  // submissions — see routes/VettingQueue.tsx and backend/src/routes/vettingSubmissions.ts.
+  listVettingSubmissionsForReview(status?: SubmissionStatus): Promise<VettingSubmissionForReview[]> {
+    return this.request(`/vetting-submissions${status ? `?status=${status}` : ""}`);
+  }
+
+  reviewVettingSubmission(
+    id: string,
+    input: { status: "APPROVED" | "REJECTED"; reviewNotes?: string; expiryDate?: string }
+  ): Promise<VettingSubmission> {
+    return this.request(`/vetting-submissions/${id}`, { method: "PATCH", body: JSON.stringify(input) });
   }
 
   inviteOfficer(officerId: string, email?: string): Promise<{ status: string; email: string }> {

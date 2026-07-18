@@ -135,14 +135,20 @@ model Document {
 }
 
 // Every write an ACS inspector or client export might need to prove happened.
+// contractorId is nullable only because it postdates this table — every
+// call site that exists has one available and always passes it now (see
+// backend/src/lib/audit.ts); older rows from before this column existed
+// just show with no tenant attributed.
 model AuditLogEntry {
-  id         String   @id @default(cuid())
-  actorEmail String
-  action     String
-  entityType String
-  entityId   String
-  metadata   Json?
-  createdAt  DateTime @default(now())
+  id           String   @id @default(cuid())
+  contractorId String?
+  actorEmail   String
+  action       String
+  entityType   String
+  entityId     String
+  metadata     Json?
+  createdAt    DateTime @default(now())
 
   @@index([entityType, entityId])
+  @@index([contractorId, createdAt])
 }

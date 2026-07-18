@@ -116,3 +116,47 @@ export function UsersIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function CheckIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 12L9.5 17.5L20 6" />
+    </Icon>
+  );
+}
+
+export function XIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M6 6L18 18M18 6L6 18" />
+    </Icon>
+  );
+}
+
+export function SettingsIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="3.25" />
+      <path d="M19.4 15A1.65 1.65 0 0 0 20.5 13.4L19.9 12L20.5 10.6A1.65 1.65 0 0 0 19.4 9L17.7 8.6A1.65 1.65 0 0 1 16.6 7.5L16.2 5.8A1.65 1.65 0 0 0 14.6 4.7L13 5A1.65 1.65 0 0 1 11 5L9.4 4.7A1.65 1.65 0 0 0 7.8 5.8L7.4 7.5A1.65 1.65 0 0 1 6.3 8.6L4.6 9A1.65 1.65 0 0 0 3.5 10.6L4.1 12L3.5 13.4A1.65 1.65 0 0 0 4.6 15L6.3 15.4A1.65 1.65 0 0 1 7.4 16.5L7.8 18.2A1.65 1.65 0 0 0 9.4 19.3L11 19A1.65 1.65 0 0 1 13 19L14.6 19.3A1.65 1.65 0 0 0 16.2 18.2L16.6 16.5A1.65 1.65 0 0 1 17.7 15.4L19.4 15Z" />
+    </Icon>
+  );
+}
+
+export function ClockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7V12L15.5 14.5" />
+    </Icon>
+  );
+}
+
+export function TrashIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 7H20" />
+      <path d="M9 7V4.5C9 3.7 9.7 3 10.5 3H13.5C14.3 3 15 3.7 15 4.5V7" />
+      <path d="M6 7L7 19.5C7.05 20.35 7.75 21 8.6 21H15.4C16.25 21 16.95 20.35 17 19.5L18 7" />
+    </Icon>
+  );
+}
+

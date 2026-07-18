@@ -34,6 +34,7 @@ vetting.post("/officers/:officerId/vetting", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "vetting.created",
     entityType: "VettingRecord",
@@ -64,6 +65,7 @@ vetting.patch("/vetting/:id", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "vetting.updated",
     entityType: "VettingRecord",

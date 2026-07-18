@@ -1,6 +1,6 @@
-import { FormEvent, useState } from "react";
-import { MailIcon, UsersIcon } from "../components/icons.js";
-import { useApi } from "../lib/api.js";
+import { FormEvent, useEffect, useState } from "react";
+import { MailIcon, TrashIcon, UsersIcon } from "../components/icons.js";
+import { TeamMember, useApi } from "../lib/api.js";
 
 export function Team() {
   const api = useApi();
@@ -8,6 +8,24 @@ export function Team() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [isLoadingTeam, setIsLoadingTeam] = useState(true);
+  const [removingUsername, setRemovingUsername] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    void loadTeam();
+  }, []);
+
+  async function loadTeam() {
+    setIsLoadingTeam(true);
+    try {
+      setTeam(await api.listTeam());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load team");
+    } finally {
+      setIsLoadingTeam(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -18,10 +36,24 @@ export function Team() {
       const result = await api.inviteTeammate(email.trim());
       setStatus(`Invitation sent to ${result.email}.`);
       setEmail("");
+      await loadTeam();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send invitation");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleRemove(member: TeamMember) {
+    if (!window.confirm(`Remove ${member.email} from this organisation?`)) return;
+    setRemovingUsername(member.username);
+    try {
+      await api.removeTeammate(member.username);
+      await loadTeam();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not remove teammate");
+    } finally {
+      setRemovingUsername(undefined);
     }
   }
 
@@ -60,6 +92,45 @@ export function Team() {
           </button>
         </form>
         {status && <p className="subtle-meta">{status}</p>}
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h2>Current team</h2>
+        </div>
+        {isLoadingTeam ? (
+          <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>
+        ) : team.length === 0 ? (
+          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>No teammates yet.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {team.map((member) => (
+                <tr key={member.username}>
+                  <td>{member.email}</td>
+                  <td>{member.status}</td>
+                  <td>
+                    <button
+                      className="btn btn-secondary"
+                      disabled={removingUsername === member.username}
+                      onClick={() => handleRemove(member)}
+                    >
+                      <TrashIcon width={14} height={14} />
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

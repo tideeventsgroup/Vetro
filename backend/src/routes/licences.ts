@@ -34,6 +34,7 @@ licences.post("/officers/:officerId/licences", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "licence.created",
     entityType: "SiaLicence",
@@ -63,6 +64,7 @@ licences.patch("/licences/:id", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "licence.updated",
     entityType: "SiaLicence",

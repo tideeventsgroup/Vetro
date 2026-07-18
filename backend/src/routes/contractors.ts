@@ -12,6 +12,23 @@ contractors.get("/me", async (c) => {
   return c.json(contractor);
 });
 
+// Not mounted behind the tenantAdminPrefixes gate (see app.ts) since
+// GET /me above needs to work for OFFICER logins too — gated inline instead.
+// Renames only; slug stays immutable so a bookmarked/shared org URL never
+// silently breaks.
+contractors.patch("/me", async (c) => {
+  const contractorId = c.get("contractorId");
+  if (!contractorId) return c.json({ error: "No organization resolved for this account" }, 403);
+  if (c.get("role") !== "ADMIN") return c.json({ error: "Admin access required" }, 403);
+
+  const body = await c.req.json<{ name: string }>();
+  if (!body.name?.trim()) return c.json({ error: "name is required" }, 400);
+
+  const db = await getDb();
+  const updated = await db.contractor.update({ where: { id: contractorId }, data: { name: body.name.trim() } });
+  return c.json(updated);
+});
+
 // Self-serve tenant creation only makes sense in SKIP_AUTH dev mode, where
 // tenantSlug comes straight from the request's subdomain with nothing to
 // verify against yet. In a real deployment a user's custom:contractor_id

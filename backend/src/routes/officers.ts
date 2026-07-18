@@ -37,6 +37,7 @@ officers.post("/", async (c) => {
 
   const created = await db.officer.create({ data: { ...body, contractorId: c.get("contractorId")! } });
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "officer.created",
     entityType: "Officer",
@@ -56,6 +57,7 @@ officers.patch("/:id", async (c) => {
   const body = await c.req.json<Partial<{ firstName: string; lastName: string; email: string; phone: string }>>();
   const updated = await db.officer.update({ where: { id }, data: body });
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "officer.updated",
     entityType: "Officer",
@@ -95,6 +97,7 @@ officers.post("/:id/invite", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "officer.invited",
     entityType: "Officer",
@@ -114,6 +117,7 @@ officers.delete("/:id", async (c) => {
 
   await db.officer.delete({ where: { id } });
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "officer.deleted",
     entityType: "Officer",

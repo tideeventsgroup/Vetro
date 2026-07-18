@@ -31,6 +31,7 @@ qualifications.post("/officers/:officerId/qualifications", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "qualification.created",
     entityType: "Qualification",
@@ -59,6 +60,7 @@ qualifications.patch("/qualifications/:id", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "qualification.updated",
     entityType: "Qualification",
@@ -78,6 +80,7 @@ qualifications.delete("/qualifications/:id", async (c) => {
 
   await db.qualification.delete({ where: { id } });
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "qualification.deleted",
     entityType: "Qualification",

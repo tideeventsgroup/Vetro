@@ -135,6 +135,12 @@ in `.env.example`), so requests don't need a bearer token locally.
 | POST | `/me/documents/upload-url` | Officer self-service — same presigned flow, scoped to the caller |
 | POST | `/me/documents` | Officer self-service |
 | GET | `/me/documents/:id/download-url` | Officer self-service |
+| GET | `/vetting-submissions` | Admin-only — the review queue behind `/me/vetting-submissions`; optional `?status=` filter |
+| PATCH | `/vetting-submissions/:id` | Admin-only — approve (creates a `VettingRecord`) or reject; 409s if already reviewed |
+| PATCH | `/contractors/me` | Admin-only — renames the org; slug stays immutable |
+| GET | `/team` | Admin-only — this org's `ADMIN` accounts |
+| DELETE | `/team/:username` | Admin-only — removes a teammate; 404s if they're not in this org, 400s on self-removal |
+| GET | `/audit-log` | Admin-only — most recent 200 `AuditLogEntry` rows for this tenant |
 
 All of the above except `/health` and `/contractors/me`+`/contractors`
 require a resolved tenant (403 otherwise) — see "Multi-tenancy" above. Routes
@@ -142,7 +148,10 @@ marked admin-only additionally 403 an `OFFICER` login (`requireAdmin`); `/me/*`
 routes require the reverse (`requireOfficerSelf`) — see "Onboarding & roles".
 
 All writes go through `src/lib/audit.ts` into `AuditLogEntry` — that table is
-the answer to "prove this happened" for an ACS inspector.
+the answer to "prove this happened" for an ACS inspector, and `/audit-log`
+above is how an org's own admin reads it back. Entries carry a `contractorId`
+so they can be scoped per-tenant; rows from before that column existed show
+with no tenant attributed.
 
 ## Expiry checking
 

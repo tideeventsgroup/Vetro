@@ -58,6 +58,7 @@ me.post("/vetting-submissions", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "vetting_submission.created",
     entityType: "VettingSubmission",
@@ -88,6 +89,7 @@ me.post("/documents", async (c) => {
   const created = await db.document.create({ data: { officerId, kind: body.kind, s3Key: body.s3Key } });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "document.created",
     entityType: "Document",

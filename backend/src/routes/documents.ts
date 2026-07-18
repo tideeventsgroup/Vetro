@@ -43,6 +43,7 @@ documents.post("/officers/:officerId/documents", async (c) => {
   });
 
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "document.created",
     entityType: "Document",
@@ -72,6 +73,7 @@ documents.delete("/documents/:id", async (c) => {
 
   await db.document.delete({ where: { id } });
   await recordAudit({
+    contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "document.deleted",
     entityType: "Document",

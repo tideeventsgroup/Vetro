@@ -1,13 +1,16 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { admin } from "./routes/admin.js";
+import { auditLog } from "./routes/auditLog.js";
 import { contractors } from "./routes/contractors.js";
 import { invitations } from "./routes/invitations.js";
 import { me } from "./routes/me.js";
 import { officers } from "./routes/officers.js";
 import { signup } from "./routes/signup.js";
+import { team } from "./routes/team.js";
 import { licences } from "./routes/licences.js";
 import { vetting } from "./routes/vetting.js";
+import { vettingSubmissions } from "./routes/vettingSubmissions.js";
 import { qualifications } from "./routes/qualifications.js";
 import { documents } from "./routes/documents.js";
 import { dashboard } from "./routes/dashboard.js";
@@ -64,11 +67,14 @@ const tenantAdminPrefixes = [
   "/officers",
   "/licences",
   "/vetting",
+  "/vetting-submissions",
   "/qualifications",
   "/documents",
   "/dashboard",
   "/exports",
   "/invitations",
+  "/team",
+  "/audit-log",
 ];
 for (const prefix of tenantAdminPrefixes) {
   api.use(prefix, requireContractor, requireAdmin);
@@ -77,10 +83,13 @@ for (const prefix of tenantAdminPrefixes) {
 api.route("/officers", officers);
 api.route("/", licences);
 api.route("/", vetting);
+api.route("/", vettingSubmissions);
 api.route("/", qualifications);
 api.route("/", documents);
 api.route("/dashboard", dashboard);
 api.route("/exports", exports_);
 api.route("/", invitations);
+api.route("/", team);
+api.route("/", auditLog);
 
 app.route("/", api);

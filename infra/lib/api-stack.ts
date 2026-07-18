@@ -72,11 +72,15 @@ export class ApiStack extends Stack {
     // routes/admin.ts, routes/invitations.ts, routes/officers.ts) create the
     // Cognito account directly rather than going through any self-serve
     // signup, so the API needs these Admin* actions scoped to its own pool.
+    // ListUsers/AdminGetUser/AdminDeleteUser back the Team page (routes/team.ts).
     props.userPool.grant(
       apiFn,
       "cognito-idp:AdminCreateUser",
       "cognito-idp:AdminAddUserToGroup",
       "cognito-idp:AdminUpdateUserAttributes",
+      "cognito-idp:ListUsers",
+      "cognito-idp:AdminGetUser",
+      "cognito-idp:AdminDeleteUser",
     );
 
     const httpApi = new apigwv2.HttpApi(this, "VetroHttpApi", {

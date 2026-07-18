@@ -43,6 +43,7 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (process.env.SKIP_AUTH === "true") {
     const tenantSlug = c.req.header("X-Vetro-Tenant");
     c.set("actorEmail", "dev@local");
+    c.set("cognitoUsername", "dev@local");
     c.set("role", c.req.header("X-Vetro-Role") ?? "ADMIN");
     const officerId = c.req.header("X-Vetro-Officer-Id");
     if (officerId) c.set("officerId", officerId);
@@ -66,6 +67,7 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   try {
     const payload = await getVerifier().verify(token);
     c.set("actorEmail", (payload["email"] as string | undefined) ?? payload.sub);
+    c.set("cognitoUsername", (payload["cognito:username"] as string | undefined) ?? payload.sub);
     const contractorId = payload["custom:contractor_id"] as string | undefined;
     if (contractorId) c.set("contractorId", contractorId);
     const role = payload["custom:role"] as string | undefined;

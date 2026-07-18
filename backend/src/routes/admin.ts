@@ -37,6 +37,7 @@ admin.post("/organizations", async (c) => {
   }
 
   await recordAudit({
+    contractorId: contractor.id,
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "organization.created",
     entityType: "Contractor",

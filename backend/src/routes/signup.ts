@@ -16,7 +16,8 @@ signup.post("/signup/organization", async (c) => {
     return c.json({ error: "This account already belongs to an organization" }, 409);
   }
   const actorEmail = c.get("actorEmail");
-  if (!actorEmail) return c.json({ error: "Unauthenticated" }, 401);
+  const cognitoUsername = c.get("cognitoUsername");
+  if (!actorEmail || !cognitoUsername) return c.json({ error: "Unauthenticated" }, 401);
 
   const body = await c.req.json<{ name: string; slug: string }>();
   if (!body.name?.trim() || !body.slug?.trim()) {
@@ -30,7 +31,9 @@ signup.post("/signup/organization", async (c) => {
   const contractor = await db.contractor.create({ data: { name: body.name, slug: body.slug } });
 
   try {
-    await updateUserAttributes(actorEmail, {
+    // cognitoUsername, not actorEmail — a self-serve account's real Cognito
+    // username is an auto-generated id, not its email (see hono-env.ts).
+    await updateUserAttributes(cognitoUsername, {
       "custom:contractor_id": contractor.id,
       "custom:role": "ADMIN",
     });
@@ -41,6 +44,7 @@ signup.post("/signup/organization", async (c) => {
   }
 
   await recordAudit({
+    contractorId: contractor.id,
     actorEmail,
     action: "organization.self_signup",
     entityType: "Contractor",
