@@ -112,6 +112,23 @@ export function PortalHome() {
         </div>
       </div>
 
+      {!latestSubmission && (
+        <div className="welcome-banner">
+          <span className="welcome-banner-icon">
+            <ShieldCheckIcon />
+          </span>
+          <div className="welcome-banner-text">
+            <h3>Welcome, {officer.firstName}!</h3>
+            <p>You're not onboarded yet — complete your vetting now to finish setting up your record.</p>
+          </div>
+          <div className="welcome-banner-actions">
+            <a href="#vetting-wizard" className="btn btn-primary">
+              Complete vetting now
+            </a>
+          </div>
+        </div>
+      )}
+
       <div className="summary-grid">
         <div className="summary-tile">
           <div>
@@ -209,7 +226,7 @@ export function PortalHome() {
         )}
       </div>
 
-      <div className="card">
+      <div className="card" id="vetting-wizard">
         <div className="card-header">
           <h2>Submit vetting details</h2>
         </div>

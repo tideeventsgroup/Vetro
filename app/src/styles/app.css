@@ -9,6 +9,10 @@ html, body, #root {
   margin: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--vetro-font-sans);
   font-size: var(--vetro-fs-body);
@@ -585,6 +589,64 @@ button {
   }
 }
 
+/* Officer portal "not onboarded yet" welcome banner — only shown before a
+   first vetting submission exists, pointing straight at the wizard below
+   rather than leaving a new officer to find it on their own. */
+.welcome-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--vetro-space-4);
+  background: linear-gradient(135deg, var(--vetro-teal-light) 0%, var(--vetro-surface) 100%);
+  border: 1px solid var(--vetro-teal);
+  border-left: 3px solid var(--vetro-teal);
+  border-radius: var(--vetro-radius-lg);
+  padding: var(--vetro-space-5);
+  margin-bottom: var(--vetro-space-5);
+}
+
+.welcome-banner-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--vetro-teal);
+  color: var(--vetro-white);
+  flex-shrink: 0;
+}
+
+.welcome-banner-text {
+  flex: 1;
+  min-width: 200px;
+}
+
+.welcome-banner-text h3 {
+  font-size: var(--vetro-fs-h4);
+  margin-bottom: 4px;
+}
+
+.welcome-banner-text p {
+  margin: 0;
+  color: var(--vetro-text-secondary);
+  font-size: var(--vetro-fs-body-sm);
+}
+
+#vetting-wizard {
+  scroll-margin-top: var(--vetro-space-6);
+}
+
+@media (max-width: 600px) {
+  .welcome-banner-actions {
+    width: 100%;
+  }
+
+  .welcome-banner-actions .btn {
+    width: 100%;
+  }
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -927,6 +989,7 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .modal-overlay, .modal-panel { animation: none; }
+  html { scroll-behavior: auto; }
 }
 
 /* Login */
