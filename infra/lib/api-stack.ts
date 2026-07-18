@@ -13,6 +13,7 @@ import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 import * as path from "path";
+import { prismaLambdaBundling } from "./prisma-bundling";
 
 export interface ApiStackProps extends StackProps {
   vpc: ec2.Vpc;
@@ -42,13 +43,7 @@ export class ApiStack extends Stack {
       DOCUMENTS_BUCKET: props.documentsBucket.bucketName,
     };
 
-    // Bundling note: @prisma/client ships a native query-engine binary that
-    // esbuild can't bundle. Keep it external and deploy the generated
-    // client (`prisma generate`) as part of the build step, or move to a
-    // Lambda layer, before this stack is actually deployed.
-    const bundling = {
-      externalModules: ["@prisma/client", ".prisma/client"],
-    };
+    const bundling = prismaLambdaBundling();
 
     const backendRoot = path.join(__dirname, "../../backend");
 

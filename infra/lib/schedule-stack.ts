@@ -8,6 +8,7 @@ import * as rds from "aws-cdk-lib/aws-rds";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 import * as path from "path";
+import { prismaLambdaBundling } from "./prisma-bundling";
 
 export interface ScheduleStackProps extends StackProps {
   vpc: ec2.Vpc;
@@ -38,9 +39,7 @@ export class ScheduleStack extends Stack {
         DB_SECRET_ARN: props.dbSecret.secretArn,
         DB_NAME: "vetro",
       },
-      bundling: {
-        externalModules: ["@prisma/client", ".prisma/client"],
-      },
+      bundling: prismaLambdaBundling(),
     });
 
     props.dbSecret.grantRead(checkExpiriesFn);

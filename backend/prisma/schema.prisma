@@ -1,5 +1,9 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" for local dev; rhel-openssl-3.0.x is what the query engine
+  // needs to actually run on Lambda's Amazon Linux 2023 Node 20 runtime —
+  // without it the locally-generated binary silently doesn't work there.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
