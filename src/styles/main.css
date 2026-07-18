@@ -257,6 +257,15 @@ a:hover {
   max-width: 600px;
 }
 
+.hero-credibility {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--vetro-fs-label);
+  color: var(--vetro-text-muted);
+  margin: var(--vetro-space-3) 0 0;
+}
+
 .hero-actions {
   display: flex;
   align-items: center;
@@ -280,6 +289,44 @@ section {
   letter-spacing: var(--vetro-ls-label);
   color: var(--vetro-teal-dark);
   margin-bottom: var(--vetro-space-2);
+}
+
+/* Three-step "how it works" loop */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--vetro-space-5);
+  margin: var(--vetro-space-6) 0;
+}
+
+.step {
+  display: flex;
+  gap: var(--vetro-space-3);
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--vetro-teal-light);
+  color: var(--vetro-teal-dark);
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-bold);
+  flex-shrink: 0;
+}
+
+.step h4 {
+  font-size: var(--vetro-fs-body);
+  margin-bottom: 4px;
+}
+
+.step p {
+  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text-secondary);
+  margin-bottom: 0;
 }
 
 /* Dashboard preview */
@@ -442,6 +489,47 @@ section {
   max-width: 640px;
 }
 
+/* Pricing */
+.pricing-card {
+  max-width: 420px;
+  padding: var(--vetro-space-7);
+  margin-top: var(--vetro-space-6);
+}
+
+.pricing-card-header h3 {
+  margin-bottom: 4px;
+}
+
+.pricing-card-header p {
+  color: var(--vetro-text-secondary);
+  font-size: var(--vetro-fs-body-sm);
+  margin-bottom: 0;
+}
+
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: var(--vetro-space-5) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-3);
+}
+
+.pricing-features li {
+  position: relative;
+  padding-left: 24px;
+  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text-secondary);
+}
+
+.pricing-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--vetro-teal-dark);
+  font-weight: var(--vetro-fw-bold);
+}
+
 /* Pitch / CTA band */
 .pitch-band {
   background: linear-gradient(180deg, var(--vetro-surface) 0%, var(--vetro-bg) 100%);
@@ -456,6 +544,60 @@ section {
   color: var(--vetro-ink);
   max-width: 720px;
   margin: 0 auto var(--vetro-space-5);
+}
+
+/* Pilot / contact form */
+.pilot-form {
+  text-align: left;
+  max-width: 520px;
+  margin: 0 auto var(--vetro-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-4);
+}
+
+.pilot-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--vetro-space-4);
+}
+
+.pilot-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pilot-form-field label {
+  font-size: var(--vetro-fs-label);
+  font-weight: var(--vetro-fw-semibold);
+  color: var(--vetro-text-secondary);
+}
+
+.pilot-form-field input {
+  padding: 10px 12px;
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-md);
+  font-size: var(--vetro-fs-body-sm);
+  font-family: inherit;
+  color: var(--vetro-ink);
+  background: var(--vetro-white);
+}
+
+.pilot-form-field input:focus-visible {
+  outline: none;
+  box-shadow: var(--vetro-shadow-focus);
+  border-color: var(--vetro-teal);
+}
+
+.pilot-form button {
+  align-self: flex-start;
+}
+
+.pilot-form-fallback {
+  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text-muted);
+  margin-bottom: 0;
 }
 
 /* Footer */
@@ -491,4 +633,6 @@ section {
   .officer-expiry { justify-self: start; margin-left: 44px; }
   .hero-actions { flex-direction: column; align-items: stretch; }
   .site-footer .container { flex-direction: column; align-items: flex-start; }
+  .pilot-form-row { grid-template-columns: 1fr; }
+  .pilot-form button { align-self: stretch; }
 }

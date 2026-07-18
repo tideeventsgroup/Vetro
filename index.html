@@ -41,6 +41,9 @@
           One record per officer — licence, vetting, qualifications, documents, in one place.
           Checked automatically, not chased manually.
         </p>
+        <p class="hero-credibility">
+          Checks run against the SIA public register — Vetro is not an official SIA integration or endorsement.
+        </p>
         <div class="hero-actions">
           <a href="#pilot" class="btn btn-primary">Book a pilot</a>
           <a href="#how-it-works" class="btn btn-secondary">See how it works</a>
@@ -55,6 +58,30 @@
         <p style="max-width:620px;color:var(--vetro-text-secondary);">
           Every officer, one row, one answer: are they legally allowed to work today.
         </p>
+
+        <div class="steps-grid">
+          <div class="step">
+            <span class="step-number">1</span>
+            <div>
+              <h4>Add your roster</h4>
+              <p>Officer names, SIA licence numbers, and vetting records — entered once.</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-number">2</span>
+            <div>
+              <h4>Vetro checks automatically</h4>
+              <p>Runs against the SIA public register on a schedule. Nobody has to remember to.</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <div>
+              <h4>See what needs attention</h4>
+              <p>Nothing to review unless a licence or vetting record actually needs it.</p>
+            </div>
+          </div>
+        </div>
 
         <div class="dashboard-preview-wrap">
           <div class="card dashboard-preview">
@@ -183,6 +210,26 @@
       </div>
     </section>
 
+    <section id="pricing">
+      <div class="container">
+        <span class="section-label">Pricing</span>
+        <h2>One plan. Priced for the contractor who needs it, not the enterprise who doesn't.</h2>
+        <div class="card pricing-card">
+          <div class="pricing-card-header">
+            <h3>Vetro</h3>
+            <p>A single flat monthly fee, covering up to 20 officers.</p>
+          </div>
+          <ul class="pricing-features">
+            <li>Unlimited licence and vetting checks, run automatically</li>
+            <li>Full audit log, plus CSV and PDF export on demand</li>
+            <li>Officer self-service document and vetting upload</li>
+            <li>Client portal for site contacts to confirm shifts</li>
+          </ul>
+          <a href="#pilot" class="btn btn-primary">Get your quote</a>
+        </div>
+      </div>
+    </section>
+
     <section id="pilot">
       <div class="container">
         <div class="pitch-band">
@@ -190,7 +237,32 @@
             Vetro checks your officers' SIA licences and BS7858 vetting automatically, so you
             always know who's actually cleared to work — no more spreadsheets, no more chasing.
           </p>
-          <a href="mailto:hello@vetro.co.uk" class="btn btn-primary">Book a pilot</a>
+          <form class="pilot-form" id="pilotForm">
+            <div class="pilot-form-row">
+              <div class="pilot-form-field">
+                <label for="pf-name">Name</label>
+                <input id="pf-name" name="name" type="text" required />
+              </div>
+              <div class="pilot-form-field">
+                <label for="pf-company">Company</label>
+                <input id="pf-company" name="company" type="text" required />
+              </div>
+            </div>
+            <div class="pilot-form-row">
+              <div class="pilot-form-field">
+                <label for="pf-officers">Number of officers</label>
+                <input id="pf-officers" name="officers" type="number" min="1" required />
+              </div>
+              <div class="pilot-form-field">
+                <label for="pf-email">Email</label>
+                <input id="pf-email" name="email" type="email" required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Book a pilot</button>
+          </form>
+          <p class="pilot-form-fallback">
+            Or email us directly at <a href="mailto:hello@vetro.co.uk">hello@vetro.co.uk</a>
+          </p>
         </div>
       </div>
     </section>
@@ -204,6 +276,24 @@
       </span>
     </div>
   </footer>
+
+  <script>
+    document.getElementById('pilotForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      var name = document.getElementById('pf-name').value.trim();
+      var company = document.getElementById('pf-company').value.trim();
+      var officers = document.getElementById('pf-officers').value.trim();
+      var email = document.getElementById('pf-email').value.trim();
+      var subject = encodeURIComponent('Vetro pilot enquiry — ' + company);
+      var body = encodeURIComponent(
+        'Name: ' + name + '\n' +
+        'Company: ' + company + '\n' +
+        'Number of officers: ' + officers + '\n' +
+        'Email: ' + email
+      );
+      window.location.href = 'mailto:hello@vetro.co.uk?subject=' + subject + '&body=' + body;
+    });
+  </script>
 
 </body>
 </html>
