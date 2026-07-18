@@ -171,7 +171,14 @@ class VetroApiClient {
 
     if (!response.ok) {
       const body = await response.text();
-      throw new ApiError(response.status, body || response.statusText);
+      let message = body || response.statusText;
+      try {
+        const parsed = JSON.parse(body) as { error?: string };
+        if (parsed.error) message = parsed.error;
+      } catch {
+        // Not JSON — fall back to the raw body/status text above.
+      }
+      throw new ApiError(response.status, message);
     }
 
     if (response.status === 204) return undefined as T;

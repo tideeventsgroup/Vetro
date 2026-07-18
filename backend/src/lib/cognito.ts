@@ -21,6 +21,14 @@ function requireUserPoolId(): string {
   return id;
 }
 
+/** Thrown by createCognitoUser when the email is already someone's Cognito username — callers turn this into a 409, not a 500. */
+export class CognitoUserExistsError extends Error {
+  constructor(email: string) {
+    super(`An account already exists for ${email}`);
+    this.name = "CognitoUserExistsError";
+  }
+}
+
 const PASSWORD_CHARS = {
   lower: "abcdefghijkmnpqrstuvwxyz",
   upper: "ABCDEFGHJKLMNPQRSTUVWXYZ",
@@ -55,19 +63,26 @@ export async function createCognitoUser(params: {
   attributes: Record<string, string>;
 }): Promise<{ temporaryPassword: string }> {
   const temporaryPassword = generateTemporaryPassword();
-  await getClient().send(
-    new AdminCreateUserCommand({
-      UserPoolId: requireUserPoolId(),
-      Username: params.email,
-      UserAttributes: [
-        { Name: "email", Value: params.email },
-        { Name: "email_verified", Value: "true" },
-        ...Object.entries(params.attributes).map(([Name, Value]) => ({ Name, Value })),
-      ],
-      TemporaryPassword: temporaryPassword,
-      DesiredDeliveryMediums: ["EMAIL"],
-    }),
-  );
+  try {
+    await getClient().send(
+      new AdminCreateUserCommand({
+        UserPoolId: requireUserPoolId(),
+        Username: params.email,
+        UserAttributes: [
+          { Name: "email", Value: params.email },
+          { Name: "email_verified", Value: "true" },
+          ...Object.entries(params.attributes).map(([Name, Value]) => ({ Name, Value })),
+        ],
+        TemporaryPassword: temporaryPassword,
+        DesiredDeliveryMediums: ["EMAIL"],
+      }),
+    );
+  } catch (err) {
+    if (err instanceof Error && err.name === "UsernameExistsException") {
+      throw new CognitoUserExistsError(params.email);
+    }
+    throw err;
+  }
   return { temporaryPassword };
 }
 
