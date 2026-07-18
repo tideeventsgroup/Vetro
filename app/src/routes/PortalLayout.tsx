@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
-import { MenuIcon, SignOutIcon } from "../components/icons.js";
+import { HomeIcon, MenuIcon, ShieldCheckIcon, SignOutIcon } from "../components/icons.js";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 
@@ -17,19 +17,20 @@ export function PortalLayout() {
   if (role !== "OFFICER") return <Navigate to={`/${tenant}`} replace />;
 
   return (
-    <div className="app-shell">
-      <button
-        type="button"
-        className="mobile-nav-toggle"
-        aria-label="Toggle navigation"
-        onClick={() => setMobileNavOpen((v) => !v)}
-      >
-        <MenuIcon />
-      </button>
+    <div className="app-shell has-tab-bar">
       {mobileNavOpen && <div className="app-sidebar-scrim" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`app-sidebar${mobileNavOpen ? " open" : ""}`}>
         <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
-        <div style={{ flex: 1 }} />
+        <nav className="app-nav" onClick={() => setMobileNavOpen(false)}>
+          <NavLink to={`/${tenant}/portal`} end>
+            <HomeIcon />
+            Home
+          </NavLink>
+          <NavLink to={`/${tenant}/portal/vetting`}>
+            <ShieldCheckIcon />
+            Vetting
+          </NavLink>
+        </nav>
         <SidebarIdentity />
         <div className="app-sidebar-footer">
           <a href="#" onClick={logout}>
@@ -44,6 +45,20 @@ export function PortalLayout() {
       <main className="app-main">
         <Outlet />
       </main>
+      <nav className="mobile-tab-bar">
+        <NavLink to={`/${tenant}/portal`} end className="mobile-tab">
+          <HomeIcon />
+          <span>Home</span>
+        </NavLink>
+        <NavLink to={`/${tenant}/portal/vetting`} className="mobile-tab">
+          <ShieldCheckIcon />
+          <span>Vetting</span>
+        </NavLink>
+        <button type="button" className="mobile-tab" onClick={() => setMobileNavOpen(true)}>
+          <MenuIcon />
+          <span>Account</span>
+        </button>
+      </nav>
     </div>
   );
 }

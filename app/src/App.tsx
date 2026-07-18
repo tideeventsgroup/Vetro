@@ -17,6 +17,7 @@ import { Signup } from "./routes/Signup.js";
 import { Sites } from "./routes/Sites.js";
 import { Team } from "./routes/Team.js";
 import { VettingQueue } from "./routes/VettingQueue.js";
+import { VettingWizard } from "./routes/VettingWizard.js";
 
 // Everything past sign-in lives under /:tenant — clyde-coast.vetro.co.uk's
 // per-org subdomain, once a custom domain exists, becomes .../clyde-coast
@@ -46,8 +47,9 @@ export function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="audit-log" element={<AuditLog />} />
             </Route>
-            <Route element={<PortalLayout />}>
-              <Route path="portal" element={<PortalHome />} />
+            <Route path="portal" element={<PortalLayout />}>
+              <Route index element={<PortalHome />} />
+              <Route path="vetting" element={<VettingWizard />} />
             </Route>
             <Route element={<ClientLayout />}>
               <Route path="client" element={<ClientHome />} />

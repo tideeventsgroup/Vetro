@@ -23,6 +23,16 @@ function Icon({ children, ...props }: SVGProps<SVGSVGElement> & { children: Reac
   );
 }
 
+export function HomeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 11L12 4L20 11" />
+      <path d="M6 9.5V20H18V9.5" />
+      <path d="M10 20V14H14V20" />
+    </Icon>
+  );
+}
+
 export function RosterIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

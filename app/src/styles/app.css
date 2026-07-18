@@ -633,10 +633,6 @@ button {
   font-size: var(--vetro-fs-body-sm);
 }
 
-#vetting-wizard {
-  scroll-margin-top: var(--vetro-space-6);
-}
-
 @media (max-width: 600px) {
   .welcome-banner-actions {
     width: 100%;
@@ -1161,6 +1157,19 @@ button {
 
   .page-actions {
     width: 100%;
+  }
+
+  .card {
+    padding: var(--vetro-space-4);
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    gap: var(--vetro-space-2);
+  }
+
+  .welcome-banner {
+    padding: var(--vetro-space-4);
   }
 
   /* A <table> can't reflow onto multiple lines — let it scroll horizontally
