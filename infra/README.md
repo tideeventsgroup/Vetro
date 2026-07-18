@@ -14,8 +14,41 @@ logins, and an EventBridge rule driving the daily expiry check.
 | `VetroAuthStack` | Cognito user pool + client for contractor admins, `custom:contractor_id` attribute |
 | `VetroApiStack` | Lambda (bundles `backend/src/lambda.ts`) behind an HTTP API; adds `api.{domainName}` if configured |
 | `VetroScheduleStack` | Daily EventBridge rule → Lambda (bundles `backend/src/jobs/checkExpiries.ts`) |
+| `VetroMigrateStack` | One-off ops Lambda (bundles `backend/src/jobs/migrate.ts`) — applies migrations and can bootstrap a tenant, invoked by hand |
 | `VetroDomainStack` | *(opt-in, us-east-1)* Wildcard ACM cert for `*.{domainName}` |
 | `VetroFrontendStack` | *(opt-in, us-east-1)* S3 + CloudFront serving `app/dist`, aliased to `*.{domainName}` |
+
+## Running migrations against the deployed database
+
+Aurora sits in an isolated private subnet — nothing outside the VPC can
+reach it, including a dev machine running `prisma migrate deploy`.
+`VetroMigrateStack`'s Lambda runs inside the VPC instead:
+
+```bash
+aws lambda invoke --function-name <MigrateFunctionName from the stack output> \
+  --cli-binary-format raw-in-base64-out result.json
+cat result.json
+```
+
+To also create the first tenant (no admin UI for this yet — see
+`backend/README.md`'s "Multi-tenancy"), pass a payload:
+
+```bash
+echo '{"bootstrapContractor":{"name":"Clyde Coast Security Ltd","slug":"clyde-coast"}}' > payload.json
+aws lambda invoke --function-name <MigrateFunctionName> \
+  --cli-binary-format raw-in-base64-out --payload file://payload.json result.json
+```
+
+Assigning that tenant to a real login is then an admin action against
+Cognito directly:
+
+```bash
+aws cognito-idp admin-create-user --user-pool-id <pool id> --username <email> \
+  --user-attributes Name=email,Value=<email> Name=email_verified,Value=true \
+    Name=custom:contractor_id,Value=<contractor id from bootstrap>
+aws cognito-idp admin-set-user-password --user-pool-id <pool id> --username <email> \
+  --password <temp password> --permanent
+```
 
 ## Custom domains (`*.vetro.co.uk`, `api.vetro.co.uk`)
 
@@ -75,13 +108,28 @@ npm run deploy    # cdk deploy --all
 
 ## Verified vs. not
 
-`cdk synth` succeeds for every stack, including `VetroDomainStack` and
-`VetroFrontendStack` with a placeholder `hostedZoneId` (that's what
-`fromHostedZoneAttributes` over `fromLookup` buys — no real AWS account
-needed to validate the CDK code is well-formed). None of it has been
-deployed against a real AWS account or a real hosted zone — that would need
-an actual `vetro.co.uk` zone and an account to bootstrap into, neither of
-which exist in this environment.
+`VetroNetworkStack`, `VetroDataStack`, `VetroAuthStack`, `VetroApiStack`,
+`VetroScheduleStack`, and `VetroMigrateStack` are deployed for real, in
+Tide Events Group's actual AWS account (589389426290, eu-west-2), alongside
+the existing NexTix stacks (verified untouched — every change was purely
+additive). Migrations have been applied to the real Aurora instance, and
+the full path has been exercised end to end against the live deployment: a
+real Cognito user with `custom:contractor_id` set, a real ID token,
+`GET /officers`, `GET /contractors/me`, and `POST /officers` all against
+`https://mau5n5d9u0.execute-api.eu-west-2.amazonaws.com` — not just a local
+dev server.
+
+Two real bugs only surfaced at this point and are now fixed: Aurora
+16.4 isn't offered in this account/region (now 16.13), and marking
+`@prisma/client` as an esbuild external without also copying it into the
+bundle meant it was simply missing from the deployed Lambda — see
+`lib/prisma-bundling.ts` and `prisma/schema.prisma`'s `binaryTargets`.
+
+`VetroDomainStack` and `VetroFrontendStack` remain unexercised against a
+real account — `cdk synth` succeeds with a placeholder `hostedZoneId`
+(`fromHostedZoneAttributes`, no AWS call needed), but there's no
+`vetro.co.uk` hosted zone in this account yet to deploy them against for
+real.
 
 ## Cost shape
 
