@@ -5,7 +5,7 @@ import {
   CognitoUserPool,
   CognitoUserSession,
 } from "amazon-cognito-identity-js";
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { getDevOfficerId, getDevRole } from "./dev.js";
 
 const SKIP_AUTH = import.meta.env.VITE_SKIP_AUTH === "true";
@@ -23,6 +23,16 @@ interface AuthContextValue {
   // the verified token itself.
   role?: string;
   officerId?: string;
+  /**
+   * Reads whatever the ID token is *right now* — a stable function, not the
+   * `idToken` field above. Use this (via lib/api.ts's useApi()) for any API
+   * call, since `idToken` is a React state snapshot: code that calls
+   * `login()`/`confirmSignUp()`/`refreshClaims()` and then immediately makes
+   * an API call in the same handler (see routes/Signup.tsx) runs before
+   * React has re-rendered with the new state, so a closure over `idToken`
+   * would still see the stale (possibly undefined) pre-call value.
+   */
+  getIdToken: () => string | undefined;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   /** Creates the raw Cognito account — email + password, nothing else (see infra/lib/auth-stack.ts's writeAttributes note). */
@@ -59,10 +69,19 @@ function getUserPool(): CognitoUserPool {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(!SKIP_AUTH);
-  const [idToken, setIdToken] = useState<string | undefined>(undefined);
+  const [idToken, setIdTokenState] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState(SKIP_AUTH);
   const [role, setRole] = useState<string | undefined>(SKIP_AUTH ? getDevRole() ?? "ADMIN" : undefined);
   const [officerId, setOfficerId] = useState<string | undefined>(SKIP_AUTH ? getDevOfficerId() : undefined);
+
+  // Mirrors `idToken` synchronously, so getIdToken() below is never a render
+  // behind — see the getIdToken doc comment on AuthContextValue.
+  const idTokenRef = useRef<string | undefined>(undefined);
+  function setIdToken(token: string | undefined) {
+    idTokenRef.current = token;
+    setIdTokenState(token);
+  }
+  const getIdToken = useCallback(() => idTokenRef.current, []);
 
   useEffect(() => {
     if (SKIP_AUTH) return;
@@ -90,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated,
       isLoading,
       idToken,
+      getIdToken,
       role,
       officerId,
       login: (email, password) =>
@@ -173,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         }),
     }),
-    [isAuthenticated, isLoading, idToken, role, officerId]
+    [isAuthenticated, isLoading, idToken, getIdToken, role, officerId]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

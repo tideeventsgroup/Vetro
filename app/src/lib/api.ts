@@ -285,6 +285,6 @@ class VetroApiClient {
 }
 
 export function useApi(): VetroApiClient {
-  const { idToken } = useAuth();
-  return new VetroApiClient(() => idToken);
+  const { getIdToken } = useAuth();
+  return new VetroApiClient(getIdToken);
 }
