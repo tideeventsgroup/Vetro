@@ -50,7 +50,7 @@ export class DataStack extends Stack {
     // traffic instead of paying for an always-on instance.
     this.cluster = new rds.DatabaseCluster(this, "VetroCluster", {
       engine: rds.DatabaseClusterEngine.auroraPostgres({
-        version: rds.AuroraPostgresEngineVersion.VER_16_4,
+        version: rds.AuroraPostgresEngineVersion.VER_16_13,
       }),
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
