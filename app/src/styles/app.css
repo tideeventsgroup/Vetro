@@ -251,14 +251,11 @@ button {
   flex-shrink: 0;
 }
 
-/* Summary tiles — pulled up to float across the hero banner's bottom edge
-   (Dashboard only; the negative margin assumes it directly follows
-   .page-header, matching the source inspiration's floating stat cards). */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: var(--vetro-space-4);
-  margin-top: -14px;
+  margin-top: var(--vetro-space-3);
   margin-bottom: var(--vetro-space-5);
   position: relative;
 }
