@@ -2,14 +2,26 @@ import { CognitoUser } from "amazon-cognito-identity-js";
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NewPasswordRequiredError, useAuth } from "../lib/auth.js";
-import { useTenantSlug } from "../lib/tenant.js";
+import { useApi } from "../lib/api.js";
 import { ShieldCheckIcon } from "../components/icons.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 
+// Login itself is tenant-agnostic — there's no /:tenant prefix here (see
+// App.tsx), so the destination after signing in is resolved from the
+// account itself rather than typed into the URL beforehand: the ID token's
+// custom:contractor_id claim already scopes GET /contractors/me server-side
+// (see backend/src/lib/auth.ts), so all this needs is the slug that comes
+// back to know which tenant-prefixed route to land on.
+function destinationFor(role: string | undefined, slug: string): string {
+  if (role === "OFFICER") return `/${slug}/portal`;
+  if (role === "CLIENT") return `/${slug}/client`;
+  return `/${slug}`;
+}
+
 export function Login() {
   const { login, completeNewPassword } = useAuth();
+  const api = useApi();
   const navigate = useNavigate();
-  const tenant = useTenantSlug();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | undefined>(undefined);
@@ -20,13 +32,19 @@ export function Login() {
   const [pendingUser, setPendingUser] = useState<CognitoUser | undefined>(undefined);
   const [newPassword, setNewPassword] = useState("");
 
+  async function redirectToOwnTenant(role: string | undefined) {
+    const contractor = await api.getCurrentContractor();
+    if (!contractor) throw new Error("This account isn't attached to an organisation yet");
+    navigate(destinationFor(role, contractor.slug), { replace: true });
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(undefined);
     setIsSubmitting(true);
     try {
-      await login(email, password);
-      navigate(`/${tenant}`, { replace: true });
+      const claims = await login(email, password);
+      await redirectToOwnTenant(claims.role);
     } catch (err) {
       if (err instanceof NewPasswordRequiredError) {
         setPendingUser(err.user);
@@ -44,8 +62,8 @@ export function Login() {
     setError(undefined);
     setIsSubmitting(true);
     try {
-      await completeNewPassword(pendingUser, newPassword);
-      navigate(`/${tenant}`, { replace: true });
+      const claims = await completeNewPassword(pendingUser, newPassword);
+      await redirectToOwnTenant(claims.role);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not set new password");
     } finally {

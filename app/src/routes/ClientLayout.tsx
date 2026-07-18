@@ -8,7 +8,7 @@ export function ClientLayout() {
   const tenant = useTenantSlug();
 
   if (isLoading) return <p style={{ padding: 24, color: "var(--vetro-text-muted)" }}>Loading…</p>;
-  if (!isAuthenticated) return <Navigate to={`/${tenant}/login`} replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   // The client portal is scoped to CLIENT logins only — an org admin
   // visiting /client by mistake belongs on the dashboard instead.
   if (role !== "CLIENT") return <Navigate to={`/${tenant}`} replace />;

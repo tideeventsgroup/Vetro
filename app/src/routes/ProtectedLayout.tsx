@@ -18,7 +18,7 @@ export function ProtectedLayout() {
   const tenant = useTenantSlug();
 
   if (isLoading) return <p style={{ padding: 24, color: "var(--vetro-text-muted)" }}>Loading…</p>;
-  if (!isAuthenticated) return <Navigate to={`/${tenant}/login`} replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   // This dashboard is the ADMIN-facing side of Vetro — self-service logins
   // belong on their own portals instead (PortalLayout.tsx for officers,
   // ClientLayout.tsx for a site's own contact).

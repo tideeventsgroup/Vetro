@@ -18,20 +18,23 @@ import { Sites } from "./routes/Sites.js";
 import { Team } from "./routes/Team.js";
 import { VettingQueue } from "./routes/VettingQueue.js";
 
-// Every real route lives under /:tenant — clyde-coast.vetro.co.uk's
+// Everything past sign-in lives under /:tenant — clyde-coast.vetro.co.uk's
 // per-org subdomain, once a custom domain exists, becomes .../clyde-coast
-// today instead (see lib/tenant.ts). Bare "/" has no tenant to resolve.
-// /signup is the one exception — by definition, someone signing up doesn't
-// have a tenant slug yet (they're picking one).
+// today instead (see lib/tenant.ts). Login itself is the one exception:
+// it's a single un-prefixed route (nobody should have to already know their
+// org's slug just to sign in) — Login.tsx resolves the right tenant from
+// the account itself once authenticated and redirects there. Bare "/" and
+// /signup are also tenant-agnostic for the same reason (there's no tenant
+// to resolve yet, or the user is picking one).
 export function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<NoTenant />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/:tenant">
-            <Route path="login" element={<Login />} />
             <Route element={<ProtectedLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="officers/:id" element={<OfficerDetail />} />

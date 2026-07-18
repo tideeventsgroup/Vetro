@@ -1,26 +1,14 @@
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 const DEV_TENANT_SLUG = import.meta.env.VITE_DEV_TENANT_SLUG;
 
 /**
- * Landing for a bare "/" — with no custom domain yet, there's no subdomain
- * to read a tenant from, so every real route lives under /:tenant instead
- * (see App.tsx). VITE_DEV_TENANT_SLUG short-circuits this for local dev.
+ * Landing for a bare "/" — sign-in itself doesn't need a tenant slug (see
+ * App.tsx and Login.tsx), so there's nothing else for this to resolve;
+ * it just sends you to /login. VITE_DEV_TENANT_SLUG short-circuits this
+ * straight to a specific tenant for local dev convenience.
  */
 export function NoTenant() {
   if (DEV_TENANT_SLUG) return <Navigate to={`/${DEV_TENANT_SLUG}`} replace />;
-
-  return (
-    <div style={{ maxWidth: 440, margin: "96px auto", textAlign: "center", padding: 24 }}>
-      <h1 style={{ fontSize: 20, marginBottom: 8 }}>Vetro</h1>
-      <p style={{ color: "var(--vetro-text-muted)" }}>
-        Visit your organisation's own link to sign in — for example
-        <br />
-        <code>{window.location.origin}/clyde-coast</code>.
-      </p>
-      <p style={{ color: "var(--vetro-text-muted)", marginTop: 16 }}>
-        New to Vetro? <Link to="/signup">Create an organisation</Link>.
-      </p>
-    </div>
-  );
+  return <Navigate to="/login" replace />;
 }

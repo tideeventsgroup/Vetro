@@ -46,10 +46,17 @@ interface AuthContextValue {
    * would still see the stale (possibly undefined) pre-call value.
    */
   getIdToken: () => string | undefined;
-  /** Rejects with NewPasswordRequiredError for an invited account's first login — see completeNewPassword. */
-  login: (email: string, password: string) => Promise<void>;
+  /**
+   * Rejects with NewPasswordRequiredError for an invited account's first
+   * login — see completeNewPassword. Resolves with the just-decoded claims
+   * directly (not read back off `role`/`officerId` above) so a caller that
+   * needs to route based on role right away — e.g. Login.tsx picking a
+   * tenant-scoped destination — isn't a render behind, same reasoning as
+   * getIdToken above.
+   */
+  login: (email: string, password: string) => Promise<{ role?: string; officerId?: string }>;
   /** Finishes the challenge login() rejected with, setting the account's real password. */
-  completeNewPassword: (user: CognitoUser, newPassword: string) => Promise<void>;
+  completeNewPassword: (user: CognitoUser, newPassword: string) => Promise<{ role?: string; officerId?: string }>;
   logout: () => void;
   /** Creates the raw Cognito account — email + password, nothing else (see infra/lib/auth-stack.ts's writeAttributes note). */
   signUp: (email: string, password: string) => Promise<void>;
@@ -132,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         new Promise((resolve, reject) => {
           if (SKIP_AUTH) {
             setIsAuthenticated(true);
-            resolve();
+            resolve({ role, officerId });
             return;
           }
 
@@ -144,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setRole(claims.role);
               setOfficerId(claims.officerId);
               setIsAuthenticated(true);
-              resolve();
+              resolve(claims);
             },
             onFailure: (err) => reject(err),
             newPasswordRequired: () => reject(new NewPasswordRequiredError(user)),
@@ -162,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setRole(claims.role);
                 setOfficerId(claims.officerId);
                 setIsAuthenticated(true);
-                resolve();
+                resolve(claims);
               },
               onFailure: (err) => reject(err),
             },

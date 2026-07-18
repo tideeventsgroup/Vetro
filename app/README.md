@@ -14,6 +14,15 @@ header is a UI convenience, not the security boundary — the backend only
 trusts it in local dev; in a real deployment it derives the tenant from the
 signed-in user's Cognito ID token instead (see `backend/README.md`).
 
+Signing in doesn't need that slug up front, though: `/login` (and `/`,
+`/signup`) are the three tenant-agnostic routes; everything past sign-in
+lives under `/:tenant`. `Login.tsx` authenticates first, then calls `GET
+/contractors/me` — already scoped correctly server-side by the ID token's
+`custom:contractor_id` claim, no tenant hint needed from the client — to
+learn which slug to land on, redirecting role-appropriately
+(`/{slug}`/`/{slug}/portal`/`/{slug}/client`). Nobody has to already know or
+type their org's URL just to log in.
+
 ## Local development
 
 ```bash
