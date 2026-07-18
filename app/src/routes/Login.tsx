@@ -1,12 +1,14 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth.js";
+import { useTenantSlug } from "../lib/tenant.js";
 import { ShieldCheckIcon } from "../components/icons.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const tenant = useTenantSlug();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | undefined>(undefined);
@@ -18,7 +20,7 @@ export function Login() {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      navigate("/", { replace: true });
+      navigate(`/${tenant}`, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {

@@ -4,6 +4,7 @@ import { DocumentsSection } from "../components/DocumentsSection.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 import { ArrowLeftIcon, MailIcon, PlusIcon } from "../components/icons.js";
 import { Officer, useApi } from "../lib/api.js";
+import { useTenantSlug } from "../lib/tenant.js";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
@@ -17,6 +18,7 @@ function initials(officer: Officer): string {
 export function OfficerDetail() {
   const { id } = useParams<{ id: string }>();
   const api = useApi();
+  const tenant = useTenantSlug();
   const [officer, setOfficer] = useState<Officer | undefined>(undefined);
   const [showAddLicence, setShowAddLicence] = useState(false);
   const [showAddVetting, setShowAddVetting] = useState(false);
@@ -98,7 +100,7 @@ export function OfficerDetail() {
 
   return (
     <div>
-      <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--vetro-text-muted)" }}>
+      <Link to={`/${tenant}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--vetro-text-muted)" }}>
         <ArrowLeftIcon width={14} height={14} />
         Back to roster
       </Link>

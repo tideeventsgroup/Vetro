@@ -4,6 +4,7 @@ import { AddOfficerModal } from "../components/AddOfficerModal.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 import { DownloadIcon, PlusIcon, RosterIcon, ShieldCheckIcon } from "../components/icons.js";
 import { Contractor, DashboardSummary, Officer, useApi } from "../lib/api.js";
+import { useTenantSlug } from "../lib/tenant.js";
 import { worstStatus } from "../lib/status.js";
 
 function initials(officer: Officer): string {
@@ -13,6 +14,7 @@ function initials(officer: Officer): string {
 export function Dashboard() {
   const api = useApi();
   const navigate = useNavigate();
+  const tenant = useTenantSlug();
 
   const [contractor, setContractor] = useState<Contractor | undefined>(undefined);
   const [newContractorName, setNewContractorName] = useState("");
@@ -183,7 +185,7 @@ export function Dashboard() {
           </thead>
           <tbody>
             {officers.map((officer) => (
-              <tr key={officer.id} className="clickable" onClick={() => navigate(`/officers/${officer.id}`)}>
+              <tr key={officer.id} className="clickable" onClick={() => navigate(`/${tenant}/officers/${officer.id}`)}>
                 <td>
                   <div className="officer-cell">
                     <span className="officer-avatar">{initials(officer)}</span>
