@@ -18,8 +18,8 @@ export function PortalLayout() {
     <div className="app-shell">
       <aside className="app-sidebar">
         <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
-        <SidebarIdentity />
         <div style={{ flex: 1 }} />
+        <SidebarIdentity />
         <div className="app-sidebar-footer">
           <a href="#" onClick={logout}>
             <SignOutIcon />

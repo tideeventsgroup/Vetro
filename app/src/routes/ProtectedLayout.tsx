@@ -30,7 +30,6 @@ export function ProtectedLayout() {
     <div className="app-shell">
       <aside className="app-sidebar">
         <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
-        <SidebarIdentity />
         <nav className="app-nav">
           <NavLink to={`/${tenant}`} end>
             <RosterIcon />
@@ -65,6 +64,7 @@ export function ProtectedLayout() {
             Settings
           </NavLink>
         </nav>
+        <SidebarIdentity />
         <div className="app-sidebar-footer">
           <a href="#" onClick={logout}>
             <SignOutIcon />

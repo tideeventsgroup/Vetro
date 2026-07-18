@@ -11,11 +11,14 @@ const ROLE_LABELS: Record<string, string> = {
   CLIENT: "Client contact",
 };
 
-// Org + signed-in-account block, shown under the (now much bigger) logo in
-// every sidebar variant — admin dashboard, officer portal, client portal.
+// Org + signed-in-account block, anchored to the bottom of every sidebar
+// variant (admin dashboard, officer portal, client portal) — the nav
+// above it uses flex to push this down, so it always sits directly above
+// the sign-out footer regardless of how much nav content there is.
 export function SidebarIdentity() {
   const { email, role } = useAuth();
   const orgName = useOrgName();
+  const roleLabel = role ? ROLE_LABELS[role] ?? role : undefined;
 
   return (
     <div className="sidebar-identity">
@@ -29,7 +32,7 @@ export function SidebarIdentity() {
         <span className="sidebar-user-avatar">{initial(email)}</span>
         <div className="sidebar-user-info">
           <div className="sidebar-user-email">{email ?? "Signed in"}</div>
-          {role && <div className="sidebar-user-role">{ROLE_LABELS[role] ?? role}</div>}
+          {roleLabel && <span className="sidebar-role-pill">{roleLabel}</span>}
         </div>
       </div>
     </div>
