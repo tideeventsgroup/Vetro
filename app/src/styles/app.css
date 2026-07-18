@@ -909,7 +909,87 @@ button {
   margin: 0 0 var(--vetro-space-4);
 }
 
+.mobile-nav-toggle {
+  display: none;
+}
+
 @media (max-width: 860px) {
   .login-shell { grid-template-columns: 1fr; }
   .login-brand-panel { display: none; }
+
+  /* Below 860px the fixed sidebar becomes an off-canvas drawer, toggled by
+     the hamburger button — there's no room for a permanent 232px rail once
+     the viewport itself is narrower than that. */
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 260px;
+    z-index: 55;
+    transform: translateX(-100%);
+    transition: transform var(--vetro-duration) var(--vetro-ease);
+    overflow-y: auto;
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--vetro-shadow-lifted);
+  }
+
+  .app-sidebar-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 32, 0.5);
+    z-index: 50;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 14px;
+    left: var(--vetro-space-3);
+    z-index: 56;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--vetro-radius-md);
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--vetro-white);
+    border: none;
+    cursor: pointer;
+  }
+
+  .app-main {
+    max-width: 100%;
+    padding: var(--vetro-space-6) var(--vetro-space-4);
+  }
+
+  .page-header {
+    width: 100vw;
+    margin: calc(var(--vetro-space-6) * -1) 0 var(--vetro-space-4) calc(var(--vetro-space-4) * -1);
+    padding: 14px var(--vetro-space-4) 14px 58px;
+    flex-wrap: wrap;
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+
+  /* A <table> can't reflow onto multiple lines — let it scroll horizontally
+     rather than crush every column on a narrow screen. */
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .data-table thead,
+  .data-table tbody,
+  .data-table tr {
+    display: table;
+    width: 100%;
+    table-layout: auto;
+  }
 }

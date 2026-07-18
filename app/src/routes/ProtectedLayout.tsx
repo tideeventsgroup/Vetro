@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
 import { useAuth } from "../lib/auth.js";
@@ -7,6 +8,7 @@ import {
   CalendarIcon,
   ClockIcon,
   MapPinIcon,
+  MenuIcon,
   RosterIcon,
   SettingsIcon,
   ShieldCheckIcon,
@@ -17,6 +19,7 @@ import {
 export function ProtectedLayout() {
   const { isAuthenticated, isLoading, logout, role } = useAuth();
   const tenant = useTenantSlug();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   if (isLoading) return <p style={{ padding: 24, color: "var(--vetro-text-muted)" }}>Loading…</p>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -28,9 +31,18 @@ export function ProtectedLayout() {
 
   return (
     <div className="app-shell">
-      <aside className="app-sidebar">
+      <button
+        type="button"
+        className="mobile-nav-toggle"
+        aria-label="Toggle navigation"
+        onClick={() => setMobileNavOpen((v) => !v)}
+      >
+        <MenuIcon />
+      </button>
+      {mobileNavOpen && <div className="app-sidebar-scrim" onClick={() => setMobileNavOpen(false)} />}
+      <aside className={`app-sidebar${mobileNavOpen ? " open" : ""}`}>
         <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
-        <nav className="app-nav">
+        <nav className="app-nav" onClick={() => setMobileNavOpen(false)}>
           <NavLink to={`/${tenant}`} end>
             <RosterIcon />
             Roster
