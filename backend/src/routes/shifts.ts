@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
+import { CHECK_CALL_GRACE_MS, CHECK_CALL_INTERVAL_MS, shiftRequiresCheckCalls } from "../lib/checkCalls.js";
 import { getRosterBlocker } from "../lib/compliance.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
@@ -46,10 +47,30 @@ shifts.get("/shifts/active", async (c) => {
       clockInAt: { not: null },
       clockOutAt: null,
     },
-    include: { site: true, officer: true },
+    include: {
+      site: true,
+      officer: true,
+      alerts: { where: { type: "CHECK_CALL" }, orderBy: { createdAt: "desc" }, take: 1 },
+    },
     orderBy: { clockInAt: "asc" },
   });
-  return c.json(rows);
+
+  // requiresCheckCalls/nextCheckCallDueAt/checkCallOverdue mirror the
+  // escalation math in jobs/checkOverdueCheckCalls.ts exactly, so Live Ops
+  // can show "due in 12m" / "overdue" without re-deriving the rule
+  // client-side.
+  const withCheckCalls = rows.map(({ alerts, ...shift }) => {
+    const requiresCheckCalls = shiftRequiresCheckCalls(shift.startTime);
+    if (!requiresCheckCalls) {
+      return { ...shift, requiresCheckCalls, nextCheckCallDueAt: null, checkCallOverdue: false };
+    }
+    const baseline = alerts[0]?.createdAt ?? shift.clockInAt!;
+    const nextCheckCallDueAt = new Date(baseline.getTime() + CHECK_CALL_INTERVAL_MS);
+    const checkCallOverdue = Date.now() - nextCheckCallDueAt.getTime() > CHECK_CALL_GRACE_MS;
+    return { ...shift, requiresCheckCalls, nextCheckCallDueAt, checkCallOverdue };
+  });
+
+  return c.json(withCheckCalls);
 });
 
 shifts.post("/shifts", async (c) => {

@@ -253,18 +253,26 @@ me.post("/sos", async (c) => {
 // NO_SHOW, there's nothing for anyone to act on; it exists purely as a
 // timestamped, GPS-tagged log an admin can look back over (Live Ops, Alerts
 // Center's Info group, the audit log). Also not gated by
-// requireVettingCompleted, matching SOS.
+// requireVettingCompleted, matching SOS. Linked to the officer's active
+// shift (if any) so jobs/checkOverdueCheckCalls.ts can measure "how long
+// since the last check-in on THIS shift" rather than across all of them —
+// and so this same check-in can clear a MISSED_CHECK_CALL escalation below.
 me.post("/check-call", async (c) => {
   const db = await getDb();
   const officerId = c.get("officerId")!;
   const contractorId = c.get("contractorId")!;
   const gps = await c.req.json<ClockGpsBody>().catch(() => ({}) as ClockGpsBody);
 
+  const activeShift = await db.shift.findFirst({
+    where: { officerId, clockInAt: { not: null }, clockOutAt: null },
+  });
+
   const created = await db.alert.create({
     data: {
       contractorId,
       officerId,
       type: "CHECK_CALL",
+      shiftId: activeShift?.id,
       status: "RESOLVED",
       resolvedAt: new Date(),
       latitude: gps.lat ?? null,
@@ -272,6 +280,16 @@ me.post("/check-call", async (c) => {
       accuracyM: gps.accuracyM ?? null,
     },
   });
+
+  // Checking in is exactly the thing a missed-check-call escalation was
+  // waiting for — clear it rather than leaving it open until an admin
+  // manually resolves an emergency that's no longer one.
+  if (activeShift) {
+    await db.alert.updateMany({
+      where: { shiftId: activeShift.id, type: "MISSED_CHECK_CALL", status: { not: "RESOLVED" } },
+      data: { status: "RESOLVED", resolvedAt: new Date() },
+    });
+  }
 
   await recordAudit({
     contractorId,

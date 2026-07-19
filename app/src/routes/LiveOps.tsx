@@ -2,7 +2,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { RadarIcon, SirenIcon, WarningIcon } from "../components/icons.js";
+import { ClockIcon, RadarIcon, SirenIcon, WarningIcon } from "../components/icons.js";
 import { Alert, Shift, useApi } from "../lib/api.js";
 
 const POLL_MS = 20_000;
@@ -30,6 +30,26 @@ function timeAgo(value: string): string {
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   return `${Math.round(mins / 60)}h ago`;
+}
+
+// Matches the copy an admin actually wants for a check-in due time: "in 12m"
+// while there's still time, "any minute" right at the boundary, and once
+// past it "overdue" takes over as its own badge instead (see checkCallStatus).
+function dueIn(value: string): string {
+  const mins = Math.round((new Date(value).getTime() - Date.now()) / 60_000);
+  if (mins <= 0) return "any minute";
+  if (mins < 60) return `in ${mins}m`;
+  return `in ${Math.round(mins / 60)}h`;
+}
+
+const CHECK_CALL_DUE_SOON_MS = 10 * 60 * 1000;
+
+function checkCallStatus(shift: Shift): { label: string; className: string } | undefined {
+  if (!shift.requiresCheckCalls || !shift.nextCheckCallDueAt) return undefined;
+  if (shift.checkCallOverdue) return { label: "Overdue", className: "status-expired" };
+  const msUntilDue = new Date(shift.nextCheckCallDueAt).getTime() - Date.now();
+  if (msUntilDue <= CHECK_CALL_DUE_SOON_MS) return { label: `Due ${dueIn(shift.nextCheckCallDueAt)}`, className: "status-expiring" };
+  return { label: `Due ${dueIn(shift.nextCheckCallDueAt)}`, className: "status-active" };
 }
 
 // Dispatch's "where is everyone right now" view — the single feature every
@@ -86,6 +106,10 @@ export function LiveOps() {
     }
   }
   const openAlerts = alerts.filter((a) => a.status === "OPEN");
+  const checkCallsDue = activeShifts
+    .filter((s) => s.requiresCheckCalls && s.nextCheckCallDueAt)
+    .sort((a, b) => new Date(a.nextCheckCallDueAt!).getTime() - new Date(b.nextCheckCallDueAt!).getTime());
+  const overdueCheckCallCount = checkCallsDue.filter((s) => s.checkCallOverdue).length;
 
   const center: [number, number] =
     positioned.length > 0
@@ -126,8 +150,12 @@ export function LiveOps() {
               {alerts.map((a) => (
                 <tr key={a.id}>
                   <td style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {a.type === "SOS" ? <SirenIcon width={14} height={14} /> : <WarningIcon width={14} height={14} />}
-                    {a.type === "SOS" ? "SOS" : "No-show"}
+                    {a.type === "SOS" || a.type === "MISSED_CHECK_CALL" ? (
+                      <SirenIcon width={14} height={14} />
+                    ) : (
+                      <WarningIcon width={14} height={14} />
+                    )}
+                    {a.type === "SOS" ? "SOS" : a.type === "MISSED_CHECK_CALL" ? "Missed check-in" : "No-show"}
                   </td>
                   <td>
                     {a.officer ? `${a.officer.firstName} ${a.officer.lastName}` : "—"}
@@ -154,6 +182,49 @@ export function LiveOps() {
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {checkCallsDue.length > 0 && (
+        <div
+          className="card"
+          style={{
+            borderLeft: `3px solid ${overdueCheckCallCount > 0 ? "var(--vetro-status-red)" : "var(--vetro-status-amber)"}`,
+            marginBottom: 24,
+          }}
+        >
+          <div className="card-header">
+            <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <ClockIcon />
+              Check calls due
+              {overdueCheckCallCount > 0 && <span className="nav-badge">{overdueCheckCallCount}</span>}
+            </h2>
+          </div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Officer</th>
+                <th>Site</th>
+                <th>Last check-in</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {checkCallsDue.map((shift) => {
+                const status = checkCallStatus(shift);
+                return (
+                  <tr key={shift.id}>
+                    <td>{shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "—"}</td>
+                    <td>{shift.site?.name ?? "—"}</td>
+                    <td>{shift.clockInAt ? timeAgo(shift.clockInAt) : "—"}</td>
+                    <td>
+                      {status && <span className={`status-badge ${status.className}`}>{status.label}</span>}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -220,17 +291,28 @@ export function LiveOps() {
                 <th>Site</th>
                 <th>Clocked in</th>
                 <th>Last position update</th>
+                <th>Check calls</th>
               </tr>
             </thead>
             <tbody>
-              {activeShifts.map((shift) => (
-                <tr key={shift.id}>
-                  <td>{shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "—"}</td>
-                  <td>{shift.site?.name ?? "—"}</td>
-                  <td>{shift.clockInAt ? timeAgo(shift.clockInAt) : "—"}</td>
-                  <td>{shift.lastLocationAt ? timeAgo(shift.lastLocationAt) : "No ping yet"}</td>
-                </tr>
-              ))}
+              {activeShifts.map((shift) => {
+                const status = checkCallStatus(shift);
+                return (
+                  <tr key={shift.id}>
+                    <td>{shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "—"}</td>
+                    <td>{shift.site?.name ?? "—"}</td>
+                    <td>{shift.clockInAt ? timeAgo(shift.clockInAt) : "—"}</td>
+                    <td>{shift.lastLocationAt ? timeAgo(shift.lastLocationAt) : "No ping yet"}</td>
+                    <td>
+                      {status ? (
+                        <span className={`status-badge ${status.className}`}>{status.label}</span>
+                      ) : (
+                        <span style={{ color: "var(--vetro-text-muted)", fontSize: 13 }}>Not required</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

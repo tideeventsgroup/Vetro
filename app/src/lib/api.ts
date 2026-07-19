@@ -201,6 +201,13 @@ export interface Shift {
   lastLat: number | null;
   lastLng: number | null;
   lastLocationAt: string | null;
+  // Only present on /shifts/active rows — whether this shift (a nightshift
+  // or weekend day shift, see backend/src/lib/checkCalls.ts) needs hourly
+  // welfare check-ins, and if so when the next one is due / whether it's
+  // already run more than 30 minutes overdue.
+  requiresCheckCalls?: boolean;
+  nextCheckCallDueAt?: string | null;
+  checkCallOverdue?: boolean;
   site?: Site;
   officer?: Officer | null;
 }
@@ -296,7 +303,7 @@ export interface MyMessage extends Message {
 
 export type AlertStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
 
-export type AlertKind = "SOS" | "NO_SHOW" | "CHECK_CALL";
+export type AlertKind = "SOS" | "NO_SHOW" | "CHECK_CALL" | "MISSED_CHECK_CALL";
 
 export interface Alert {
   id: string;
