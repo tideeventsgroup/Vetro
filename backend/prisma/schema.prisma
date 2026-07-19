@@ -31,6 +31,29 @@ enum ShiftStatus {
   LATE
 }
 
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CASUAL
+  ZERO_HOURS
+}
+
+// Distinct from ComplianceStatus (licence/vetting state) — this is whether
+// the person is currently a working employee at all, the baseline fact an
+// HR record exists to answer before compliance status is even relevant.
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE
+  SUSPENDED
+  LEFT
+}
+
+enum PayRateType {
+  HOURLY
+  DAILY
+  SALARY
+}
+
 enum IncidentCategory {
   THEFT
   VANDALISM
@@ -126,26 +149,49 @@ model Shift {
 }
 
 model Officer {
-  id                 String              @id @default(cuid())
-  contractorId       String
-  contractor         Contractor          @relation(fields: [contractorId], references: [id])
-  firstName          String
-  lastName           String
-  email              String?
-  phone              String?
-  licences           SiaLicence[]
-  vettingRecords     VettingRecord[]
-  qualifications     Qualification[]
-  documents          Document[]
-  vettingSubmissions VettingSubmission[]
-  shifts             Shift[]
-  incidents          Incident[]
-  checkpointScans    CheckpointScan[]
-  visitorLogEntries  VisitorLogEntry[]
-  messagesReceived   Message[]
-  messageReads       MessageRead[]
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                           String              @id @default(cuid())
+  contractorId                 String
+  contractor                   Contractor          @relation(fields: [contractorId], references: [id])
+  firstName                    String
+  lastName                     String
+  email                        String?
+  phone                        String?
+  // Personal details
+  dateOfBirth                  DateTime?
+  nationalInsuranceNumber      String?
+  addressLine1                 String?
+  addressLine2                 String?
+  city                         String?
+  postcode                     String?
+  emergencyContactName         String?
+  emergencyContactPhone        String?
+  emergencyContactRelationship String?
+  // Employment details — separate from ComplianceStatus (licence/vetting),
+  // which answers "cleared to work"; these answer "employed at all, doing
+  // what, since when, paid how".
+  employeeNumber               String?
+  jobTitle                     String?
+  employmentType               EmploymentType?
+  employmentStatus             EmploymentStatus    @default(ACTIVE)
+  startDate                    DateTime?
+  leaveDate                    DateTime?
+  payRate                      Float?
+  payRateType                  PayRateType?
+  rightToWorkConfirmed         Boolean             @default(false)
+  rightToWorkCheckedAt         DateTime?
+  licences                     SiaLicence[]
+  vettingRecords               VettingRecord[]
+  qualifications               Qualification[]
+  documents                    Document[]
+  vettingSubmissions           VettingSubmission[]
+  shifts                       Shift[]
+  incidents                    Incident[]
+  checkpointScans              CheckpointScan[]
+  visitorLogEntries            VisitorLogEntry[]
+  messagesReceived             Message[]
+  messageReads                 MessageRead[]
+  createdAt                    DateTime            @default(now())
+  updatedAt                    DateTime            @updatedAt
 
   @@index([contractorId])
 }

@@ -82,6 +82,10 @@ export interface AuditLogEntry {
   createdAt: string;
 }
 
+export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CASUAL" | "ZERO_HOURS";
+export type EmploymentStatus = "ACTIVE" | "ON_LEAVE" | "SUSPENDED" | "LEFT";
+export type PayRateType = "HOURLY" | "DAILY" | "SALARY";
+
 export interface Officer {
   id: string;
   contractorId: string;
@@ -89,11 +93,54 @@ export interface Officer {
   lastName: string;
   email: string | null;
   phone: string | null;
+  dateOfBirth: string | null;
+  nationalInsuranceNumber: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  postcode: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  emergencyContactRelationship: string | null;
+  employeeNumber: string | null;
+  jobTitle: string | null;
+  employmentType: EmploymentType | null;
+  employmentStatus: EmploymentStatus;
+  startDate: string | null;
+  leaveDate: string | null;
+  payRate: number | null;
+  payRateType: PayRateType | null;
+  rightToWorkConfirmed: boolean;
+  rightToWorkCheckedAt: string | null;
   licences: SiaLicence[];
   vettingRecords: VettingRecord[];
   qualifications?: Qualification[];
   documents?: OfficerDocument[];
   vettingSubmissions?: VettingSubmission[];
+}
+
+export interface OfficerHrInput {
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string | null;
+  nationalInsuranceNumber?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  postcode?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  emergencyContactRelationship?: string | null;
+  employeeNumber?: string | null;
+  jobTitle?: string | null;
+  employmentType?: EmploymentType | null;
+  employmentStatus?: EmploymentStatus;
+  startDate?: string | null;
+  leaveDate?: string | null;
+  payRate?: number | null;
+  payRateType?: PayRateType | null;
+  rightToWorkConfirmed?: boolean;
+  rightToWorkCheckedAt?: string | null;
 }
 
 export interface Contractor {
@@ -313,8 +360,12 @@ class VetroApiClient {
     return this.request(`/officers/${id}`);
   }
 
-  createOfficer(input: { firstName: string; lastName: string; email?: string; phone?: string }) {
+  createOfficer(input: { firstName: string; lastName: string } & OfficerHrInput) {
     return this.request<Officer>("/officers", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  updateOfficer(id: string, input: Partial<{ firstName: string; lastName: string }> & OfficerHrInput) {
+    return this.request<Officer>(`/officers/${id}`, { method: "PATCH", body: JSON.stringify(input) });
   }
 
   createLicence(

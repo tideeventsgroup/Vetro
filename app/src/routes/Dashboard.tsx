@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AddOfficerModal } from "../components/AddOfficerModal.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 import { DownloadIcon, PlusIcon, RosterIcon, ShieldCheckIcon } from "../components/icons.js";
-import { Contractor, DashboardSummary, Officer, useApi } from "../lib/api.js";
+import { Contractor, DashboardSummary, Officer, OfficerHrInput, useApi } from "../lib/api.js";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 import { worstStatus } from "../lib/status.js";
@@ -113,7 +113,7 @@ export function Dashboard() {
     }
   }
 
-  async function handleAddOfficer(input: { firstName: string; lastName: string; email?: string }) {
+  async function handleAddOfficer(input: { firstName: string; lastName: string } & OfficerHrInput) {
     await api.createOfficer(input);
     await loadRoster();
   }

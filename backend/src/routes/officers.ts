@@ -1,3 +1,4 @@
+import type { EmploymentStatus, EmploymentType, PayRateType } from "@prisma/client";
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
@@ -26,16 +27,108 @@ officers.get("/:id", async (c) => {
   return c.json(row);
 });
 
+// The full HR profile an officer create/update can carry — everything
+// beyond first/last name is optional, since a new hire's full paperwork
+// (NI number, address, emergency contact, pay rate) often trickles in over
+// the first few days rather than arriving complete at the moment they're
+// added.
+interface OfficerHrFields {
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string | null;
+  nationalInsuranceNumber?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  postcode?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  emergencyContactRelationship?: string | null;
+  employeeNumber?: string | null;
+  jobTitle?: string | null;
+  employmentType?: string | null;
+  employmentStatus?: string;
+  startDate?: string | null;
+  leaveDate?: string | null;
+  payRate?: number | null;
+  payRateType?: string | null;
+  rightToWorkConfirmed?: boolean;
+  rightToWorkCheckedAt?: string | null;
+}
+
+const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "CASUAL", "ZERO_HOURS"] as const;
+const EMPLOYMENT_STATUSES = ["ACTIVE", "ON_LEAVE", "SUSPENDED", "LEFT"] as const;
+const PAY_RATE_TYPES = ["HOURLY", "DAILY", "SALARY"] as const;
+
+// Builds the Prisma `data` object from an HR-fields body, allowlisting each
+// key explicitly (never `data: body`) and converting date strings to Date —
+// shared by create and update so the two can't drift on which fields or
+// enum values are actually accepted.
+function buildOfficerHrData(body: OfficerHrFields) {
+  if (body.employmentType && !EMPLOYMENT_TYPES.includes(body.employmentType as (typeof EMPLOYMENT_TYPES)[number])) {
+    throw new Error(`employmentType must be one of: ${EMPLOYMENT_TYPES.join(", ")}`);
+  }
+  if (
+    body.employmentStatus &&
+    !EMPLOYMENT_STATUSES.includes(body.employmentStatus as (typeof EMPLOYMENT_STATUSES)[number])
+  ) {
+    throw new Error(`employmentStatus must be one of: ${EMPLOYMENT_STATUSES.join(", ")}`);
+  }
+  if (body.payRateType && !PAY_RATE_TYPES.includes(body.payRateType as (typeof PAY_RATE_TYPES)[number])) {
+    throw new Error(`payRateType must be one of: ${PAY_RATE_TYPES.join(", ")}`);
+  }
+
+  const toDate = (v: string | null | undefined) => (v === undefined ? undefined : v === null ? null : new Date(v));
+
+  return {
+    ...(body.email !== undefined && { email: body.email }),
+    ...(body.phone !== undefined && { phone: body.phone }),
+    ...(body.dateOfBirth !== undefined && { dateOfBirth: toDate(body.dateOfBirth) }),
+    ...(body.nationalInsuranceNumber !== undefined && { nationalInsuranceNumber: body.nationalInsuranceNumber }),
+    ...(body.addressLine1 !== undefined && { addressLine1: body.addressLine1 }),
+    ...(body.addressLine2 !== undefined && { addressLine2: body.addressLine2 }),
+    ...(body.city !== undefined && { city: body.city }),
+    ...(body.postcode !== undefined && { postcode: body.postcode }),
+    ...(body.emergencyContactName !== undefined && { emergencyContactName: body.emergencyContactName }),
+    ...(body.emergencyContactPhone !== undefined && { emergencyContactPhone: body.emergencyContactPhone }),
+    ...(body.emergencyContactRelationship !== undefined && {
+      emergencyContactRelationship: body.emergencyContactRelationship,
+    }),
+    ...(body.employeeNumber !== undefined && { employeeNumber: body.employeeNumber }),
+    ...(body.jobTitle !== undefined && { jobTitle: body.jobTitle }),
+    ...(body.employmentType !== undefined && { employmentType: body.employmentType as EmploymentType | null }),
+    ...(body.employmentStatus !== undefined && { employmentStatus: body.employmentStatus as EmploymentStatus }),
+    ...(body.startDate !== undefined && { startDate: toDate(body.startDate) }),
+    ...(body.leaveDate !== undefined && { leaveDate: toDate(body.leaveDate) }),
+    ...(body.payRate !== undefined && { payRate: body.payRate }),
+    ...(body.payRateType !== undefined && { payRateType: body.payRateType as PayRateType | null }),
+    ...(body.rightToWorkConfirmed !== undefined && { rightToWorkConfirmed: body.rightToWorkConfirmed }),
+    ...(body.rightToWorkCheckedAt !== undefined && { rightToWorkCheckedAt: toDate(body.rightToWorkCheckedAt) }),
+  };
+}
+
 officers.post("/", async (c) => {
   const db = await getDb();
-  const body = await c.req.json<{
-    firstName: string;
-    lastName: string;
-    email?: string;
-    phone?: string;
-  }>();
+  const body = await c.req.json<{ firstName: string; lastName: string } & OfficerHrFields>();
+  if (!body.firstName?.trim() || !body.lastName?.trim()) {
+    return c.json({ error: "firstName and lastName are required" }, 400);
+  }
 
-  const created = await db.officer.create({ data: { ...body, contractorId: c.get("contractorId")! } });
+  let hrData;
+  try {
+    hrData = buildOfficerHrData(body);
+  } catch (err) {
+    return c.json({ error: err instanceof Error ? err.message : "Invalid officer fields" }, 400);
+  }
+
+  const created = await db.officer.create({
+    data: {
+      contractorId: c.get("contractorId")!,
+      firstName: body.firstName.trim(),
+      lastName: body.lastName.trim(),
+      ...hrData,
+    },
+  });
   await recordAudit({
     contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
@@ -54,8 +147,22 @@ officers.patch("/:id", async (c) => {
     return c.json({ error: "Officer not found" }, 404);
   }
 
-  const body = await c.req.json<Partial<{ firstName: string; lastName: string; email: string; phone: string }>>();
-  const updated = await db.officer.update({ where: { id }, data: body });
+  const body = await c.req.json<Partial<{ firstName: string; lastName: string }> & OfficerHrFields>();
+  let hrData;
+  try {
+    hrData = buildOfficerHrData(body);
+  } catch (err) {
+    return c.json({ error: err instanceof Error ? err.message : "Invalid officer fields" }, 400);
+  }
+
+  const updated = await db.officer.update({
+    where: { id },
+    data: {
+      ...(body.firstName !== undefined && { firstName: body.firstName }),
+      ...(body.lastName !== undefined && { lastName: body.lastName }),
+      ...hrData,
+    },
+  });
   await recordAudit({
     contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
