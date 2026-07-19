@@ -2,7 +2,13 @@
 <html lang="en-GB">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- viewport-fit=cover is required for the standalone/installed PWA to
+       actually draw edge-to-edge on notch/Dynamic-Island/home-indicator
+       devices — without it, every env(safe-area-inset-*) used across
+       app.css (mobile tab bar, hamburger button, SOS FAB, page header)
+       silently resolves to 0px and those elements collide with the
+       device's own chrome instead of padding around it. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Vetro</title>
   <meta name="theme-color" content="#0E7C7B" />
   <meta name="description" content="Scotland's security workforce, verified — SIA licence and BS7858 vetting, checked automatically." />
