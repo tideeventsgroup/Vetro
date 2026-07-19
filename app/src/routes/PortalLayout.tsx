@@ -28,7 +28,7 @@ import { useTenantSlug } from "../lib/tenant.js";
 // Messages are never locked: an officer needs the first two to actually get
 // vetted, and dispatch may need to reach an unvetted officer directly (e.g.
 // about a vetting appointment), so messaging can't be gated behind it.
-const LOCKED_SEGMENTS = ["shifts", "incidents", "patrols", "visitor-log"];
+export const LOCKED_SEGMENTS = ["shifts", "incidents", "patrols", "visitor-log"];
 
 // How often to poll for new messages while the portal is open. There's no
 // websocket/push infra yet, so this is what keeps the unread badge current

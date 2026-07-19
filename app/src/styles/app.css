@@ -1065,6 +1065,73 @@ button {
   border-top: 1px solid var(--vetro-border);
 }
 
+/* Officer portal Home — quick-action tiles to the locked/unlocked segments
+   (PortalHome.tsx), same lock-styling convention as the sidebar's
+   .app-nav-locked so "not available yet" reads identically in both places. */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--vetro-space-3);
+  margin-bottom: var(--vetro-space-5);
+}
+
+.quick-action-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--vetro-space-2);
+  padding: var(--vetro-space-4) var(--vetro-space-3);
+  min-height: 44px;
+  background: var(--vetro-surface);
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-lg);
+  box-shadow: var(--vetro-shadow-sm);
+  text-decoration: none;
+  color: var(--vetro-text);
+  font-size: var(--vetro-fs-body-sm);
+  font-weight: var(--vetro-fw-medium);
+  text-align: center;
+  transition: box-shadow var(--vetro-duration) var(--vetro-ease);
+}
+
+.quick-action-tile:hover {
+  box-shadow: var(--vetro-shadow-card);
+  text-decoration: none;
+}
+
+.quick-action-tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--vetro-radius-md);
+  background: var(--vetro-teal-light);
+  color: var(--vetro-teal-dark);
+}
+
+.quick-action-tile-locked {
+  cursor: not-allowed;
+  color: var(--vetro-text-muted);
+}
+
+.quick-action-tile-locked:hover {
+  box-shadow: var(--vetro-shadow-sm);
+}
+
+.quick-action-tile-locked .quick-action-tile-icon {
+  background: var(--vetro-surface-muted);
+  color: var(--vetro-ink-500);
+}
+
+.quick-action-tile-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
 /* Shift status-mix bar (Reports) — a stacked bar per site, gaps between
    segments (not strokes) do the separating; the legend below is the
    identity channel, colour alone never is. */
