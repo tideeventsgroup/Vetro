@@ -1614,6 +1614,17 @@ button {
     table-layout: auto;
   }
 
+  /* iOS auto-zooms the whole page when a form field's font-size is under
+     16px, to make it legible while typing — and in an installed standalone
+     PWA that zoomed-in state routinely fails to reset on blur, leaving the
+     entire app stuck zoomed. --vetro-fs-body-sm (14px) is fine with a
+     desktop pointer but must never reach an <input> on a touch device. */
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    font-size: var(--vetro-fs-body);
+  }
+
   /* Bigger tap targets everywhere on mobile — 44px is the platform minimum
      (Apple HIG / Material), the desktop sizing below that is fine with a
      precise pointer but not a thumb. */
