@@ -1753,8 +1753,9 @@ button {
 }
 
 /* Installed-PWA cold-launch splash (components/SplashScreen.tsx) — the V
-   mark draws itself in, then radar-style rings pulse outward around it for
-   the rest of the six seconds on screen before crossfading into the app. */
+   mark draws in alongside a verification ring closing around it, then a
+   slow radar sweep circles continuously for the rest of the six seconds
+   before crossfading into the app. */
 .pwa-splash {
   position: fixed;
   inset: 0;
@@ -1777,13 +1778,13 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 140px;
-  height: 134px;
+  width: 160px;
+  height: 160px;
 }
 
 .pwa-splash-mark {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   overflow: visible;
 }
 
@@ -1812,7 +1813,7 @@ button {
 }
 
 /* A soft, static glow gives the mark some depth against the flat gradient —
-   deliberately not animated itself, so it doesn't compete with the rings. */
+   deliberately not animated itself, so it doesn't compete with the sweep. */
 .pwa-splash-glow {
   position: absolute;
   top: 50%;
@@ -1832,38 +1833,81 @@ button {
   }
 }
 
-/* Two rings pulsing outward and fading, offset in time, like a radar/sonar
-   sweep — the one continuously-moving element once the draw-in settles
-   (~800ms), echoing Live Ops' own radar iconography and standing in for
-   the "verified, not assumed" idea without needing any text on screen. */
-.pwa-splash-ring {
+/* The verification ring — draws itself closed in step with the mark's own
+   strokes (same technique, same ~800ms finish), the "circle completes, mark
+   is confirmed" beat common to checkmark/success animations. Stays put,
+   faded, once drawn; the sweep below is what keeps this alive afterwards. */
+.pwa-splash-ring-svg {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 140px;
-  height: 140px;
-  margin: -70px 0 0 -70px;
+  width: 160px;
+  height: 160px;
+  margin: -80px 0 0 -80px;
+  z-index: 1;
+  overflow: visible;
+}
+
+.pwa-splash-ring-circle {
+  fill: none;
+  stroke: var(--vetro-teal);
+  stroke-width: 2;
+  opacity: 0.55;
+  /* circumference = 2πr = 2π·68 ≈ 428, enough dash length to fully hide it
+     at offset 428. */
+  stroke-dasharray: 428;
+  stroke-dashoffset: 428;
+  transform-origin: 80px 80px;
+  transform: rotate(-90deg);
+  animation: pwa-splash-ring-draw 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms forwards;
+}
+
+@keyframes pwa-splash-ring-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* A slow radar sweep once the ring has closed (~900ms) — the one
+   continuously-moving element for the rest of the hold, echoing Live Ops'
+   own radar iconography and standing in for "verified, not assumed"
+   without needing any text on screen. A conic-gradient wedge, masked down
+   to just the ring's band so it reads as a sweep circling the ring rather
+   than a filled pie slice. */
+.pwa-splash-sweep {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 136px;
+  height: 136px;
+  margin: -68px 0 0 -68px;
   border-radius: 50%;
-  border: 2px solid var(--vetro-teal);
   opacity: 0;
-  animation: pwa-splash-ping 2400ms cubic-bezier(0.25, 0.65, 0.3, 1) 850ms infinite;
+  /* White rather than teal — a teal highlight barely registers against a
+     teal/ink background, whereas white gives the sweep an actual visible
+     leading edge. */
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0) 0deg,
+    rgba(255, 255, 255, 0.9) 22deg,
+    rgba(255, 255, 255, 0) 80deg,
+    rgba(255, 255, 255, 0) 360deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 62%, black 64%, black 100%);
+  mask: radial-gradient(circle, transparent 62%, black 64%, black 100%);
+  animation:
+    pwa-splash-sweep-in 400ms ease-out 900ms forwards,
+    pwa-splash-sweep-spin 3200ms linear 900ms infinite;
 }
 
-.pwa-splash-ring-2 {
-  border-color: var(--vetro-white);
-  animation-delay: 2050ms;
+@keyframes pwa-splash-sweep-in {
+  to {
+    opacity: 1;
+  }
 }
 
-@keyframes pwa-splash-ping {
-  0% {
-    transform: scale(0.7);
-    opacity: 0.5;
-  }
-  70% {
-    opacity: 0.12;
-  }
-  100% {
-    transform: scale(1.7);
-    opacity: 0;
+@keyframes pwa-splash-sweep-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
