@@ -20,6 +20,15 @@
   --vetro-status-red: #D64545;
   --vetro-status-green: #2E9E5B;
 
+  /* Darker "as text" variants of the three status colours above — the base
+     tones are tuned for badge fills/icons/borders (where WCAG's looser 3:1
+     non-text contrast applies) and fall short of 4.5:1 for actual body text
+     on a light surface. These are what status badges and any status-coloured
+     numeral/label should use instead. */
+  --vetro-status-green-text: #1C7A45;
+  --vetro-status-amber-text: #C24A16;
+  --vetro-status-red-text: #B23A3A;
+
   /* Neutral text hierarchy, all derived from Ink */
   --vetro-ink-900: #1F2933;
   --vetro-ink-700: #3E4C59;
@@ -34,7 +43,11 @@
   --vetro-border-strong: var(--vetro-ink-300);
   --vetro-text: var(--vetro-ink-900);
   --vetro-text-secondary: var(--vetro-ink-700);
-  --vetro-text-muted: var(--vetro-ink-500);
+  /* Deliberately darker than --vetro-ink-500 (#7B8794, ~3.7:1 on white,
+     under WCAG AA's 4.5:1 for body text) — --vetro-text-muted is used as
+     real, readable text throughout (empty states, table meta, "Loading…"),
+     not just as a decorative tint, so it needs to actually meet AA. */
+  --vetro-text-muted: #5B6770;
   --vetro-accent: var(--vetro-teal);
   --vetro-accent-hover: var(--vetro-teal-dark);
   --vetro-focus-ring: #0E7C7B66;

@@ -243,7 +243,11 @@ export function Schedule() {
                               </option>
                             ))}
                           </select>
-                          <button className="btn btn-secondary" onClick={() => handleDelete(shift)}>
+                          <button
+                            className="btn btn-secondary"
+                            onClick={() => handleDelete(shift)}
+                            aria-label="Delete shift"
+                          >
                             <TrashIcon width={14} height={14} />
                           </button>
                         </div>

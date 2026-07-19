@@ -35,6 +35,7 @@ function QrCodeCell({ checkpoint }: { checkpoint: Checkpoint }) {
       onClick={handlePrint}
       style={{ border: "none", background: "none", cursor: "pointer", padding: 0 }}
       title="Click to print"
+      aria-label={`Print QR code for checkpoint ${checkpoint.name}`}
     >
       <img src={dataUrl} width={40} height={40} alt={`QR code for ${checkpoint.name}`} />
     </button>
@@ -220,7 +221,11 @@ export function Patrols() {
                           <QrCodeCell checkpoint={cp} />
                         </td>
                         <td>
-                          <button className="btn btn-secondary" onClick={() => handleDelete(cp.id)}>
+                          <button
+                            className="btn btn-secondary"
+                            onClick={() => handleDelete(cp.id)}
+                            aria-label={`Delete checkpoint ${cp.name}`}
+                          >
                             <TrashIcon width={14} height={14} />
                           </button>
                         </td>

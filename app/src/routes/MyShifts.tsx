@@ -165,7 +165,7 @@ export function MyShifts() {
         </div>
         <div className="summary-tile">
           <div>
-            <div className="count" style={{ color: tally.needsConfirmation > 0 ? "var(--vetro-status-amber)" : undefined }}>
+            <div className="count" style={{ color: tally.needsConfirmation > 0 ? "var(--vetro-status-amber-text)" : undefined }}>
               {tally.needsConfirmation}
             </div>
             <div className="label">Needs confirmation</div>
@@ -173,7 +173,7 @@ export function MyShifts() {
         </div>
         <div className="summary-tile">
           <div>
-            <div className="count" style={{ color: "#1C7A45" }}>
+            <div className="count" style={{ color: "var(--vetro-status-green-text)" }}>
               {tally.completed}
             </div>
             <div className="label">Completed</div>

@@ -205,7 +205,7 @@ export function Dashboard() {
         </div>
         <div className="summary-tile">
           <div>
-            <div className="count" style={{ color: "#1C7A45" }}>
+            <div className="count" style={{ color: "var(--vetro-status-green-text)" }}>
               {tally.ACTIVE}
             </div>
             <div className="label">Active</div>
@@ -213,7 +213,7 @@ export function Dashboard() {
         </div>
         <div className="summary-tile">
           <div>
-            <div className="count" style={{ color: "#C24A16" }}>
+            <div className="count" style={{ color: "var(--vetro-status-amber-text)" }}>
               {tally.EXPIRING}
             </div>
             <div className="label">Expiring soon</div>
@@ -221,7 +221,7 @@ export function Dashboard() {
         </div>
         <div className="summary-tile">
           <div>
-            <div className="count" style={{ color: "var(--vetro-status-red)" }}>
+            <div className="count" style={{ color: "var(--vetro-status-red-text)" }}>
               {tally.EXPIRED}
             </div>
             <div className="label">Expired</div>

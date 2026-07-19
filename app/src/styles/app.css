@@ -838,9 +838,9 @@ button {
   flex-shrink: 0;
 }
 
-.status-active { color: #1C7A45; background: color-mix(in srgb, var(--vetro-status-green) 14%, white); }
-.status-expiring { color: #C24A16; background: color-mix(in srgb, var(--vetro-status-amber) 14%, white); }
-.status-expired { color: var(--vetro-status-red); background: color-mix(in srgb, var(--vetro-status-red) 12%, white); }
+.status-active { color: var(--vetro-status-green-text); background: color-mix(in srgb, var(--vetro-status-green) 14%, white); }
+.status-expiring { color: var(--vetro-status-amber-text); background: color-mix(in srgb, var(--vetro-status-amber) 14%, white); }
+.status-expired { color: var(--vetro-status-red-text); background: color-mix(in srgb, var(--vetro-status-red) 12%, white); }
 
 /* Shift statuses (Schedule/ClientHome/Reports) — same pill/dot language,
    two additions for "hasn't happened yet" states that compliance status

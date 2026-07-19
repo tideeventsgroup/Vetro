@@ -21,7 +21,7 @@ function divIcon(background: string, size: number) {
 }
 
 const OFFICER_ICON = divIcon("#1C7A6B", 16);
-const SITE_ICON = divIcon("#7B8794", 10);
+const SITE_ICON = divIcon("var(--vetro-ink-500)", 10);
 const ALERT_ICON = divIcon("#C4342B", 22);
 
 function timeAgo(value: string): string {

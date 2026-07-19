@@ -194,6 +194,7 @@ export function MyIncidents() {
                     type="button"
                     className="btn btn-secondary"
                     onClick={() => setPhotos((current) => current.filter((_, idx) => idx !== i))}
+                    aria-label={`Remove photo ${file.name}`}
                   >
                     <TrashIcon width={14} height={14} />
                   </button>

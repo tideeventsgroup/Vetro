@@ -128,7 +128,7 @@ export function ClientHome() {
         </div>
         <div className="summary-tile">
           <div>
-            <div className="count" style={{ color: "#1C7A45" }}>
+            <div className="count" style={{ color: "var(--vetro-status-green-text)" }}>
               {tally.completed}
             </div>
             <div className="label">Completed</div>
@@ -136,7 +136,7 @@ export function ClientHome() {
         </div>
         <div className="summary-tile">
           <div>
-            <div className="count" style={{ color: tally.needsAttention > 0 ? "var(--vetro-status-red)" : undefined }}>
+            <div className="count" style={{ color: tally.needsAttention > 0 ? "var(--vetro-status-red-text)" : undefined }}>
               {tally.needsAttention}
             </div>
             <div className="label">Missed or late</div>

@@ -149,7 +149,7 @@ export function MyPatrols() {
                           display: "flex",
                           alignItems: "center",
                           gap: 6,
-                          color: "#1C7A45",
+                          color: "var(--vetro-status-green-text)",
                           fontSize: 13,
                           margin: 0,
                         }}

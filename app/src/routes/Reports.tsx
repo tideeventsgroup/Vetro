@@ -61,7 +61,7 @@ export function Reports() {
                   <td>{row.officerCount}</td>
                   <td>
                     {row.officersAtRisk > 0 ? (
-                      <span style={{ color: "var(--vetro-status-red)", fontWeight: 600 }}>{row.officersAtRisk}</span>
+                      <span style={{ color: "var(--vetro-status-red-text)", fontWeight: 600 }}>{row.officersAtRisk}</span>
                     ) : (
                       "0"
                     )}
