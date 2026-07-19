@@ -362,6 +362,23 @@ me.get("/checkpoints", async (c) => {
   return c.json({ checkpoints, scans });
 });
 
+// Shared by both scan entry points below (by checkpoint id, and by the
+// QR-code token) — looks the checkpoint up by whichever criteria the caller
+// scanned, then applies the one authorization rule that matters regardless
+// of entry point: the officer must have actually worked a shift at that
+// checkpoint's site.
+async function findCheckpointForOfficer(
+  db: Awaited<ReturnType<typeof getDb>>,
+  officerId: string,
+  where: { id: string } | { qrCode: string }
+): Promise<Checkpoint | null> {
+  const checkpoint = await db.checkpoint.findUnique({ where });
+  if (!checkpoint || !(await officerBelongsAtSite(db, officerId, checkpoint.siteId))) {
+    return null;
+  }
+  return checkpoint;
+}
+
 async function performCheckpointScan(
   c: Context<AppEnv>,
   checkpoint: Checkpoint,
@@ -397,11 +414,8 @@ async function performCheckpointScan(
 me.post("/checkpoints/:id/scan", async (c) => {
   const db = await getDb();
   const officerId = c.get("officerId")!;
-  const checkpointId = c.req.param("id");
-  const checkpoint = await db.checkpoint.findUnique({ where: { id: checkpointId } });
-  if (!checkpoint || !(await officerBelongsAtSite(db, officerId, checkpoint.siteId))) {
-    return c.json({ error: "Checkpoint not found" }, 404);
-  }
+  const checkpoint = await findCheckpointForOfficer(db, officerId, { id: c.req.param("id") });
+  if (!checkpoint) return c.json({ error: "Checkpoint not found" }, 404);
 
   const gps = await c.req.json<ClockGpsBody>().catch(() => ({}) as ClockGpsBody);
   return performCheckpointScan(c, checkpoint, officerId, gps);
@@ -418,10 +432,8 @@ me.post("/checkpoints/scan-qr", async (c) => {
     .catch(() => ({}) as ClockGpsBody & { qrCode?: string });
   if (!body.qrCode) return c.json({ error: "qrCode is required" }, 400);
 
-  const checkpoint = await db.checkpoint.findUnique({ where: { qrCode: body.qrCode } });
-  if (!checkpoint || !(await officerBelongsAtSite(db, officerId, checkpoint.siteId))) {
-    return c.json({ error: "Checkpoint not found" }, 404);
-  }
+  const checkpoint = await findCheckpointForOfficer(db, officerId, { qrCode: body.qrCode });
+  if (!checkpoint) return c.json({ error: "Checkpoint not found" }, 404);
 
   return performCheckpointScan(c, checkpoint, officerId, body);
 });
@@ -608,70 +620,62 @@ me.get("/documents/:id/download-url", async (c) => {
 // or a contractor-wide broadcast (recipientId null); read state is tracked
 // per-officer via MessageRead so a broadcast's unread count is personal to
 // each reader, not shared.
-me.get("/messages", async (c) => {
-  const db = await getDb();
-  const officerId = c.get("officerId")!;
-  const contractorId = c.get("contractorId")!;
+//
+// The 100-row cap is shared between the list and the count so the two never
+// disagree — counting unread against the full, unbounded history would let
+// the badge report messages the officer can't actually see or mark read via
+// /messages (which only ever shows the newest 100).
+const MESSAGE_PAGE_SIZE = 100;
 
+async function getMyMessagesWithReadState(
+  db: Awaited<ReturnType<typeof getDb>>,
+  contractorId: string,
+  officerId: string
+) {
   const rows = await db.message.findMany({
     where: { contractorId, OR: [{ recipientId: officerId }, { recipientId: null }] },
     orderBy: { createdAt: "desc" },
-    take: 100,
-  });
-  const reads = await db.messageRead.findMany({
-    where: { officerId, messageId: { in: rows.map((r) => r.id) } },
-  });
-  const readIds = new Set(reads.map((r) => r.messageId));
-
-  return c.json(rows.map((r) => ({ ...r, read: readIds.has(r.id) })));
-});
-
-me.get("/messages/unread-count", async (c) => {
-  const db = await getDb();
-  const officerId = c.get("officerId")!;
-  const contractorId = c.get("contractorId")!;
-
-  const rows = await db.message.findMany({
-    where: { contractorId, OR: [{ recipientId: officerId }, { recipientId: null }] },
-    select: { id: true },
+    take: MESSAGE_PAGE_SIZE,
   });
   const reads = await db.messageRead.findMany({
     where: { officerId, messageId: { in: rows.map((r) => r.id) } },
     select: { messageId: true },
   });
   const readIds = new Set(reads.map((r) => r.messageId));
-  const unreadCount = rows.filter((r) => !readIds.has(r.id)).length;
+  return rows.map((r) => ({ ...r, read: readIds.has(r.id) }));
+}
 
-  return c.json({ unreadCount });
+me.get("/messages", async (c) => {
+  const db = await getDb();
+  const rows = await getMyMessagesWithReadState(db, c.get("contractorId")!, c.get("officerId")!);
+  return c.json(rows);
 });
 
-me.patch("/messages/:id/read", async (c) => {
+me.get("/messages/unread-count", async (c) => {
+  const db = await getDb();
+  const rows = await getMyMessagesWithReadState(db, c.get("contractorId")!, c.get("officerId")!);
+  return c.json({ unreadCount: rows.filter((r) => !r.read).length });
+});
+
+// Marks every currently-unread message (within the same 100-row window
+// above) as read in one atomic write — there's no per-message read toggle in
+// the product, MyMessages.tsx marks everything visible as read on open, so a
+// single bulk call replaces what would otherwise be one request per unread
+// message. `skipDuplicates` makes this safe under a concurrent duplicate
+// call (StrictMode's double effect invocation, two tabs) without needing a
+// try/catch around a unique-constraint violation.
+me.post("/messages/mark-read", async (c) => {
   const db = await getDb();
   const officerId = c.get("officerId")!;
-  const contractorId = c.get("contractorId")!;
-  const messageId = c.req.param("id");
+  const rows = await getMyMessagesWithReadState(db, c.get("contractorId")!, officerId);
+  const unreadIds = rows.filter((r) => !r.read).map((r) => r.id);
 
-  const message = await db.message.findUnique({ where: { id: messageId } });
-  if (!message || message.contractorId !== contractorId || (message.recipientId && message.recipientId !== officerId)) {
-    return c.json({ error: "Message not found" }, 404);
-  }
-
-  try {
-    await db.messageRead.upsert({
-      where: { messageId_officerId: { messageId, officerId } },
-      create: { messageId, officerId },
-      update: {},
+  if (unreadIds.length > 0) {
+    await db.messageRead.createMany({
+      data: unreadIds.map((messageId) => ({ messageId, officerId })),
+      skipDuplicates: true,
     });
-  } catch (err) {
-    // A concurrent read (e.g. React StrictMode's double-invoked effects, or
-    // two tabs open at once) can race two upserts for the same key — Postgres
-    // upsert isn't fully atomic under Prisma, so the loser here hits a unique
-    // violation rather than a WHERE match. The row already exists either way,
-    // which is exactly the end state we want, so treat P2002 as success.
-    const isUniqueViolation =
-      typeof err === "object" && err !== null && "code" in err && (err as { code: string }).code === "P2002";
-    if (!isUniqueViolation) throw err;
   }
 
-  return c.json({ status: "ok" });
+  return c.json({ markedCount: unreadIds.length });
 });

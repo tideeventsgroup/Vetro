@@ -2,34 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { MailIcon, MapPinIcon, PlusIcon } from "../components/icons.js";
 import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
 import { Site, useApi } from "../lib/api.js";
-
-// Fills the two coordinate inputs from the browser's own location — the
-// fastest way for whoever's setting up a site to get an accurate geofence
-// centre without looking up coordinates by hand.
-function useCurrentLocation(latInputId: string, lngInputId: string) {
-  const [status, setStatus] = useState<string | undefined>(undefined);
-
-  function fill() {
-    if (!("geolocation" in navigator)) {
-      setStatus("Location isn't available in this browser");
-      return;
-    }
-    setStatus("Locating…");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const latInput = document.getElementById(latInputId) as HTMLInputElement | null;
-        const lngInput = document.getElementById(lngInputId) as HTMLInputElement | null;
-        if (latInput) latInput.value = position.coords.latitude.toFixed(6);
-        if (lngInput) lngInput.value = position.coords.longitude.toFixed(6);
-        setStatus(undefined);
-      },
-      () => setStatus("Could not read your location — enter coordinates manually"),
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }
-
-  return { fill, status };
-}
+import { useCurrentLocation } from "../lib/geo.js";
 
 export function Sites() {
   const api = useApi();
@@ -239,7 +212,7 @@ export function Sites() {
 
                     <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid var(--vetro-border)" }} />
                     <p style={{ fontSize: 13, marginBottom: 12, color: "var(--vetro-text-muted)" }}>
-                      {site.geofenceRadiusM
+                      {site.geofenceRadiusM != null
                         ? `Geofence: ${site.geofenceRadiusM}m radius — officers must be on site to clock in/out.`
                         : "No geofence set — clock-in/out isn't GPS-verified for this site."}
                     </p>

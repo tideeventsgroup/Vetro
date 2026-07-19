@@ -30,14 +30,15 @@ const DISMISS_KEY = "vetro-install-dismissed";
 // Captures the browser's install prompt (fired once per session at most, per
 // the spec) so we can offer our own "Install" button instead of relying on
 // the browser's own UI, which many users never notice. Dismissal is
-// remembered so the banner doesn't nag on every visit.
+// remembered in localStorage so the banner doesn't nag on every visit; once
+// dismissed, `deferredEvent` is cleared rather than kept alongside a second
+// "dismissed" flag, so `canInstall` only ever depends on one piece of state.
 export function useInstallPrompt() {
   const [deferredEvent, setDeferredEvent] = useState<BeforeInstallPromptEvent | undefined>(undefined);
-  const [dismissed, setDismissed] = useState(() => localStorage.getItem(DISMISS_KEY) === "true");
 
   useEffect(() => {
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-    if (isStandalone) return;
+    if (isStandalone || localStorage.getItem(DISMISS_KEY) === "true") return;
 
     function handler(e: Event) {
       e.preventDefault();
@@ -56,8 +57,8 @@ export function useInstallPrompt() {
 
   function dismiss() {
     localStorage.setItem(DISMISS_KEY, "true");
-    setDismissed(true);
+    setDeferredEvent(undefined);
   }
 
-  return { canInstall: Boolean(deferredEvent) && !dismissed, promptInstall, dismiss };
+  return { canInstall: Boolean(deferredEvent), promptInstall, dismiss };
 }

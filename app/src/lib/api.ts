@@ -559,8 +559,8 @@ class VetroApiClient {
     return this.request("/me/messages/unread-count");
   }
 
-  markMessageRead(id: string): Promise<{ status: string }> {
-    return this.request(`/me/messages/${id}/read`, { method: "PATCH" });
+  markAllMessagesRead(): Promise<{ markedCount: number }> {
+    return this.request("/me/messages/mark-read", { method: "POST" });
   }
 
   listMyVisitorLog(siteId: string): Promise<VisitorLogEntry[]> {

@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { MessageIcon } from "../components/icons.js";
 import { MyMessage, useApi } from "../lib/api.js";
-
-function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
+import { MESSAGES_READ_EVENT } from "../lib/events.js";
+import { formatDateTime } from "../lib/format.js";
 
 // The field side of dispatch messaging — read-only, since this is a
 // control-room-to-officer channel, not officer-to-officer chat. Polling on
@@ -25,11 +23,21 @@ export function MyMessages() {
     try {
       const rows = await api.listMyMessages();
       setMessages(rows);
-      await Promise.all(rows.filter((m) => !m.read).map((m) => api.markMessageRead(m.id)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load messages");
+      return;
     } finally {
       setIsLoading(false);
+    }
+
+    // Marking read is best-effort and separate from the fetch above — a
+    // failure here shouldn't make an already-successfully-loaded list look
+    // broken to the officer.
+    try {
+      await api.markAllMessagesRead();
+      window.dispatchEvent(new Event(MESSAGES_READ_EVENT));
+    } catch {
+      // Nav badge just won't clear until the next poll; not worth surfacing.
     }
   }
 

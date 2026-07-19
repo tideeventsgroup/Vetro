@@ -1,10 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { MessageIcon } from "../components/icons.js";
 import { Message, Officer, useApi } from "../lib/api.js";
-
-function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
+import { formatDateTime } from "../lib/format.js";
 
 // The control-room side of dispatch messaging — send a broadcast to every
 // officer or a direct message to one. One-way for now: officers read here,

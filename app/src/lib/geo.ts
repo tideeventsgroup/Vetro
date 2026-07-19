@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ClockGps } from "./api.js";
 
 // Best-effort GPS read — resolves with undefined rather than rejecting when
@@ -21,4 +22,33 @@ export function getGpsPosition(): Promise<ClockGps | undefined> {
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
   });
+}
+
+// Fills a pair of lat/lng inputs from the browser's own location — the
+// fastest way for whoever's setting up a site or checkpoint to get an
+// accurate geofence centre without looking up coordinates by hand. Shared by
+// Sites.tsx and Patrols.tsx, which both had their own copy of this before.
+export function useCurrentLocation(latInputId: string, lngInputId: string) {
+  const [status, setStatus] = useState<string | undefined>(undefined);
+
+  function fill() {
+    if (!("geolocation" in navigator)) {
+      setStatus("Location isn't available in this browser");
+      return;
+    }
+    setStatus("Locating…");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latInput = document.getElementById(latInputId) as HTMLInputElement | null;
+        const lngInput = document.getElementById(lngInputId) as HTMLInputElement | null;
+        if (latInput) latInput.value = position.coords.latitude.toFixed(6);
+        if (lngInput) lngInput.value = position.coords.longitude.toFixed(6);
+        setStatus(undefined);
+      },
+      () => setStatus("Could not read your location — enter coordinates manually"),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+
+  return { fill, status };
 }

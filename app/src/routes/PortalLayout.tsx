@@ -18,6 +18,7 @@ import {
 } from "../components/icons.js";
 import { useAuth } from "../lib/auth.js";
 import { Officer, useApi } from "../lib/api.js";
+import { MESSAGES_READ_EVENT } from "../lib/events.js";
 import { useInstallPrompt, useOnlineStatus } from "../lib/pwa.js";
 import { useTenantSlug } from "../lib/tenant.js";
 
@@ -104,9 +105,16 @@ export function PortalLayout() {
     }
     pollUnread();
     const interval = setInterval(pollUnread, MESSAGE_POLL_MS);
-    return () => clearInterval(interval);
+    // MyMessages.tsx fires this the moment it marks everything read, so the
+    // badge doesn't sit stale for up to a full poll interval after an
+    // officer actually clears their messages.
+    window.addEventListener(MESSAGES_READ_EVENT, pollUnread);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener(MESSAGES_READ_EVENT, pollUnread);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, []);
 
   if (isLoading) return <p style={{ padding: 24, color: "var(--vetro-text-muted)" }}>Loading…</p>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;

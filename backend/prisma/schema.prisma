@@ -143,6 +143,7 @@ model Officer {
   checkpointScans    CheckpointScan[]
   visitorLogEntries  VisitorLogEntry[]
   messagesReceived   Message[]
+  messageReads       MessageRead[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -332,24 +333,32 @@ model VisitorLogEntry {
 // for now (no websocket infra), so readAt is what drives the unread badge
 // rather than a push event.
 model Message {
-  id           String     @id @default(cuid())
+  id           String        @id @default(cuid())
   contractorId String
-  contractor   Contractor @relation(fields: [contractorId], references: [id])
+  contractor   Contractor    @relation(fields: [contractorId], references: [id])
   senderEmail  String
   recipientId  String?
-  recipient    Officer?   @relation(fields: [recipientId], references: [id])
+  recipient    Officer?      @relation(fields: [recipientId], references: [id])
   body         String
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime      @default(now())
+  reads        MessageRead[]
 
   @@index([contractorId])
   @@index([recipientId])
   @@index([createdAt])
 }
 
+// Cascades on both sides: a deleted message has no reads worth keeping, and
+// a deleted officer's read receipts are meaningless without the officer —
+// unlike CheckpointScan/VisitorLogEntry (real records of what happened),
+// this table only ever answers "has X seen Y", so nothing is lost by letting
+// it disappear with either side.
 model MessageRead {
   id        String   @id @default(cuid())
   messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   officerId String
+  officer   Officer  @relation(fields: [officerId], references: [id], onDelete: Cascade)
   readAt    DateTime @default(now())
 
   @@unique([messageId, officerId])

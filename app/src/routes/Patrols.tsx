@@ -2,35 +2,8 @@ import { Fragment, FormEvent, useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { MapPinIcon, PlusIcon, TrashIcon } from "../components/icons.js";
 import { Checkpoint, CheckpointScan, Site, useApi } from "../lib/api.js";
-
-function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
-
-function useCurrentLocation(latInputId: string, lngInputId: string) {
-  const [status, setStatus] = useState<string | undefined>(undefined);
-
-  function fill() {
-    if (!("geolocation" in navigator)) {
-      setStatus("Location isn't available in this browser");
-      return;
-    }
-    setStatus("Locating…");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const latInput = document.getElementById(latInputId) as HTMLInputElement | null;
-        const lngInput = document.getElementById(lngInputId) as HTMLInputElement | null;
-        if (latInput) latInput.value = position.coords.latitude.toFixed(6);
-        if (lngInput) lngInput.value = position.coords.longitude.toFixed(6);
-        setStatus(undefined);
-      },
-      () => setStatus("Could not read your location — enter coordinates manually"),
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }
-
-  return { fill, status };
-}
+import { useCurrentLocation } from "../lib/geo.js";
+import { formatDateTime } from "../lib/format.js";
 
 function QrCodeCell({ checkpoint }: { checkpoint: Checkpoint }) {
   const [dataUrl, setDataUrl] = useState<string | undefined>(undefined);
@@ -253,11 +226,11 @@ export function Patrols() {
                         </td>
                       </tr>
                       {expandedId === cp.id && (
-                        <tr key={`${cp.id}-geofence`}>
+                        <tr>
                           <td colSpan={4} style={{ background: "var(--vetro-surface-muted)" }}>
                             <div style={{ padding: "12px 0" }}>
                               <p style={{ fontSize: 13, color: "var(--vetro-text-muted)", marginBottom: 12 }}>
-                                {cp.geofenceRadiusM
+                                {cp.geofenceRadiusM != null
                                   ? `Geofence: ${cp.geofenceRadiusM}m radius — scans must happen on site.`
                                   : "No geofence set — scans aren't GPS-verified for this checkpoint."}
                               </p>
@@ -341,7 +314,7 @@ export function Patrols() {
                         {scan.officer ? `${scan.officer.firstName} ${scan.officer.lastName}` : "—"}
                       </td>
                       <td>{formatDateTime(scan.scannedAt)}</td>
-                      <td>{scan.latitude !== null ? "Verified" : "—"}</td>
+                      <td>{scan.checkpoint?.geofenceRadiusM != null && scan.latitude !== null ? "Verified" : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

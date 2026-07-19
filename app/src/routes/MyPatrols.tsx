@@ -155,7 +155,7 @@ export function MyPatrols() {
                         }}
                       >
                         <CheckIcon width={14} height={14} /> Scanned at {formatTime(scan.scannedAt)}
-                        {scan.latitude !== null && " · GPS verified"}
+                        {cp.geofenceRadiusM != null && scan.latitude !== null && " · GPS verified"}
                       </p>
                     ) : (
                       <button

@@ -68,7 +68,20 @@ sites.patch("/sites/:id", async (c) => {
       geofenceRadiusM: number | null;
     }>
   >();
-  const updated = await db.site.update({ where: { id }, data: body });
+  // Explicit allowlist, not `data: body` — c.req.json<T>() only types the
+  // shape, it doesn't strip extra keys, so passing the raw body through
+  // would let a request that adds contractorId reassign this site to a
+  // tenant the caller was never checked against.
+  const data = {
+    ...(body.name !== undefined && { name: body.name }),
+    ...(body.address !== undefined && { address: body.address }),
+    ...(body.clientContactName !== undefined && { clientContactName: body.clientContactName }),
+    ...(body.clientContactEmail !== undefined && { clientContactEmail: body.clientContactEmail }),
+    ...(body.latitude !== undefined && { latitude: body.latitude }),
+    ...(body.longitude !== undefined && { longitude: body.longitude }),
+    ...(body.geofenceRadiusM !== undefined && { geofenceRadiusM: body.geofenceRadiusM }),
+  };
+  const updated = await db.site.update({ where: { id }, data });
   await recordAudit({
     contractorId: c.get("contractorId"),
     actorEmail: c.get("actorEmail") ?? "unknown",

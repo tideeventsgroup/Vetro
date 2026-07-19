@@ -39,17 +39,25 @@ export function QrScanModal({ onDetected, onClose }: QrScanModalProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
-          tick();
+          tick(performance.now());
         }
       } catch {
         setError("Could not access the camera — check permissions, or use the manual scan button instead.");
       }
     }
 
-    function tick() {
+    // A static printed QR code doesn't need a 60fps decode attempt — 5/sec
+    // is plenty to feel instant while using a fraction of the CPU/battery
+    // that getImageData + jsQR at every animation frame would burn for
+    // however long an officer holds the scanner open.
+    const DECODE_INTERVAL_MS = 200;
+    let lastAttempt = 0;
+
+    function tick(now: number) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+      if (now - lastAttempt >= DECODE_INTERVAL_MS && video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+        lastAttempt = now;
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext("2d");
