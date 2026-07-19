@@ -447,12 +447,15 @@ enum AlertStatus {
   RESOLVED
 }
 
-// SOS is officer-raised (routes/me.ts's POST /sos); NO_SHOW is system-raised
-// by the scheduled no-show job (jobs/checkNoShows.ts) once a shift's start
-// time plus grace period passes with no clock-in.
+// SOS and CHECK_CALL are officer-raised (routes/me.ts's POST /sos and
+// POST /check-call); NO_SHOW is system-raised by the scheduled no-show job
+// (jobs/checkNoShows.ts) once a shift's start time plus grace period passes
+// with no clock-in. Unlike SOS, a CHECK_CALL is created already RESOLVED —
+// it's a routine "I'm OK" welfare ping, not something needing a response.
 enum AlertType {
   SOS
   NO_SHOW
+  CHECK_CALL
 }
 
 // A lone-worker panic/SOS alert or a system-raised no-show. OPEN means

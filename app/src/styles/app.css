@@ -1405,6 +1405,12 @@ button {
   font-size: var(--vetro-fs-label);
 }
 
+/* Mobile/PWA-only welcome header — see Login.tsx for why this exists
+   alongside .login-brand-panel rather than just reusing it. */
+.login-mobile-brand {
+  display: none;
+}
+
 .login-form-panel {
   display: flex;
   align-items: center;
@@ -1519,6 +1525,29 @@ button {
 @media (max-width: 860px) {
   .login-shell { grid-template-columns: 1fr; }
   .login-brand-panel { display: none; }
+
+  /* Anchored above the sign-in form so it's the first thing an officer
+     sees opening the installed PWA — stays put if the form scrolls (e.g.
+     the keyboard pushing the page up while a field is focused). */
+  .login-mobile-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--vetro-space-2);
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: calc(var(--vetro-space-5) + env(safe-area-inset-top)) var(--vetro-space-5) var(--vetro-space-5);
+    background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+  }
+
+  .login-mobile-brand p {
+    color: #D3DAE0;
+    font-size: var(--vetro-fs-body-sm);
+    margin: 0;
+    max-width: 320px;
+  }
 
   .staff-layout {
     grid-template-columns: 1fr;
@@ -1696,5 +1725,29 @@ button {
   .mobile-tab-locked {
     color: var(--vetro-ink-300);
     cursor: not-allowed;
+  }
+
+  /* Check-call — the tab bar's centre action (CheckCallButton.tsx), raised
+     above the bar the way a lot of apps highlight their primary action. */
+  .mobile-tab-checkcall {
+    color: var(--vetro-text-secondary);
+  }
+
+  .mobile-tab-checkcall-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-top: -22px;
+    border-radius: 50%;
+    background: var(--vetro-teal);
+    color: var(--vetro-white);
+    box-shadow: var(--vetro-shadow-lifted);
+    transition: background-color var(--vetro-duration) var(--vetro-ease);
+  }
+
+  .mobile-tab-checkcall-sent {
+    background: var(--vetro-status-green);
   }
 }

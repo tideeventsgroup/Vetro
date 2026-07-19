@@ -79,16 +79,28 @@ export function Alerts() {
 
   function alertItem(a: Alert): AlertItem {
     const name = a.officer ? `${a.officer.firstName} ${a.officer.lastName}` : "Unknown officer";
+    const icon =
+      a.type === "SOS" ? (
+        <SirenIcon width={16} height={16} />
+      ) : a.type === "CHECK_CALL" ? (
+        <CheckIcon width={16} height={16} />
+      ) : (
+        <WarningIcon width={16} height={16} />
+      );
+    const title =
+      a.type === "SOS" ? `SOS raised — ${name}` : a.type === "CHECK_CALL" ? `Check-in confirmed — ${name}` : `No-show — ${name}`;
     return {
       key: a.id,
-      icon: a.type === "SOS" ? <SirenIcon width={16} height={16} /> : <WarningIcon width={16} height={16} />,
-      title: a.type === "SOS" ? `SOS raised — ${name}` : `No-show — ${name}`,
+      icon,
+      title,
       detail:
-        a.status === "RESOLVED"
-          ? `Resolved${a.acknowledgedByEmail ? ` by ${a.acknowledgedByEmail}` : ""}`
-          : a.latitude !== null && a.longitude !== null
-            ? `${a.latitude.toFixed(4)}, ${a.longitude.toFixed(4)}`
-            : "No GPS fix",
+        a.type === "CHECK_CALL"
+          ? "Welfare check-in — no action needed"
+          : a.status === "RESOLVED"
+            ? `Resolved${a.acknowledgedByEmail ? ` by ${a.acknowledgedByEmail}` : ""}`
+            : a.latitude !== null && a.longitude !== null
+              ? `${a.latitude.toFixed(4)}, ${a.longitude.toFixed(4)}`
+              : "No GPS fix",
       time: timeAgo(a.createdAt),
       action:
         a.status === "RESOLVED"

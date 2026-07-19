@@ -296,7 +296,7 @@ export interface MyMessage extends Message {
 
 export type AlertStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
 
-export type AlertKind = "SOS" | "NO_SHOW";
+export type AlertKind = "SOS" | "NO_SHOW" | "CHECK_CALL";
 
 export interface Alert {
   id: string;
@@ -588,6 +588,11 @@ class VetroApiClient {
 
   triggerSos(gps?: ClockGps): Promise<Alert> {
     return this.request("/me/sos", { method: "POST", body: JSON.stringify(gps ?? {}) });
+  }
+
+  // Routine "I'm OK" welfare check-in — see routes/me.ts's POST /check-call.
+  triggerCheckCall(gps?: ClockGps): Promise<Alert> {
+    return this.request("/me/check-call", { method: "POST", body: JSON.stringify(gps ?? {}) });
   }
 
   // The sites this officer has ever had a shift at — used to populate

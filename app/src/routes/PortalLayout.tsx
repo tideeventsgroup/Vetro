@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
+import { CheckCallButton } from "../components/CheckCallButton.js";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
-import { SosButton } from "../components/SosButton.js";
 import {
   CalendarIcon,
   DownloadIcon,
@@ -231,6 +231,7 @@ export function PortalLayout() {
             <span>Shifts</span>
           </span>
         )}
+        <CheckCallButton />
         {vettingCompleted ? (
           <NavLink to={`/${tenant}/portal/incidents`} className="mobile-tab">
             <WarningIcon />
@@ -249,7 +250,6 @@ export function PortalLayout() {
         </button>
       </nav>
       </div>
-      <SosButton />
     </>
   );
 }

@@ -296,3 +296,14 @@ export function SirenIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// Welfare check-call — a routine "I'm OK" ping, distinct from SirenIcon's
+// emergency SOS.
+export function PhoneCheckIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M5 4H8L10 8.5L7.5 10C8.4 12 10 13.6 12 14.5L13.5 12L18 14V17C18 18.1 17.1 19 16 19C10 19 5 14 5 8C5 6.9 5 5.5 5 4Z" />
+      <path d="M15 3.5L16.5 5L19.5 2" />
+    </Icon>
+  );
+}
+

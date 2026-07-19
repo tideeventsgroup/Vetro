@@ -106,6 +106,15 @@ export function Login() {
         <div className="login-brand-foot">Built by Tide Events Group Scotland</div>
       </div>
 
+      {/* Mobile/PWA-only — .login-brand-panel above is hidden below 860px,
+          so this is what actually greets an officer opening the installed
+          app: the desktop version has room for the full pitch, this is
+          just the logo + a one-line welcome, anchored above the form. */}
+      <div className="login-mobile-brand">
+        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="28" />
+        <p>Welcome back — sign in to your officer record.</p>
+      </div>
+
       <div className="login-form-panel">
         <div className="login-card">
           <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)" }}>
