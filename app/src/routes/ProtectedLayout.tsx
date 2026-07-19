@@ -54,6 +54,7 @@ export function ProtectedLayout() {
       <aside className={`app-sidebar${mobileNavOpen ? " open" : ""}`}>
         <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
         <nav className="app-nav" onClick={() => setMobileNavOpen(false)}>
+          <span className="app-nav-section">Overview</span>
           <NavLink to={`/${tenant}`} end>
             <RosterIcon />
             Roster
@@ -67,6 +68,8 @@ export function ProtectedLayout() {
             <ShieldCheckIcon />
             Vetting queue
           </NavLink>
+
+          <span className="app-nav-section">Operations</span>
           <NavLink to={`/${tenant}/sites`}>
             <MapPinIcon />
             Sites
@@ -91,17 +94,21 @@ export function ProtectedLayout() {
             <MessageIcon />
             Dispatch
           </NavLink>
+
+          <span className="app-nav-section">Insights</span>
           <NavLink to={`/${tenant}/reports`}>
             <BarChartIcon />
             Reports
           </NavLink>
-          <NavLink to={`/${tenant}/team`}>
-            <UsersIcon />
-            Team
-          </NavLink>
           <NavLink to={`/${tenant}/audit-log`}>
             <ClockIcon />
             Audit log
+          </NavLink>
+
+          <span className="app-nav-section">Admin</span>
+          <NavLink to={`/${tenant}/team`}>
+            <UsersIcon />
+            Team
           </NavLink>
           <NavLink to={`/${tenant}/settings`}>
             <SettingsIcon />

@@ -168,6 +168,24 @@ button {
   flex: 1;
 }
 
+/* Groups the admin sidebar's dozen-odd destinations into scannable
+   sections (Linear/Vercel-style) instead of one undifferentiated list —
+   the officer/client portals stay flat since they're short enough (≤6
+   items) not to need it. */
+.app-nav-section {
+  margin: var(--vetro-space-4) 0 var(--vetro-space-1);
+  padding: 0 var(--vetro-space-3);
+  font-size: 10px;
+  font-weight: var(--vetro-fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--vetro-ls-label);
+  color: #7B8794;
+}
+
+.app-nav-section:first-child {
+  margin-top: 0;
+}
+
 .app-nav a {
   display: flex;
   align-items: center;
@@ -424,7 +442,7 @@ button {
   border: 1px solid var(--vetro-border);
   border-radius: var(--vetro-radius-lg);
   overflow: hidden;
-  box-shadow: var(--vetro-shadow-sm);
+  box-shadow: var(--vetro-shadow-card);
 }
 
 .data-table th {
@@ -1049,7 +1067,7 @@ button {
   background: var(--vetro-surface);
   border: 1px solid var(--vetro-border);
   border-radius: var(--vetro-radius-lg);
-  box-shadow: var(--vetro-shadow-sm);
+  box-shadow: var(--vetro-shadow-card);
   padding: var(--vetro-space-5);
   margin-bottom: var(--vetro-space-5);
 }
@@ -1180,6 +1198,37 @@ button {
   color: #B8C2CC;
   font-size: var(--vetro-fs-body);
   line-height: 1.6;
+}
+
+.login-feature-list {
+  position: relative;
+  list-style: none;
+  margin: var(--vetro-space-6) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vetro-space-3);
+}
+
+.login-feature-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--vetro-space-3);
+  color: #D3DAE0;
+  font-size: var(--vetro-fs-body-sm);
+  line-height: 1.5;
+}
+
+.login-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--vetro-radius-md);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--vetro-teal-light);
 }
 
 .login-brand-foot {

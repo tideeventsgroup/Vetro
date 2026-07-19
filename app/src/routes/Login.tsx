@@ -3,8 +3,14 @@ import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NewPasswordRequiredError, useAuth } from "../lib/auth.js";
 import { useApi } from "../lib/api.js";
-import { ShieldCheckIcon } from "../components/icons.js";
+import { MapPinIcon, QrCodeIcon, ShieldCheckIcon } from "../components/icons.js";
 import { StatusBadge } from "../components/StatusBadge.js";
+
+const FEATURES = [
+  { icon: MapPinIcon, text: "GPS-verified clock-in/out — proof of presence for every shift you bill" },
+  { icon: QrCodeIcon, text: "QR patrol checkpoints, logged automatically — no paper tour sheets" },
+  { icon: ShieldCheckIcon, text: "SIA licence and BS7858 vetting tracked for you — nothing to chase" },
+];
 
 // Login itself is tenant-agnostic — there's no /:tenant prefix here (see
 // App.tsx), so the destination after signing in is resolved from the
@@ -86,6 +92,16 @@ export function Login() {
             <StatusBadge status="EXPIRING" />
             <StatusBadge status="EXPIRED" />
           </div>
+          <ul className="login-feature-list">
+            {FEATURES.map(({ icon: Icon, text }) => (
+              <li key={text}>
+                <span className="login-feature-icon">
+                  <Icon width={14} height={14} />
+                </span>
+                {text}
+              </li>
+            ))}
+          </ul>
         </div>
         <div className="login-brand-foot">Built by Tide Events Group Scotland</div>
       </div>
