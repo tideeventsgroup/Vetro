@@ -57,13 +57,13 @@ export function ProtectedLayout() {
         <nav className="app-nav" onClick={() => setMobileNavOpen(false)}>
           <span className="app-nav-section">Overview</span>
           <NavLink to={`/${tenant}`} end>
-            <RosterIcon />
-            Compliance dashboard
-          </NavLink>
-          <NavLink to={`/${tenant}/live-ops`}>
             <RadarIcon />
             Live ops
             {openAlertCount > 0 && <span className="nav-badge">{openAlertCount}</span>}
+          </NavLink>
+          <NavLink to={`/${tenant}/compliance`}>
+            <RosterIcon />
+            Compliance dashboard
           </NavLink>
           <NavLink to={`/${tenant}/alerts`}>
             <WarningIcon />
@@ -146,8 +146,8 @@ export function ProtectedLayout() {
       </main>
       <nav className="mobile-tab-bar">
         <NavLink to={`/${tenant}`} end className="mobile-tab">
-          <RosterIcon />
-          <span>Compliance</span>
+          <RadarIcon />
+          <span>Live ops</span>
         </NavLink>
         <NavLink to={`/${tenant}/schedule`} className="mobile-tab">
           <CalendarIcon />

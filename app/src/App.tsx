@@ -53,8 +53,12 @@ export function App() {
           <Route path="/kiosk" element={<Kiosk />} />
           <Route path="/:tenant">
             <Route element={<ProtectedLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="live-ops" element={<LiveOps />} />
+              {/* Live ops is the landing page — an on-site manager opening
+                  this wants "what's happening right now", not a compliance
+                  report. The old compliance-first home page moves to its
+                  own path rather than disappearing. */}
+              <Route index element={<LiveOps />} />
+              <Route path="compliance" element={<Dashboard />} />
               <Route path="officers/:id" element={<OfficerDetail />} />
               <Route path="vetting-queue" element={<VettingQueue />} />
               <Route path="staff" element={<Staff />} />
