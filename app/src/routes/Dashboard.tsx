@@ -177,9 +177,6 @@ export function Dashboard() {
       <div className="page-header">
         <div>
           <h1>{friendlyName(email) ? `Welcome back, ${friendlyName(email)}` : contractor.name}</h1>
-          <p>
-            {contractor.name} — checked automatically, not chased manually.
-          </p>
         </div>
         <div className="page-actions">
           <button className="btn btn-secondary" onClick={handleExport}>
