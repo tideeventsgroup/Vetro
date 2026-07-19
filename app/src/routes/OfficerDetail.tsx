@@ -106,11 +106,7 @@ export function OfficerDetail() {
 
   return (
     <div>
-      <Link to={`/${tenant}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--vetro-text-muted)" }}>
-        <ArrowLeftIcon width={14} height={14} />
-        Back to roster
-      </Link>
-      <div className="page-header" style={{ marginTop: 12, alignItems: "center" }}>
+      <div className="page-header" style={{ alignItems: "center" }}>
         <h1 style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span className="officer-avatar" style={{ width: 40, height: 40, fontSize: 15 }}>
             {initials(officer)}
@@ -118,6 +114,13 @@ export function OfficerDetail() {
           {officer.firstName} {officer.lastName}
         </h1>
       </div>
+      <Link
+        to={`/${tenant}`}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--vetro-text-muted)", marginBottom: 12 }}
+      >
+        <ArrowLeftIcon width={14} height={14} />
+        Back to roster
+      </Link>
 
       <div className="card">
         <div className="card-header">
