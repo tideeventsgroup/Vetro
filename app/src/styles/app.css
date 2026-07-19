@@ -1751,3 +1751,94 @@ button {
     background: var(--vetro-status-green);
   }
 }
+
+/* Installed-PWA cold-launch splash (components/SplashScreen.tsx) — the V
+   mark draws itself in, then the wordmark and tagline rise in behind it,
+   held for six seconds total before crossfading into the app. */
+.pwa-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--vetro-space-3);
+  background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+  opacity: 1;
+  transition: opacity 500ms ease;
+}
+
+.pwa-splash-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pwa-splash-mark {
+  overflow: visible;
+  animation: pwa-splash-pop 500ms ease-out 800ms both;
+}
+
+.pwa-splash-stroke {
+  fill: none;
+  /* Each line runs ~86px (46,18)→(85,95) and (124,18)→(85,95) by symmetry —
+     90 gives enough slack that the dash is fully hidden at offset 90. */
+  stroke-dasharray: 90;
+  stroke-dashoffset: 90;
+  animation: pwa-splash-draw 650ms ease-out forwards;
+}
+
+.pwa-splash-stroke-1 {
+  stroke: var(--vetro-teal);
+}
+
+.pwa-splash-stroke-2 {
+  stroke: var(--vetro-white);
+  animation-delay: 150ms;
+}
+
+@keyframes pwa-splash-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pwa-splash-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pwa-splash-wordmark {
+  font-family: var(--vetro-font-sans);
+  font-weight: var(--vetro-fw-bold);
+  font-size: var(--vetro-fs-h2);
+  color: var(--vetro-white);
+  opacity: 0;
+  transform: translateY(6px);
+  animation: pwa-splash-rise 500ms ease-out 550ms forwards;
+}
+
+.pwa-splash-tagline {
+  font-family: var(--vetro-font-sans);
+  font-size: var(--vetro-fs-label);
+  font-weight: var(--vetro-fw-semibold);
+  letter-spacing: var(--vetro-ls-label);
+  text-transform: uppercase;
+  color: var(--vetro-teal);
+  opacity: 0;
+  animation: pwa-splash-rise 500ms ease-out 800ms forwards;
+}
+
+@keyframes pwa-splash-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

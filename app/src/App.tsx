@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { SplashScreen } from "./components/SplashScreen.js";
 import { AuthProvider } from "./lib/auth.js";
 import { Alerts } from "./routes/Alerts.js";
 import { Arbitration } from "./routes/Arbitration.js";
@@ -45,6 +46,10 @@ import { VisitorLog } from "./routes/VisitorLog.js";
 export function App() {
   return (
     <AuthProvider>
+      {/* Rendered as a fixed overlay above everything else — the real app
+          keeps mounting underneath it the whole time, so the splash costs
+          no extra load time, it's purely a launch-moment visual. */}
+      <SplashScreen />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<NoTenant />} />
