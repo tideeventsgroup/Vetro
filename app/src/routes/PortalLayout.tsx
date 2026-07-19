@@ -204,9 +204,6 @@ export function PortalLayout() {
             <SignOutIcon />
             Sign out
           </a>
-          <p className="sidebar-disclaimer">
-            Checks run against the SIA public register — not an official SIA integration.
-          </p>
         </div>
       </aside>
       <main className="app-main">
