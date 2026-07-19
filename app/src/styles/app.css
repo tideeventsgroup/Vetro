@@ -348,7 +348,6 @@ button {
   flex: 1;
   min-width: 0;
   padding: var(--vetro-space-6) var(--vetro-space-8);
-  max-width: 1180px;
 }
 
 /* Page hero — full-bleed dark gradient banner behind every page's title,
