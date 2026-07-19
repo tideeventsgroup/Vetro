@@ -1,28 +1,26 @@
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 import { useEffect, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { ClockIcon, RadarIcon, SirenIcon, WarningIcon } from "../components/icons.js";
-import { Alert, Shift, useApi } from "../lib/api.js";
+import { Link } from "react-router-dom";
+import { ClockIcon, FileIcon, MapPinIcon, RadarIcon, SirenIcon, WarningIcon } from "../components/icons.js";
+import { Alert, Incident, IncidentCategory, Shift, useApi } from "../lib/api.js";
+import { useTenantSlug } from "../lib/tenant.js";
 
 const POLL_MS = 20_000;
 
-// Falkirk-ish — a reasonable Scotland-wide fallback centre when there's
-// nothing on the map yet to centre on instead.
-const FALLBACK_CENTER: [number, number] = [56.0, -3.9];
+// How many of the most recent incidents to show before pointing an admin at
+// the full Incidents log instead — this card is "what just happened", not a
+// replacement for that page's filtering/history.
+const RECENT_INCIDENTS_LIMIT = 8;
 
-function divIcon(background: string, size: number) {
-  return L.divIcon({
-    className: "",
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${background};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-}
-
-const OFFICER_ICON = divIcon("#1C7A6B", 16);
-const SITE_ICON = divIcon("var(--vetro-ink-500)", 10);
-const ALERT_ICON = divIcon("#C4342B", 22);
+const CATEGORY_LABELS: Record<IncidentCategory, string> = {
+  THEFT: "Theft",
+  VANDALISM: "Vandalism",
+  TRESPASSING: "Trespassing",
+  MEDICAL: "Medical",
+  FIRE_SAFETY: "Fire / safety",
+  EQUIPMENT_FAULT: "Equipment fault",
+  SUSPICIOUS_ACTIVITY: "Suspicious activity",
+  OTHER: "Other",
+};
 
 function timeAgo(value: string): string {
   const ms = Date.now() - new Date(value).getTime();
@@ -52,15 +50,17 @@ function checkCallStatus(shift: Shift): { label: string; className: string } | u
   return { label: `Due ${dueIn(shift.nextCheckCallDueAt)}`, className: "status-active" };
 }
 
-// Dispatch's "where is everyone right now" view — the single feature every
-// 2026 buyer's guide (Belfry, Novagems, GuardMetrics) names as the category's
-// actual core. Plots every currently clocked-in officer at their live
-// position (routes/me.ts's ping, falling back to the clock-in snapshot if a
-// ping hasn't landed yet) alongside any open lone-worker SOS alerts.
+// Dispatch's "what's happening right now" view — every site that's currently
+// covered, who's working it, and anything that needs a response (lone-worker
+// alerts, overdue check-ins, freshly-filed incidents). No map: GPS pins never
+// told an on-site manager anything a site name and an officer list didn't —
+// this trades that for a denser, faster-scanning list.
 export function LiveOps() {
   const api = useApi();
+  const tenant = useTenantSlug();
   const [activeShifts, setActiveShifts] = useState<Shift[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busyAlertId, setBusyAlertId] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -73,9 +73,14 @@ export function LiveOps() {
 
   async function load() {
     try {
-      const [shifts, alertRows] = await Promise.all([api.listActiveShifts(), api.listAlerts()]);
+      const [shifts, alertRows, incidentRows] = await Promise.all([
+        api.listActiveShifts(),
+        api.listAlerts(),
+        api.listIncidents(),
+      ]);
       setActiveShifts(shifts);
       setAlerts(alertRows.filter((a) => a.status !== "RESOLVED"));
+      setIncidents(incidentRows.slice(0, RECENT_INCIDENTS_LIMIT));
       setError(undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load live ops data");
@@ -96,32 +101,27 @@ export function LiveOps() {
     }
   }
 
-  const positioned = activeShifts.filter(
-    (s) => (s.lastLat ?? s.clockInLat) !== null && (s.lastLng ?? s.clockInLng) !== null
-  );
-  const sitePins = new Map<string, { lat: number; lng: number; name: string }>();
-  for (const s of activeShifts) {
-    if (s.site && s.site.latitude !== null && s.site.longitude !== null && !sitePins.has(s.site.id)) {
-      sitePins.set(s.site.id, { lat: s.site.latitude, lng: s.site.longitude, name: s.site.name });
-    }
-  }
   const openAlerts = alerts.filter((a) => a.status === "OPEN");
   const checkCallsDue = activeShifts
     .filter((s) => s.requiresCheckCalls && s.nextCheckCallDueAt)
     .sort((a, b) => new Date(a.nextCheckCallDueAt!).getTime() - new Date(b.nextCheckCallDueAt!).getTime());
   const overdueCheckCallCount = checkCallsDue.filter((s) => s.checkCallOverdue).length;
 
-  const center: [number, number] =
-    positioned.length > 0
-      ? [(positioned[0].lastLat ?? positioned[0].clockInLat)!, (positioned[0].lastLng ?? positioned[0].clockInLng)!]
-      : FALLBACK_CENTER;
+  const activeSites = new Map<string, { name: string; officerNames: string[] }>();
+  for (const s of activeShifts) {
+    if (!s.site) continue;
+    const entry = activeSites.get(s.site.id) ?? { name: s.site.name, officerNames: [] };
+    entry.officerNames.push(s.officer ? `${s.officer.firstName} ${s.officer.lastName}` : "Officer");
+    activeSites.set(s.site.id, entry);
+  }
+  const activeSiteList = [...activeSites.values()].sort((a, b) => b.officerNames.length - a.officerNames.length);
 
   return (
     <div>
       <div className="page-header">
         <div>
           <h1>Live ops</h1>
-          <p>Every clocked-in officer right now, and any lone-worker alerts that need a response.</p>
+          <p>Which sites are covered right now, who's working, and anything that needs a response.</p>
         </div>
       </div>
 
@@ -234,53 +234,44 @@ export function LiveOps() {
         </div>
       )}
 
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ height: 480 }}>
-          <MapContainer center={center} zoom={positioned.length > 0 ? 12 : 7} style={{ height: "100%", width: "100%" }}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {[...sitePins.entries()].map(([id, site]) => (
-              <Marker key={id} position={[site.lat, site.lng]} icon={SITE_ICON}>
-                <Popup>{site.name}</Popup>
-              </Marker>
-            ))}
-            {positioned.map((shift) => (
-              <Marker
-                key={shift.id}
-                position={[(shift.lastLat ?? shift.clockInLat)!, (shift.lastLng ?? shift.clockInLng)!]}
-                icon={OFFICER_ICON}
-              >
-                <Popup>
-                  {shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "Officer"}
-                  <br />
-                  {shift.site?.name}
-                  <br />
-                  {shift.lastLocationAt ? `Updated ${timeAgo(shift.lastLocationAt)}` : "Position from clock-in"}
-                </Popup>
-              </Marker>
-            ))}
-            {openAlerts
-              .filter((a) => a.latitude !== null && a.longitude !== null)
-              .map((a) => (
-                <Marker key={a.id} position={[a.latitude!, a.longitude!]} icon={ALERT_ICON}>
-                  <Popup>
-                    SOS — {a.officer ? `${a.officer.firstName} ${a.officer.lastName}` : "Officer"}
-                    <br />
-                    Raised {timeAgo(a.createdAt)}
-                  </Popup>
-                </Marker>
-              ))}
-          </MapContainer>
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card-header">
+          <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <MapPinIcon />
+            Active sites ({activeSiteList.length})
+          </h2>
         </div>
+        {isLoading ? (
+          <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>
+        ) : activeSiteList.length === 0 ? (
+          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>No sites are currently covered.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Site</th>
+                <th>Officers on site</th>
+                <th>Covered by</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeSiteList.map((site) => (
+                <tr key={site.name}>
+                  <td>{site.name}</td>
+                  <td>{site.officerNames.length}</td>
+                  <td>{site.officerNames.join(", ")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      <div className="card">
+      <div className="card" style={{ marginBottom: 24 }}>
         <div className="card-header">
           <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <RadarIcon />
-            Clocked in now ({activeShifts.length})
+            Officers working ({activeShifts.length})
           </h2>
         </div>
         {isLoading ? (
@@ -294,7 +285,6 @@ export function LiveOps() {
                 <th>Officer</th>
                 <th>Site</th>
                 <th>Clocked in</th>
-                <th>Last position update</th>
                 <th>Check calls</th>
               </tr>
             </thead>
@@ -306,7 +296,6 @@ export function LiveOps() {
                     <td>{shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "—"}</td>
                     <td>{shift.site?.name ?? "—"}</td>
                     <td>{shift.clockInAt ? timeAgo(shift.clockInAt) : "—"}</td>
-                    <td>{shift.lastLocationAt ? timeAgo(shift.lastLocationAt) : "No ping yet"}</td>
                     <td>
                       {status ? (
                         <span className={`status-badge ${status.className}`}>{status.label}</span>
@@ -317,6 +306,48 @@ export function LiveOps() {
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <FileIcon />
+            Recent incidents
+          </h2>
+          <Link to={`/${tenant}/incidents`} style={{ fontSize: 13 }}>
+            View all
+          </Link>
+        </div>
+        {isLoading ? (
+          <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>
+        ) : incidents.length === 0 ? (
+          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>No incidents filed recently.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Officer</th>
+                <th>Site</th>
+                <th>Occurred</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {incidents.map((incident) => (
+                <tr key={incident.id}>
+                  <td>{CATEGORY_LABELS[incident.category]}</td>
+                  <td>{incident.officer ? `${incident.officer.firstName} ${incident.officer.lastName}` : "—"}</td>
+                  <td>{incident.site?.name ?? "—"}</td>
+                  <td>{timeAgo(incident.occurredAt)}</td>
+                  <td style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {incident.description}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
