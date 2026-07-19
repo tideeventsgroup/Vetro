@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useState } from "react";
-import { FileIcon, PlusIcon, TrashIcon, UploadIcon } from "../components/icons.js";
+import { FileIcon, MapPinIcon, PlusIcon, TrashIcon, UploadIcon } from "../components/icons.js";
 import { Incident, IncidentCategory, Site, useApi } from "../lib/api.js";
+import { getGpsPosition } from "../lib/geo.js";
 
 const CATEGORY_LABELS: Record<IncidentCategory, string> = {
   THEFT: "Theft",
@@ -70,12 +71,14 @@ export function MyIncidents() {
       for (const file of photos) {
         photoKeys.push(await api.uploadMyIncidentPhoto(file));
       }
+      const gps = await getGpsPosition();
       await api.reportIncident({
         siteId,
         category,
         description: description.trim(),
         occurredAt: new Date(occurredAt).toISOString(),
         photoKeys,
+        ...gps,
       });
       setDescription("");
       setPhotos([]);
@@ -221,9 +224,14 @@ export function MyIncidents() {
                   {formatDateTime(incident.occurredAt)}
                 </span>
               </div>
-              <p style={{ fontSize: 14, color: "var(--vetro-text-secondary)", marginBottom: incident.photoKeys.length ? 12 : 0 }}>
+              <p style={{ fontSize: 14, color: "var(--vetro-text-secondary)", marginBottom: 8 }}>
                 {incident.description}
               </p>
+              {incident.latitude !== null && (
+                <p style={{ fontSize: 12, color: "var(--vetro-text-muted)", margin: "0 0 8px" }}>
+                  <MapPinIcon width={11} height={11} /> GPS logged
+                </p>
+              )}
               {incident.photoKeys.length > 0 && (
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {incident.photoKeys.map((key) => (

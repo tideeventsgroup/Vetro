@@ -9,6 +9,7 @@ import {
   ClockIcon,
   MapPinIcon,
   MenuIcon,
+  MessageIcon,
   RosterIcon,
   RouteIcon,
   SettingsIcon,
@@ -64,6 +65,10 @@ export function ProtectedLayout() {
           <NavLink to={`/${tenant}/visitor-log`}>
             <UsersIcon />
             Visitor log
+          </NavLink>
+          <NavLink to={`/${tenant}/dispatch`}>
+            <MessageIcon />
+            Dispatch
           </NavLink>
           <NavLink to={`/${tenant}/reports`}>
             <BarChartIcon />

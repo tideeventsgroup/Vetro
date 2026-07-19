@@ -57,6 +57,7 @@ model Contractor {
   checkpoints       Checkpoint[]
   checkpointScans   CheckpointScan[]
   visitorLogEntries VisitorLogEntry[]
+  messages          Message[]
   createdAt         DateTime          @default(now())
 }
 
@@ -141,6 +142,7 @@ model Officer {
   incidents          Incident[]
   checkpointScans    CheckpointScan[]
   visitorLogEntries  VisitorLogEntry[]
+  messagesReceived   Message[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -244,6 +246,9 @@ model Incident {
   description  String
   occurredAt   DateTime
   photoKeys    String[]
+  latitude     Float?
+  longitude    Float?
+  accuracyM    Float?
   createdAt    DateTime         @default(now())
 
   @@index([contractorId])
@@ -252,20 +257,26 @@ model Incident {
   @@index([occurredAt])
 }
 
-// A patrol route is just a named set of checkpoints at a site — no GPS
-// geofencing or NFC hardware assumed, an officer taps "Scan" from their
-// phone when they physically reach each one, same as Vetro's other
-// self-service actions.
+// A patrol route is just a named set of checkpoints at a site. Each
+// checkpoint carries a printable QR code (a random opaque token, not the
+// row id, so a photographed/shared QR doesn't leak a guessable-looking
+// primary key) that an officer scans with their phone camera to log a
+// visit; coordinates are optional and only enforced if an admin sets them,
+// same opt-in pattern as Site's clock-in geofence.
 model Checkpoint {
-  id           String           @id @default(cuid())
-  contractorId String
-  contractor   Contractor       @relation(fields: [contractorId], references: [id])
-  siteId       String
-  site         Site             @relation(fields: [siteId], references: [id])
-  name         String
-  description  String?
-  scans        CheckpointScan[]
-  createdAt    DateTime         @default(now())
+  id              String           @id @default(cuid())
+  contractorId    String
+  contractor      Contractor       @relation(fields: [contractorId], references: [id])
+  siteId          String
+  site            Site             @relation(fields: [siteId], references: [id])
+  name            String
+  description     String?
+  qrCode          String           @unique @default(cuid())
+  latitude        Float?
+  longitude       Float?
+  geofenceRadiusM Int?
+  scans           CheckpointScan[]
+  createdAt       DateTime         @default(now())
 
   @@index([contractorId])
   @@index([siteId])
@@ -279,6 +290,9 @@ model CheckpointScan {
   checkpoint   Checkpoint @relation(fields: [checkpointId], references: [id])
   officerId    String
   officer      Officer    @relation(fields: [officerId], references: [id])
+  latitude     Float?
+  longitude    Float?
+  accuracyM    Float?
   scannedAt    DateTime   @default(now())
 
   @@index([contractorId])
@@ -309,6 +323,37 @@ model VisitorLogEntry {
   @@index([siteId])
   @@index([officerId])
   @@index([signedInAt])
+}
+
+// Dispatch messaging — an admin broadcasts to every officer (recipientId
+// null) or messages one officer directly. Officers only ever read here
+// (see requireOfficerSelf-scoped /me/messages), never send: this is a
+// control-room-to-field channel, not officer-to-officer chat. Polling-based
+// for now (no websocket infra), so readAt is what drives the unread badge
+// rather than a push event.
+model Message {
+  id           String     @id @default(cuid())
+  contractorId String
+  contractor   Contractor @relation(fields: [contractorId], references: [id])
+  senderEmail  String
+  recipientId  String?
+  recipient    Officer?   @relation(fields: [recipientId], references: [id])
+  body         String
+  createdAt    DateTime   @default(now())
+
+  @@index([contractorId])
+  @@index([recipientId])
+  @@index([createdAt])
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  officerId String
+  readAt    DateTime @default(now())
+
+  @@unique([messageId, officerId])
+  @@index([officerId])
 }
 
 // Every write an ACS inspector or client export might need to prove happened.

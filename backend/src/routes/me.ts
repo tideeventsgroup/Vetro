@@ -1,6 +1,6 @@
-import type { Prisma } from "@prisma/client";
+import type { Checkpoint, Prisma } from "@prisma/client";
 import { Hono } from "hono";
-import type { MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
 import { createDownloadUrl, createUploadUrl } from "../lib/documents.js";
@@ -132,22 +132,23 @@ interface ClockGpsBody {
 // coordinates + a radius for it — sites without that configured never block
 // clock-in on missing GPS, so this stays opt-in per site.
 function checkGeofence(
-  site: { latitude: number | null; longitude: number | null; geofenceRadiusM: number | null },
-  gps: ClockGpsBody
+  place: { latitude: number | null; longitude: number | null; geofenceRadiusM: number | null },
+  gps: ClockGpsBody,
+  action = "clock in/out at this site"
 ): { distanceM: number | null; error?: string } {
   const geofenced =
-    site.latitude !== null && site.longitude !== null && site.geofenceRadiusM !== null;
+    place.latitude !== null && place.longitude !== null && place.geofenceRadiusM !== null;
   if (!geofenced) return { distanceM: null };
 
   if (gps.lat === undefined || gps.lng === undefined) {
-    return { distanceM: null, error: "Location is required to clock in/out at this site" };
+    return { distanceM: null, error: `Location is required to ${action}` };
   }
 
-  const distanceM = haversineDistanceM(site.latitude!, site.longitude!, gps.lat, gps.lng);
-  if (distanceM > site.geofenceRadiusM!) {
+  const distanceM = haversineDistanceM(place.latitude!, place.longitude!, gps.lat, gps.lng);
+  if (distanceM > place.geofenceRadiusM!) {
     return {
       distanceM,
-      error: `Too far from site to clock in — you're ${Math.round(distanceM)}m away, must be within ${site.geofenceRadiusM}m`,
+      error: `Too far away to ${action} — you're ${Math.round(distanceM)}m away, must be within ${place.geofenceRadiusM}m`,
     };
   }
   return { distanceM };
@@ -272,6 +273,9 @@ me.post("/incidents", async (c) => {
     description: string;
     occurredAt: string;
     photoKeys?: string[];
+    lat?: number;
+    lng?: number;
+    accuracyM?: number;
   }>();
 
   if (!body.siteId || !body.category || !body.description || !body.occurredAt) {
@@ -293,6 +297,9 @@ me.post("/incidents", async (c) => {
       description: body.description,
       occurredAt: new Date(body.occurredAt),
       photoKeys: body.photoKeys ?? [],
+      latitude: body.lat ?? null,
+      longitude: body.lng ?? null,
+      accuracyM: body.accuracyM ?? null,
     },
     include: { site: true },
   });
@@ -355,17 +362,25 @@ me.get("/checkpoints", async (c) => {
   return c.json({ checkpoints, scans });
 });
 
-me.post("/checkpoints/:id/scan", async (c) => {
+async function performCheckpointScan(
+  c: Context<AppEnv>,
+  checkpoint: Checkpoint,
+  officerId: string,
+  gps: ClockGpsBody
+) {
   const db = await getDb();
-  const officerId = c.get("officerId")!;
-  const checkpointId = c.req.param("id");
-  const checkpoint = await db.checkpoint.findUnique({ where: { id: checkpointId } });
-  if (!checkpoint || !(await officerBelongsAtSite(db, officerId, checkpoint.siteId))) {
-    return c.json({ error: "Checkpoint not found" }, 404);
-  }
+  const { error } = checkGeofence(checkpoint, gps, "scan this checkpoint");
+  if (error) return c.json({ error }, 403);
 
   const created = await db.checkpointScan.create({
-    data: { contractorId: checkpoint.contractorId, checkpointId, officerId },
+    data: {
+      contractorId: checkpoint.contractorId,
+      checkpointId: checkpoint.id,
+      officerId,
+      latitude: gps.lat ?? null,
+      longitude: gps.lng ?? null,
+      accuracyM: gps.accuracyM ?? null,
+    },
   });
 
   await recordAudit({
@@ -377,6 +392,38 @@ me.post("/checkpoints/:id/scan", async (c) => {
   });
 
   return c.json(created, 201);
+}
+
+me.post("/checkpoints/:id/scan", async (c) => {
+  const db = await getDb();
+  const officerId = c.get("officerId")!;
+  const checkpointId = c.req.param("id");
+  const checkpoint = await db.checkpoint.findUnique({ where: { id: checkpointId } });
+  if (!checkpoint || !(await officerBelongsAtSite(db, officerId, checkpoint.siteId))) {
+    return c.json({ error: "Checkpoint not found" }, 404);
+  }
+
+  const gps = await c.req.json<ClockGpsBody>().catch(() => ({}) as ClockGpsBody);
+  return performCheckpointScan(c, checkpoint, officerId, gps);
+});
+
+// The QR-code scan path — an officer taps "Scan checkpoint" and their camera
+// reads the code physically posted at that spot, so lookup goes by the
+// opaque qrCode token rather than a checkpoint id the officer never sees.
+me.post("/checkpoints/scan-qr", async (c) => {
+  const db = await getDb();
+  const officerId = c.get("officerId")!;
+  const body = await c.req
+    .json<ClockGpsBody & { qrCode?: string }>()
+    .catch(() => ({}) as ClockGpsBody & { qrCode?: string });
+  if (!body.qrCode) return c.json({ error: "qrCode is required" }, 400);
+
+  const checkpoint = await db.checkpoint.findUnique({ where: { qrCode: body.qrCode } });
+  if (!checkpoint || !(await officerBelongsAtSite(db, officerId, checkpoint.siteId))) {
+    return c.json({ error: "Checkpoint not found" }, 404);
+  }
+
+  return performCheckpointScan(c, checkpoint, officerId, body);
 });
 
 // A site-level sign-in/out register. Listing is scoped to the site, not the
@@ -554,4 +601,77 @@ me.get("/documents/:id/download-url", async (c) => {
   }
   const downloadUrl = await createDownloadUrl(document.s3Key);
   return c.json({ downloadUrl });
+});
+
+// Dispatch messaging, officer side — read-only here (see routes/messages.ts
+// for how admins send). A message is "mine" if it's a direct message to me
+// or a contractor-wide broadcast (recipientId null); read state is tracked
+// per-officer via MessageRead so a broadcast's unread count is personal to
+// each reader, not shared.
+me.get("/messages", async (c) => {
+  const db = await getDb();
+  const officerId = c.get("officerId")!;
+  const contractorId = c.get("contractorId")!;
+
+  const rows = await db.message.findMany({
+    where: { contractorId, OR: [{ recipientId: officerId }, { recipientId: null }] },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+  const reads = await db.messageRead.findMany({
+    where: { officerId, messageId: { in: rows.map((r) => r.id) } },
+  });
+  const readIds = new Set(reads.map((r) => r.messageId));
+
+  return c.json(rows.map((r) => ({ ...r, read: readIds.has(r.id) })));
+});
+
+me.get("/messages/unread-count", async (c) => {
+  const db = await getDb();
+  const officerId = c.get("officerId")!;
+  const contractorId = c.get("contractorId")!;
+
+  const rows = await db.message.findMany({
+    where: { contractorId, OR: [{ recipientId: officerId }, { recipientId: null }] },
+    select: { id: true },
+  });
+  const reads = await db.messageRead.findMany({
+    where: { officerId, messageId: { in: rows.map((r) => r.id) } },
+    select: { messageId: true },
+  });
+  const readIds = new Set(reads.map((r) => r.messageId));
+  const unreadCount = rows.filter((r) => !readIds.has(r.id)).length;
+
+  return c.json({ unreadCount });
+});
+
+me.patch("/messages/:id/read", async (c) => {
+  const db = await getDb();
+  const officerId = c.get("officerId")!;
+  const contractorId = c.get("contractorId")!;
+  const messageId = c.req.param("id");
+
+  const message = await db.message.findUnique({ where: { id: messageId } });
+  if (!message || message.contractorId !== contractorId || (message.recipientId && message.recipientId !== officerId)) {
+    return c.json({ error: "Message not found" }, 404);
+  }
+
+  try {
+    await db.messageRead.upsert({
+      where: { messageId_officerId: { messageId, officerId } },
+      create: { messageId, officerId },
+      update: {},
+    });
+  } catch (err) {
+    // A concurrent read (e.g. React StrictMode's double-invoked effects, or
+    // two tabs open at once) can race two upserts for the same key — Postgres
+    // upsert isn't fully atomic under Prisma, so the loser here hits a unique
+    // violation rather than a WHERE match. The row already exists either way,
+    // which is exactly the end state we want, so treat P2002 as success.
+    const isUniqueViolation =
+      typeof err === "object" && err !== null && "code" in err && (err as { code: string }).code === "P2002";
+    if (!isUniqueViolation) throw err;
+  }
+
+  return c.json({ status: "ok" });
 });

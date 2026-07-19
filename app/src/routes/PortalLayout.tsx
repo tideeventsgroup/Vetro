@@ -3,23 +3,35 @@ import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
 import {
   CalendarIcon,
+  DownloadIcon,
   HomeIcon,
   LockIcon,
   MenuIcon,
+  MessageIcon,
   RouteIcon,
   ShieldCheckIcon,
   SignOutIcon,
   UsersIcon,
   WarningIcon,
+  WifiOffIcon,
+  XIcon,
 } from "../components/icons.js";
 import { useAuth } from "../lib/auth.js";
 import { Officer, useApi } from "../lib/api.js";
+import { useInstallPrompt, useOnlineStatus } from "../lib/pwa.js";
 import { useTenantSlug } from "../lib/tenant.js";
 
 // Segments that stay locked until vetting is complete — everything
-// operational (shifts, incidents, patrols, visitor log). Home and Vetting
-// itself are never locked: an officer needs both to actually get vetted.
+// operational (shifts, incidents, patrols, visitor log). Home, Vetting, and
+// Messages are never locked: an officer needs the first two to actually get
+// vetted, and dispatch may need to reach an unvetted officer directly (e.g.
+// about a vetting appointment), so messaging can't be gated behind it.
 const LOCKED_SEGMENTS = ["shifts", "incidents", "patrols", "visitor-log"];
+
+// How often to poll for new messages while the portal is open. There's no
+// websocket/push infra yet, so this is what keeps the unread badge current
+// without the officer having to manually refresh.
+const MESSAGE_POLL_MS = 60_000;
 
 function LockedNotice({ tenant }: { tenant: string | undefined }) {
   return (
@@ -43,14 +55,41 @@ function LockedNotice({ tenant }: { tenant: string | undefined }) {
   );
 }
 
+function OfflineBanner() {
+  return (
+    <div className="portal-status-banner portal-status-banner-offline">
+      <WifiOffIcon width={15} height={15} />
+      You're offline — some actions won't work until you're back online.
+    </div>
+  );
+}
+
+function InstallBanner({ onInstall, onDismiss }: { onInstall: () => void; onDismiss: () => void }) {
+  return (
+    <div className="portal-status-banner portal-status-banner-install">
+      <DownloadIcon width={15} height={15} />
+      <span style={{ flex: 1 }}>Install Vetro on this device for one-tap access.</span>
+      <button type="button" className="btn btn-secondary" onClick={onInstall} style={{ padding: "4px 10px" }}>
+        Install
+      </button>
+      <button type="button" onClick={onDismiss} aria-label="Dismiss" className="portal-status-banner-dismiss">
+        <XIcon width={14} height={14} />
+      </button>
+    </div>
+  );
+}
+
 export function PortalLayout() {
   const { isAuthenticated, isLoading, logout, role } = useAuth();
   const api = useApi();
   const tenant = useTenantSlug();
   const location = useLocation();
+  const isOnline = useOnlineStatus();
+  const { canInstall, promptInstall, dismiss } = useInstallPrompt();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [officer, setOfficer] = useState<Officer | undefined>(undefined);
   const [isLoadingOfficer, setIsLoadingOfficer] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     void api
@@ -58,6 +97,16 @@ export function PortalLayout() {
       .then(setOfficer)
       .finally(() => setIsLoadingOfficer(false));
   }, []);
+
+  useEffect(() => {
+    function pollUnread() {
+      void api.getMyUnreadMessageCount().then(({ unreadCount: count }) => setUnreadCount(count));
+    }
+    pollUnread();
+    const interval = setInterval(pollUnread, MESSAGE_POLL_MS);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   if (isLoading) return <p style={{ padding: 24, color: "var(--vetro-text-muted)" }}>Loading…</p>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -70,8 +119,11 @@ export function PortalLayout() {
   const onLockedPath = LOCKED_SEGMENTS.includes(currentSegment ?? "");
 
   return (
-    <div className="app-shell has-tab-bar">
-      {mobileNavOpen && <div className="app-sidebar-scrim" onClick={() => setMobileNavOpen(false)} />}
+    <>
+      {!isOnline && <OfflineBanner />}
+      {isOnline && canInstall && <InstallBanner onInstall={promptInstall} onDismiss={dismiss} />}
+      <div className="app-shell has-tab-bar">
+        {mobileNavOpen && <div className="app-sidebar-scrim" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`app-sidebar${mobileNavOpen ? " open" : ""}`}>
         <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
         <nav className="app-nav" onClick={() => setMobileNavOpen(false)}>
@@ -127,6 +179,11 @@ export function PortalLayout() {
               <LockIcon width={13} height={13} />
             </span>
           )}
+          <NavLink to={`/${tenant}/portal/messages`}>
+            <MessageIcon />
+            Messages
+            {unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
+          </NavLink>
           <NavLink to={`/${tenant}/portal/vetting`}>
             <ShieldCheckIcon />
             Vetting
@@ -179,11 +236,13 @@ export function PortalLayout() {
             <span>Incidents</span>
           </span>
         )}
-        <button type="button" className="mobile-tab" onClick={() => setMobileNavOpen(true)}>
+        <button type="button" className="mobile-tab" onClick={() => setMobileNavOpen(true)} style={{ position: "relative" }}>
           <MenuIcon />
+          {unreadCount > 0 && <span className="nav-badge nav-badge-corner">{unreadCount}</span>}
           <span>More</span>
         </button>
       </nav>
-    </div>
+      </div>
+    </>
   );
 }

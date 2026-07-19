@@ -8,6 +8,7 @@ import { contractors } from "./routes/contractors.js";
 import { incidents } from "./routes/incidents.js";
 import { invitations } from "./routes/invitations.js";
 import { me } from "./routes/me.js";
+import { messages } from "./routes/messages.js";
 import { officers } from "./routes/officers.js";
 import { reports } from "./routes/reports.js";
 import { shifts } from "./routes/shifts.js";
@@ -109,6 +110,7 @@ const tenantAdminPrefixes = [
   "/checkpoints",
   "/patrol-log",
   "/visitor-log",
+  "/messages",
 ];
 for (const prefix of tenantAdminPrefixes) {
   api.use(prefix, requireContractor, requireAdmin);
@@ -131,5 +133,6 @@ api.route("/", reports);
 api.route("/", incidents);
 api.route("/", checkpoints);
 api.route("/", visitorLog);
+api.route("/", messages);
 
 app.route("/", api);

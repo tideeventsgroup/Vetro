@@ -171,6 +171,9 @@ export interface Incident {
   description: string;
   occurredAt: string;
   photoKeys: string[];
+  latitude: number | null;
+  longitude: number | null;
+  accuracyM: number | null;
   createdAt: string;
   site?: Site;
   officer?: Officer;
@@ -182,6 +185,10 @@ export interface Checkpoint {
   siteId: string;
   name: string;
   description: string | null;
+  qrCode: string;
+  latitude: number | null;
+  longitude: number | null;
+  geofenceRadiusM: number | null;
   createdAt: string;
   site?: Site;
 }
@@ -191,6 +198,9 @@ export interface CheckpointScan {
   contractorId: string;
   checkpointId: string;
   officerId: string;
+  latitude: number | null;
+  longitude: number | null;
+  accuracyM: number | null;
   scannedAt: string;
   checkpoint?: Checkpoint;
   officer?: Officer;
@@ -209,6 +219,20 @@ export interface VisitorLogEntry {
   signedOutAt: string | null;
   site?: Site;
   officer?: Officer;
+}
+
+export interface Message {
+  id: string;
+  contractorId: string;
+  senderEmail: string;
+  recipientId: string | null;
+  body: string;
+  createdAt: string;
+  recipient?: Officer | null;
+}
+
+export interface MyMessage extends Message {
+  read: boolean;
 }
 
 export interface SiteReport {
@@ -498,7 +522,7 @@ class VetroApiClient {
     description: string;
     occurredAt: string;
     photoKeys?: string[];
-  }): Promise<Incident> {
+  } & ClockGps): Promise<Incident> {
     return this.request("/me/incidents", { method: "POST", body: JSON.stringify(input) });
   }
 
@@ -513,8 +537,30 @@ class VetroApiClient {
     return this.request(`/me/checkpoints?siteId=${encodeURIComponent(siteId)}`);
   }
 
-  scanMyCheckpoint(checkpointId: string): Promise<CheckpointScan> {
-    return this.request(`/me/checkpoints/${checkpointId}/scan`, { method: "POST" });
+  scanMyCheckpoint(checkpointId: string, gps?: ClockGps): Promise<CheckpointScan> {
+    return this.request(`/me/checkpoints/${checkpointId}/scan`, {
+      method: "POST",
+      body: JSON.stringify(gps ?? {}),
+    });
+  }
+
+  scanCheckpointByQrCode(qrCode: string, gps?: ClockGps): Promise<CheckpointScan> {
+    return this.request("/me/checkpoints/scan-qr", {
+      method: "POST",
+      body: JSON.stringify({ qrCode, ...gps }),
+    });
+  }
+
+  listMyMessages(): Promise<MyMessage[]> {
+    return this.request("/me/messages");
+  }
+
+  getMyUnreadMessageCount(): Promise<{ unreadCount: number }> {
+    return this.request("/me/messages/unread-count");
+  }
+
+  markMessageRead(id: string): Promise<{ status: string }> {
+    return this.request(`/me/messages/${id}/read`, { method: "PATCH" });
   }
 
   listMyVisitorLog(siteId: string): Promise<VisitorLogEntry[]> {
@@ -635,8 +681,28 @@ class VetroApiClient {
     return this.request(`/checkpoints${siteId ? `?siteId=${encodeURIComponent(siteId)}` : ""}`);
   }
 
-  createCheckpoint(input: { siteId: string; name: string; description?: string }): Promise<Checkpoint> {
+  createCheckpoint(input: {
+    siteId: string;
+    name: string;
+    description?: string;
+    latitude?: number;
+    longitude?: number;
+    geofenceRadiusM?: number;
+  }): Promise<Checkpoint> {
     return this.request("/checkpoints", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  updateCheckpoint(
+    id: string,
+    input: Partial<{
+      name: string;
+      description: string;
+      latitude: number | null;
+      longitude: number | null;
+      geofenceRadiusM: number | null;
+    }>
+  ): Promise<Checkpoint> {
+    return this.request(`/checkpoints/${id}`, { method: "PATCH", body: JSON.stringify(input) });
   }
 
   deleteCheckpoint(id: string): Promise<void> {
@@ -659,6 +725,14 @@ class VetroApiClient {
     if (filter?.to) params.set("to", filter.to);
     const qs = params.toString();
     return this.request(`/visitor-log${qs ? `?${qs}` : ""}`);
+  }
+
+  listMessages(): Promise<Message[]> {
+    return this.request("/messages");
+  }
+
+  sendMessage(input: { recipientId?: string; body: string }): Promise<Message> {
+    return this.request("/messages", { method: "POST", body: JSON.stringify(input) });
   }
 
   // Client self-service portal — scoped server-side to the caller's own

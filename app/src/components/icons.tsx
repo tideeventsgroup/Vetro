@@ -226,6 +226,42 @@ export function CalendarIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function WifiOffIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M2 2L22 22" />
+      <path d="M8.5 16.5C10.1 15.3 13.9 15.3 15.5 16.5" />
+      <circle cx="12" cy="20" r="0.25" fill="currentColor" />
+      <path d="M5.5 13C6.7 12 8.3 11.3 10 11" />
+      <path d="M16 11.2C16.9 11.5 17.8 11.9 18.6 12.5" />
+      <path d="M2.5 9C4 7.7 5.8 6.7 7.7 6" />
+      <path d="M12.5 5.1C15.8 5.3 19 6.7 21.5 9" />
+    </Icon>
+  );
+}
+
+export function MessageIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 5H20V16H9L4 20V16Z" />
+    </Icon>
+  );
+}
+
+export function QrCodeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <path d="M14 14H17V17H14V14Z" fill="currentColor" stroke="none" />
+      <path d="M18 14H21V17" />
+      <path d="M14 18H17V21" />
+      <path d="M18 18H21V21" />
+    </Icon>
+  );
+}
+
 export function BarChartIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

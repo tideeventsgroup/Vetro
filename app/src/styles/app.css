@@ -206,6 +206,68 @@ button {
   opacity: 0.7;
 }
 
+/* Unread-message badge — sparing use per nav-badge convention: a small
+   pill next to the nav label, or a dot pinned to a tab's corner when the
+   destination (Messages) is nested behind an overflow tab like "More". */
+.nav-badge {
+  margin-left: auto;
+  background: var(--vetro-status-amber);
+  color: var(--vetro-ink);
+  font-size: 11px;
+  font-weight: var(--vetro-fw-bold, 700);
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.nav-badge-corner {
+  position: absolute;
+  top: 2px;
+  right: calc(50% - 20px);
+  margin-left: 0;
+  padding: 1px 5px;
+}
+
+/* Status banners at the top of the officer portal's main content —
+   offline and PWA-install notices. Kept visually distinct from status
+   colors used for compliance state so they're never confused with a
+   licence/vetting alert. */
+.portal-status-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--vetro-space-2);
+  font-size: var(--vetro-fs-body-sm);
+  padding: 10px var(--vetro-space-4);
+  border-radius: var(--vetro-radius-md);
+  margin-bottom: var(--vetro-space-4);
+}
+
+.portal-status-banner-offline {
+  background: rgba(214, 69, 69, 0.1);
+  color: var(--vetro-status-red);
+}
+
+.portal-status-banner-install {
+  background: var(--vetro-teal-light);
+  color: var(--vetro-teal-dark);
+}
+
+.portal-status-banner-dismiss {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  padding: 4px;
+  opacity: 0.7;
+}
+
+.portal-status-banner-dismiss:hover {
+  opacity: 1;
+}
+
 .app-sidebar-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: var(--vetro-space-3);

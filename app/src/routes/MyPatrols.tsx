@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckIcon, ClockIcon } from "../components/icons.js";
+import { QrScanModal } from "../components/QrScanModal.js";
+import { CheckIcon, ClockIcon, QrCodeIcon } from "../components/icons.js";
 import { Checkpoint, CheckpointScan, Site, useApi } from "../lib/api.js";
+import { getGpsPosition } from "../lib/geo.js";
 
 function formatTime(value: string): string {
   return new Date(value).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
@@ -18,6 +20,7 @@ export function MyPatrols() {
   const [scanningId, setScanningId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
+  const [showCameraScan, setShowCameraScan] = useState(false);
 
   useEffect(() => {
     void loadSites();
@@ -51,12 +54,25 @@ export function MyPatrols() {
     setScanningId(checkpointId);
     setError(undefined);
     try {
-      await api.scanMyCheckpoint(checkpointId);
+      const gps = await getGpsPosition();
+      await api.scanMyCheckpoint(checkpointId, gps);
       await loadCheckpoints();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not record this scan");
     } finally {
       setScanningId(undefined);
+    }
+  }
+
+  async function handleQrDetected(qrCode: string) {
+    setShowCameraScan(false);
+    setError(undefined);
+    try {
+      const gps = await getGpsPosition();
+      await api.scanCheckpointByQrCode(qrCode, gps);
+      await loadCheckpoints();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That QR code doesn't match a checkpoint here");
     }
   }
 
@@ -76,7 +92,17 @@ export function MyPatrols() {
           <h1>Patrols</h1>
           <p>Scan each checkpoint as you complete your round — today's scans reset at midnight.</p>
         </div>
+        <div className="page-actions">
+          <button type="button" className="btn btn-primary" onClick={() => setShowCameraScan(true)}>
+            <QrCodeIcon width={14} height={14} />
+            Scan with camera
+          </button>
+        </div>
       </div>
+
+      {showCameraScan && (
+        <QrScanModal onDetected={handleQrDetected} onClose={() => setShowCameraScan(false)} />
+      )}
 
       {sites.length === 0 ? (
         <div className="card empty-state">
@@ -129,6 +155,7 @@ export function MyPatrols() {
                         }}
                       >
                         <CheckIcon width={14} height={14} /> Scanned at {formatTime(scan.scannedAt)}
+                        {scan.latitude !== null && " · GPS verified"}
                       </p>
                     ) : (
                       <button

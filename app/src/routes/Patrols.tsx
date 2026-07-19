@@ -1,14 +1,77 @@
-import { FormEvent, useEffect, useState } from "react";
-import { PlusIcon, TrashIcon } from "../components/icons.js";
+import { Fragment, FormEvent, useEffect, useState } from "react";
+import QRCode from "qrcode";
+import { MapPinIcon, PlusIcon, TrashIcon } from "../components/icons.js";
 import { Checkpoint, CheckpointScan, Site, useApi } from "../lib/api.js";
 
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+function useCurrentLocation(latInputId: string, lngInputId: string) {
+  const [status, setStatus] = useState<string | undefined>(undefined);
+
+  function fill() {
+    if (!("geolocation" in navigator)) {
+      setStatus("Location isn't available in this browser");
+      return;
+    }
+    setStatus("Locating…");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latInput = document.getElementById(latInputId) as HTMLInputElement | null;
+        const lngInput = document.getElementById(lngInputId) as HTMLInputElement | null;
+        if (latInput) latInput.value = position.coords.latitude.toFixed(6);
+        if (lngInput) lngInput.value = position.coords.longitude.toFixed(6);
+        setStatus(undefined);
+      },
+      () => setStatus("Could not read your location — enter coordinates manually"),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+
+  return { fill, status };
+}
+
+function QrCodeCell({ checkpoint }: { checkpoint: Checkpoint }) {
+  const [dataUrl, setDataUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    void QRCode.toDataURL(checkpoint.qrCode, { width: 96, margin: 1 }).then(setDataUrl);
+  }, [checkpoint.qrCode]);
+
+  function handlePrint() {
+    const win = window.open("", "_blank", "width=400,height=500");
+    if (!win || !dataUrl) return;
+    win.document.write(`
+      <html>
+        <head><title>${checkpoint.name} — checkpoint QR</title></head>
+        <body style="text-align:center;font-family:sans-serif;padding:32px;">
+          <h2>${checkpoint.name}</h2>
+          <img src="${dataUrl}" width="240" height="240" style="image-rendering:pixelated;" />
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
+  if (!dataUrl) return null;
+  return (
+    <button
+      type="button"
+      onClick={handlePrint}
+      style={{ border: "none", background: "none", cursor: "pointer", padding: 0 }}
+      title="Click to print"
+    >
+      <img src={dataUrl} width={40} height={40} alt={`QR code for ${checkpoint.name}`} />
+    </button>
+  );
+}
+
 // Admin side of the patrol tour: define checkpoints per site, then see
 // whether the round actually got walked. Officers scan from the
-// self-service portal (routes/MyPatrols.tsx).
+// self-service portal (routes/MyPatrols.tsx) — either the manual button or
+// by scanning the printed QR code this page generates for each checkpoint.
 export function Patrols() {
   const api = useApi();
   const [sites, setSites] = useState<Site[]>([]);
@@ -20,6 +83,9 @@ export function Patrols() {
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
+  const [expandedId, setExpandedId] = useState<string | undefined>(undefined);
+  const [geofenceStatus, setGeofenceStatus] = useState<string | undefined>(undefined);
+  const geoLocation = useCurrentLocation("cpEditLat", "cpEditLng");
 
   useEffect(() => {
     void loadSites();
@@ -67,6 +133,31 @@ export function Patrols() {
     if (!window.confirm("Remove this checkpoint?")) return;
     await api.deleteCheckpoint(id);
     await loadCheckpoints();
+  }
+
+  function toggleExpand(id: string) {
+    setExpandedId((current) => (current === id ? undefined : id));
+    setGeofenceStatus(undefined);
+  }
+
+  async function handleSaveGeofence(e: FormEvent<HTMLFormElement>, checkpointId: string) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const lat = String(form.get("latitude") || "");
+    const lng = String(form.get("longitude") || "");
+    const radius = String(form.get("geofenceRadiusM") || "");
+    setGeofenceStatus(undefined);
+    try {
+      await api.updateCheckpoint(checkpointId, {
+        latitude: lat ? Number(lat) : null,
+        longitude: lng ? Number(lng) : null,
+        geofenceRadiusM: radius ? Number(radius) : null,
+      });
+      setGeofenceStatus("Geofence saved");
+      await loadCheckpoints();
+    } catch (err) {
+      setGeofenceStatus(err instanceof Error ? err.message : "Could not save geofence");
+    }
   }
 
   return (
@@ -134,20 +225,92 @@ export function Patrols() {
                   <tr>
                     <th>Name</th>
                     <th>Description</th>
+                    <th>QR code</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {checkpoints.map((cp) => (
-                    <tr key={cp.id}>
-                      <td>{cp.name}</td>
-                      <td>{cp.description ?? "—"}</td>
-                      <td>
-                        <button className="btn btn-secondary" onClick={() => handleDelete(cp.id)}>
-                          <TrashIcon width={14} height={14} />
-                        </button>
-                      </td>
-                    </tr>
+                    <Fragment key={cp.id}>
+                      <tr>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(cp.id)}
+                            style={{ border: "none", background: "none", cursor: "pointer", padding: 0, font: "inherit", color: "inherit" }}
+                          >
+                            {cp.name}
+                          </button>
+                        </td>
+                        <td>{cp.description ?? "—"}</td>
+                        <td>
+                          <QrCodeCell checkpoint={cp} />
+                        </td>
+                        <td>
+                          <button className="btn btn-secondary" onClick={() => handleDelete(cp.id)}>
+                            <TrashIcon width={14} height={14} />
+                          </button>
+                        </td>
+                      </tr>
+                      {expandedId === cp.id && (
+                        <tr key={`${cp.id}-geofence`}>
+                          <td colSpan={4} style={{ background: "var(--vetro-surface-muted)" }}>
+                            <div style={{ padding: "12px 0" }}>
+                              <p style={{ fontSize: 13, color: "var(--vetro-text-muted)", marginBottom: 12 }}>
+                                {cp.geofenceRadiusM
+                                  ? `Geofence: ${cp.geofenceRadiusM}m radius — scans must happen on site.`
+                                  : "No geofence set — scans aren't GPS-verified for this checkpoint."}
+                              </p>
+                              <form onSubmit={(e) => handleSaveGeofence(e, cp.id)}>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                  <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                                    <label htmlFor="cpEditLat">Latitude</label>
+                                    <input
+                                      id="cpEditLat"
+                                      name="latitude"
+                                      type="number"
+                                      step="any"
+                                      defaultValue={cp.latitude ?? ""}
+                                    />
+                                  </div>
+                                  <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                                    <label htmlFor="cpEditLng">Longitude</label>
+                                    <input
+                                      id="cpEditLng"
+                                      name="longitude"
+                                      type="number"
+                                      step="any"
+                                      defaultValue={cp.longitude ?? ""}
+                                    />
+                                  </div>
+                                  <div className="form-field" style={{ flex: 1, minWidth: 140 }}>
+                                    <label htmlFor="cpEditRadius">Radius (metres)</label>
+                                    <input
+                                      id="cpEditRadius"
+                                      name="geofenceRadiusM"
+                                      type="number"
+                                      min="1"
+                                      defaultValue={cp.geofenceRadiusM ?? ""}
+                                    />
+                                  </div>
+                                </div>
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <button type="button" className="btn btn-secondary" onClick={geoLocation.fill}>
+                                    <MapPinIcon width={14} height={14} />
+                                    Use my current location
+                                  </button>
+                                  <button type="submit" className="btn btn-primary">
+                                    Save geofence
+                                  </button>
+                                </div>
+                              </form>
+                              {geoLocation.status && <p className="subtle-meta">{geoLocation.status}</p>}
+                              {geofenceStatus && <p className="subtle-meta">{geofenceStatus}</p>}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
@@ -167,6 +330,7 @@ export function Patrols() {
                     <th>Checkpoint</th>
                     <th>Officer</th>
                     <th>Scanned</th>
+                    <th>GPS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -177,6 +341,7 @@ export function Patrols() {
                         {scan.officer ? `${scan.officer.firstName} ${scan.officer.lastName}` : "—"}
                       </td>
                       <td>{formatDateTime(scan.scannedAt)}</td>
+                      <td>{scan.latitude !== null ? "Verified" : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

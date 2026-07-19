@@ -22,14 +22,29 @@ checkpoints.get("/checkpoints", async (c) => {
 checkpoints.post("/checkpoints", async (c) => {
   const db = await getDb();
   const contractorId = c.get("contractorId")!;
-  const body = await c.req.json<{ siteId: string; name: string; description?: string }>();
+  const body = await c.req.json<{
+    siteId: string;
+    name: string;
+    description?: string;
+    latitude?: number;
+    longitude?: number;
+    geofenceRadiusM?: number;
+  }>();
   if (!body.siteId || !body.name?.trim()) return c.json({ error: "siteId and name are required" }, 400);
 
   const site = await db.site.findUnique({ where: { id: body.siteId } });
   if (!site || site.contractorId !== contractorId) return c.json({ error: "Site not found" }, 404);
 
   const created = await db.checkpoint.create({
-    data: { contractorId, siteId: body.siteId, name: body.name.trim(), description: body.description },
+    data: {
+      contractorId,
+      siteId: body.siteId,
+      name: body.name.trim(),
+      description: body.description,
+      latitude: body.latitude,
+      longitude: body.longitude,
+      geofenceRadiusM: body.geofenceRadiusM,
+    },
     include: { site: true },
   });
 
@@ -42,6 +57,34 @@ checkpoints.post("/checkpoints", async (c) => {
   });
 
   return c.json(created, 201);
+});
+
+checkpoints.patch("/checkpoints/:id", async (c) => {
+  const db = await getDb();
+  const id = c.req.param("id");
+  const existing = await db.checkpoint.findUnique({ where: { id } });
+  if (!existing || existing.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Checkpoint not found" }, 404);
+  }
+
+  const body = await c.req.json<
+    Partial<{
+      name: string;
+      description: string;
+      latitude: number | null;
+      longitude: number | null;
+      geofenceRadiusM: number | null;
+    }>
+  >();
+  const updated = await db.checkpoint.update({ where: { id }, data: body, include: { site: true } });
+  await recordAudit({
+    contractorId: c.get("contractorId"),
+    actorEmail: c.get("actorEmail") ?? "unknown",
+    action: "checkpoint.updated",
+    entityType: "Checkpoint",
+    entityId: id,
+  });
+  return c.json(updated);
 });
 
 checkpoints.delete("/checkpoints/:id", async (c) => {
