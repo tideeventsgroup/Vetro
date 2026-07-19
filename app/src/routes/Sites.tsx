@@ -15,6 +15,7 @@ export function Sites() {
   const [invitedPassword, setInvitedPassword] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
   const [geofenceStatus, setGeofenceStatus] = useState<string | undefined>(undefined);
+  const [isGeneratingSin, setIsGeneratingSin] = useState(false);
   const addSiteLocation = useCurrentLocation("newSiteLat", "newSiteLng");
   const editLocation = useCurrentLocation("editSiteLat", "editSiteLng");
 
@@ -91,6 +92,16 @@ export function Sites() {
       await load();
     } catch (err) {
       setInviteStatus(err instanceof Error ? err.message : "Could not send invitation");
+    }
+  }
+
+  async function handleGenerateSin(siteId: string) {
+    setIsGeneratingSin(true);
+    try {
+      await api.regenerateSiteSin(siteId);
+      await load();
+    } finally {
+      setIsGeneratingSin(false);
     }
   }
 
@@ -261,6 +272,25 @@ export function Sites() {
                     </form>
                     {editLocation.status && <p className="subtle-meta">{editLocation.status}</p>}
                     {geofenceStatus && <p className="subtle-meta">{geofenceStatus}</p>}
+
+                    <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid var(--vetro-border)" }} />
+                    <p style={{ fontSize: 13, marginBottom: 12, color: "var(--vetro-text-muted)" }}>
+                      A shared device at this site books officers on/off with this SIN and their own
+                      PIN — no Cognito sign-in needed.
+                    </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontFamily: "var(--vetro-font-mono, monospace)", fontSize: 20, fontWeight: 700, letterSpacing: 3 }}>
+                        {site.sin ?? "— — — — — —"}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleGenerateSin(site.id)}
+                        disabled={isGeneratingSin}
+                      >
+                        {isGeneratingSin ? "Generating…" : site.sin ? "Regenerate SIN" : "Generate SIN"}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

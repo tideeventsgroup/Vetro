@@ -4,6 +4,7 @@ import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
 import { buildInviteClientMetadata, CognitoUserExistsError, createCognitoUser } from "../lib/cognito.js";
 import type { AppEnv } from "../lib/hono-env.js";
+import { generateOfficerPin } from "../lib/identityCodes.js";
 
 export const officers = new Hono<AppEnv>();
 
@@ -221,6 +222,34 @@ officers.post("/:id/invite", async (c) => {
   });
 
   return c.json({ status: "invited", email, temporaryPassword }, 201);
+});
+
+// (Re)issues this officer's kiosk PIN — the plan's "highest-value
+// integration point": this PIN's own validity is never baked into the code
+// itself, it's checked live against vetting status at the moment of use
+// (see routes/kiosk.ts's getBookOnBlocker call), so a suspended/expired vet
+// blocks booking on without this record ever needing to change.
+officers.post("/:id/pin", async (c) => {
+  const db = await getDb();
+  const id = c.req.param("id");
+  const contractorId = c.get("contractorId")!;
+  const existing = await db.officer.findUnique({ where: { id } });
+  if (!existing || existing.contractorId !== contractorId) {
+    return c.json({ error: "Officer not found" }, 404);
+  }
+
+  const pin = await generateOfficerPin(db, contractorId);
+  const updated = await db.officer.update({ where: { id }, data: { pin } });
+
+  await recordAudit({
+    contractorId,
+    actorEmail: c.get("actorEmail") ?? "unknown",
+    action: "officer.pin_regenerated",
+    entityType: "Officer",
+    entityId: id,
+  });
+
+  return c.json({ pin: updated.pin });
 });
 
 officers.delete("/:id", async (c) => {

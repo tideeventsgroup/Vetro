@@ -97,6 +97,12 @@ model Site {
   address            String?
   clientContactName  String?
   clientContactEmail String?
+  // Site Identity Number — what a shared site device/kiosk uses to resolve
+  // which tenant + site a PIN book-on/off is happening at (routes/kiosk.ts),
+  // without the officer ever signing into their own Cognito login. Globally
+  // unique (not scoped to contractorId) since the kiosk looks it up before
+  // any tenant is known. Null until an admin generates one.
+  sin                String?           @unique
   // Geofence centre + radius for GPS-verified clock-in/out. All three are
   // optional together — a site with no coordinates set skips geofence
   // enforcement entirely rather than blocking clock-in on missing data.
@@ -148,6 +154,7 @@ model Shift {
   lastLat           Float?
   lastLng           Float?
   lastLocationAt    DateTime?
+  alerts            Alert[]
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -188,6 +195,14 @@ model Officer {
   payRateType                  PayRateType?
   rightToWorkConfirmed         Boolean             @default(false)
   rightToWorkCheckedAt         DateTime?
+  // Personnel Identity Number — the officer-side counterpart to Site.sin,
+  // typed into a shared kiosk device instead of signing into the officer's
+  // own Cognito login (routes/kiosk.ts). Its validity is gated live against
+  // vetting status at book-on time, not baked into the code itself, so a
+  // lapsed vet blocks booking on without needing to touch this field.
+  // Unique per contractor (not globally) since the kiosk already knows the
+  // tenant by the time it looks a PIN up, via the SIN it was entered against.
+  pin                          String?
   licences                     SiaLicence[]
   vettingRecords               VettingRecord[]
   qualifications               Qualification[]
@@ -204,6 +219,7 @@ model Officer {
   updatedAt                    DateTime            @updatedAt
 
   @@index([contractorId])
+  @@unique([contractorId, pin])
 }
 
 // SIA licence held by an officer. `status` is derived by the scheduled
@@ -427,17 +443,29 @@ enum AlertStatus {
   RESOLVED
 }
 
-// A lone-worker panic/SOS alert — an officer presses one button (deliberately
-// not gated by requireVettingCompleted, since a safety escape hatch has no
-// business waiting on admin approval) and it lands here with a GPS fix if
-// one was available. OPEN means nobody at the office has seen it yet;
-// ACKNOWLEDGED means someone has and is responding; RESOLVED closes it out.
+// SOS is officer-raised (routes/me.ts's POST /sos); NO_SHOW is system-raised
+// by the scheduled no-show job (jobs/checkNoShows.ts) once a shift's start
+// time plus grace period passes with no clock-in.
+enum AlertType {
+  SOS
+  NO_SHOW
+}
+
+// A lone-worker panic/SOS alert or a system-raised no-show. OPEN means
+// nobody at the office has seen it yet; ACKNOWLEDGED means someone has and
+// is responding; RESOLVED closes it out. SOS alerts are deliberately not
+// gated by requireVettingCompleted (a safety escape hatch has no business
+// waiting on admin approval) — that gate is irrelevant to NO_SHOW anyway,
+// since it's never raised by the officer themself.
 model Alert {
   id                  String      @id @default(cuid())
   contractorId        String
   contractor          Contractor  @relation(fields: [contractorId], references: [id])
   officerId           String
   officer             Officer     @relation(fields: [officerId], references: [id])
+  type                AlertType   @default(SOS)
+  shiftId             String?
+  shift               Shift?      @relation(fields: [shiftId], references: [id])
   latitude            Float?
   longitude           Float?
   accuracyM           Float?

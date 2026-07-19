@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
+import { getRosterBlocker } from "../lib/compliance.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
 export const shifts = new Hono<AppEnv>();
@@ -67,9 +68,13 @@ shifts.post("/shifts", async (c) => {
   const site = await db.site.findUnique({ where: { id: body.siteId } });
   if (!site || site.contractorId !== contractorId) return c.json({ error: "Site not found" }, 404);
 
+  const endTime = new Date(body.endTime);
   if (body.officerId) {
     const officer = await db.officer.findUnique({ where: { id: body.officerId } });
     if (!officer || officer.contractorId !== contractorId) return c.json({ error: "Officer not found" }, 404);
+
+    const blocker = await getRosterBlocker(db, body.officerId, endTime);
+    if (blocker) return c.json({ error: blocker }, 400);
   }
 
   const created = await db.shift.create({
@@ -78,7 +83,7 @@ shifts.post("/shifts", async (c) => {
       siteId: body.siteId,
       officerId: body.officerId,
       startTime: new Date(body.startTime),
-      endTime: new Date(body.endTime),
+      endTime,
     },
     include: { site: true, officer: true },
   });
@@ -110,17 +115,22 @@ shifts.patch("/shifts/:id", async (c) => {
     }>
   >();
 
+  const effectiveEndTime = body.endTime ? new Date(body.endTime) : existing.endTime;
   if (body.officerId) {
     const officer = await db.officer.findUnique({ where: { id: body.officerId } });
     if (!officer || officer.contractorId !== contractorId) return c.json({ error: "Officer not found" }, 404);
+
+    const blocker = await getRosterBlocker(db, body.officerId, effectiveEndTime);
+    if (blocker) return c.json({ error: blocker }, 400);
   }
 
   const updated = await db.shift.update({
     where: { id },
     data: {
-      ...body,
-      startTime: body.startTime ? new Date(body.startTime) : undefined,
-      endTime: body.endTime ? new Date(body.endTime) : undefined,
+      ...(body.officerId !== undefined && { officerId: body.officerId }),
+      ...(body.status !== undefined && { status: body.status }),
+      ...(body.startTime !== undefined && { startTime: new Date(body.startTime) }),
+      ...(body.endTime !== undefined && { endTime: effectiveEndTime }),
     },
     include: { site: true, officer: true },
   });

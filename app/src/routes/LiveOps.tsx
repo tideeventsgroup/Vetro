@@ -2,7 +2,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { RadarIcon, SirenIcon } from "../components/icons.js";
+import { RadarIcon, SirenIcon, WarningIcon } from "../components/icons.js";
 import { Alert, Shift, useApi } from "../lib/api.js";
 
 const POLL_MS = 20_000;
@@ -108,12 +108,13 @@ export function LiveOps() {
           <div className="card-header">
             <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <SirenIcon />
-              {openAlerts.length > 0 ? `${openAlerts.length} SOS alert${openAlerts.length === 1 ? "" : "s"} — needs attention` : "Alerts in progress"}
+              {openAlerts.length > 0 ? `${openAlerts.length} alert${openAlerts.length === 1 ? "" : "s"} — needs attention` : "Alerts in progress"}
             </h2>
           </div>
           <table className="data-table">
             <thead>
               <tr>
+                <th>Type</th>
                 <th>Officer</th>
                 <th>Raised</th>
                 <th>Location</th>
@@ -124,6 +125,10 @@ export function LiveOps() {
             <tbody>
               {alerts.map((a) => (
                 <tr key={a.id}>
+                  <td style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {a.type === "SOS" ? <SirenIcon width={14} height={14} /> : <WarningIcon width={14} height={14} />}
+                    {a.type === "SOS" ? "SOS" : "No-show"}
+                  </td>
                   <td>
                     {a.officer ? `${a.officer.firstName} ${a.officer.lastName}` : "—"}
                   </td>

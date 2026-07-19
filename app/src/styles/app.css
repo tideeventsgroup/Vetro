@@ -1256,6 +1256,74 @@ button {
   margin-bottom: var(--vetro-space-6);
 }
 
+/* Kiosk.tsx — a shared site device, not anyone's own login, so this is
+   deliberately its own simple centred layout rather than the admin/portal
+   app shell: one big touch-friendly card, no sidebar, no navigation. */
+.kiosk-shell {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--vetro-space-5);
+  background: var(--vetro-bg);
+}
+
+.kiosk-card {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  background: var(--vetro-surface);
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-lg);
+  box-shadow: var(--vetro-shadow-card);
+  padding: var(--vetro-space-6) var(--vetro-space-5);
+}
+
+.kiosk-title {
+  font-size: var(--vetro-fs-h3);
+  margin-bottom: 4px;
+}
+
+.kiosk-subtitle {
+  color: var(--vetro-text-muted);
+  margin-bottom: var(--vetro-space-5);
+}
+
+.kiosk-code-input {
+  width: 100%;
+  text-align: center;
+  font-size: 28px;
+  font-weight: var(--vetro-fw-bold);
+  letter-spacing: 6px;
+  padding: 14px;
+  margin-bottom: var(--vetro-space-4);
+  border: 1px solid var(--vetro-border);
+  border-radius: var(--vetro-radius-md);
+  background: var(--vetro-bg);
+  color: var(--vetro-text);
+}
+
+.kiosk-result {
+  color: var(--vetro-status-green-text);
+  background: color-mix(in srgb, var(--vetro-status-green) 14%, white);
+  border-radius: var(--vetro-radius-md);
+  padding: var(--vetro-space-3);
+  margin-bottom: var(--vetro-space-4);
+  font-size: var(--vetro-fs-body-sm);
+}
+
+.kiosk-change-site {
+  display: block;
+  width: 100%;
+  margin-top: var(--vetro-space-5);
+  background: none;
+  border: none;
+  color: var(--vetro-text-muted);
+  font-size: var(--vetro-fs-body-sm);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .error-text {
   display: flex;
   align-items: center;

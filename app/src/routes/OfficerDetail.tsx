@@ -57,6 +57,7 @@ export function OfficerDetail() {
   const [isInviting, setIsInviting] = useState(false);
   const [hrStatus, setHrStatus] = useState<string | undefined>(undefined);
   const [isSavingHr, setIsSavingHr] = useState(false);
+  const [isGeneratingPin, setIsGeneratingPin] = useState(false);
 
   useEffect(() => {
     if (id) void load(id);
@@ -107,6 +108,17 @@ export function OfficerDetail() {
     });
     setShowAddQualification(false);
     await load(id);
+  }
+
+  async function handleGeneratePin() {
+    if (!id) return;
+    setIsGeneratingPin(true);
+    try {
+      await api.regenerateOfficerPin(id);
+      await load(id);
+    } finally {
+      setIsGeneratingPin(false);
+    }
   }
 
   async function handleSaveHrProfile(e: FormEvent<HTMLFormElement>) {
@@ -188,6 +200,24 @@ export function OfficerDetail() {
         <ArrowLeftIcon width={14} height={14} />
         Back to roster
       </Link>
+
+      <div className="card">
+        <div className="card-header">
+          <h2>Kiosk access</h2>
+        </div>
+        <p style={{ color: "var(--vetro-text-muted)", fontSize: 14, marginBottom: 12 }}>
+          A shared site device books this officer on/off with this PIN and the site's own SIN — no
+          Cognito sign-in needed. It only works while vetting and licences are current.
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontFamily: "var(--vetro-font-mono, monospace)", fontSize: 24, fontWeight: 700, letterSpacing: 4 }}>
+            {officer.pin ?? "— — — —"}
+          </span>
+          <button type="button" className="btn btn-secondary" onClick={handleGeneratePin} disabled={isGeneratingPin}>
+            {isGeneratingPin ? "Generating…" : officer.pin ? "Regenerate PIN" : "Generate PIN"}
+          </button>
+        </div>
+      </div>
 
       <div className="card">
         <div className="card-header">

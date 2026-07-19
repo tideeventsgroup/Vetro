@@ -3,6 +3,7 @@ import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
 import { buildInviteClientMetadata, CognitoUserExistsError, createCognitoUser } from "../lib/cognito.js";
 import type { AppEnv } from "../lib/hono-env.js";
+import { generateSiteSin } from "../lib/identityCodes.js";
 
 export const sites = new Hono<AppEnv>();
 
@@ -109,6 +110,32 @@ sites.delete("/sites/:id", async (c) => {
     entityId: id,
   });
   return c.body(null, 204);
+});
+
+// (Re)issues this site's kiosk SIN — typed into a shared site device
+// alongside an officer's PIN (routes/kiosk.ts) so book-on/off works without
+// anyone signing into their own Cognito login.
+sites.post("/sites/:id/sin", async (c) => {
+  const db = await getDb();
+  const id = c.req.param("id");
+  const contractorId = c.get("contractorId")!;
+  const existing = await db.site.findUnique({ where: { id } });
+  if (!existing || existing.contractorId !== contractorId) {
+    return c.json({ error: "Site not found" }, 404);
+  }
+
+  const sin = await generateSiteSin(db);
+  const updated = await db.site.update({ where: { id }, data: { sin } });
+
+  await recordAudit({
+    contractorId,
+    actorEmail: c.get("actorEmail") ?? "unknown",
+    action: "site.sin_regenerated",
+    entityType: "Site",
+    entityId: id,
+  });
+
+  return c.json({ sin: updated.sin });
 });
 
 // Gives a site's own client contact a login to review/confirm shifts there

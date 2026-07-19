@@ -6,6 +6,7 @@ import { ClientLayout } from "./routes/ClientLayout.js";
 import { Dashboard } from "./routes/Dashboard.js";
 import { Dispatch } from "./routes/Dispatch.js";
 import { Incidents } from "./routes/Incidents.js";
+import { Kiosk } from "./routes/Kiosk.js";
 import { LiveOps } from "./routes/LiveOps.js";
 import { Login } from "./routes/Login.js";
 import { MyIncidents } from "./routes/MyIncidents.js";
@@ -45,6 +46,7 @@ export function App() {
           <Route path="/" element={<NoTenant />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/kiosk" element={<Kiosk />} />
           <Route path="/:tenant">
             <Route element={<ProtectedLayout />}>
               <Route index element={<Dashboard />} />

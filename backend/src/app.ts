@@ -8,6 +8,7 @@ import { client } from "./routes/client.js";
 import { contractors } from "./routes/contractors.js";
 import { incidents } from "./routes/incidents.js";
 import { invitations } from "./routes/invitations.js";
+import { kiosk } from "./routes/kiosk.js";
 import { me } from "./routes/me.js";
 import { messages } from "./routes/messages.js";
 import { officers } from "./routes/officers.js";
@@ -56,6 +57,11 @@ app.use(
 );
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Public, no Cognito session at all — a shared site device resolves the
+// tenant from the SIN itself, then the officer from their PIN. Deliberately
+// mounted here, before requireAuth below, not inside the api sub-app.
+app.route("/", kiosk);
 
 // Verifies identity for everything below, but doesn't require a resolved
 // tenant yet — /contractors/me and /contractors (dev-only creation) need to

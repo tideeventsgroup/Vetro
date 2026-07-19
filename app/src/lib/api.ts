@@ -112,6 +112,9 @@ export interface Officer {
   payRateType: PayRateType | null;
   rightToWorkConfirmed: boolean;
   rightToWorkCheckedAt: string | null;
+  // Kiosk book-on/off identity — see lib/identityCodes.ts on the backend.
+  // Null until an admin generates one from OfficerDetail.tsx.
+  pin: string | null;
   licences: SiaLicence[];
   vettingRecords: VettingRecord[];
   qualifications?: Qualification[];
@@ -161,6 +164,9 @@ export interface Site {
   address: string | null;
   clientContactName: string | null;
   clientContactEmail: string | null;
+  // Kiosk book-on/off identity — see lib/identityCodes.ts on the backend.
+  // Null until an admin generates one from Sites.tsx.
+  sin: string | null;
   latitude: number | null;
   longitude: number | null;
   geofenceRadiusM: number | null;
@@ -287,10 +293,14 @@ export interface MyMessage extends Message {
 
 export type AlertStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
 
+export type AlertKind = "SOS" | "NO_SHOW";
+
 export interface Alert {
   id: string;
   contractorId: string;
   officerId: string;
+  type: AlertKind;
+  shiftId: string | null;
   latitude: number | null;
   longitude: number | null;
   accuracyM: number | null;
@@ -386,6 +396,10 @@ class VetroApiClient {
 
   updateOfficer(id: string, input: Partial<{ firstName: string; lastName: string }> & OfficerHrInput) {
     return this.request<Officer>(`/officers/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  }
+
+  regenerateOfficerPin(id: string): Promise<{ pin: string }> {
+    return this.request(`/officers/${id}/pin`, { method: "POST" });
   }
 
   createLicence(
@@ -702,6 +716,10 @@ class VetroApiClient {
     return this.request(`/sites/${id}`, { method: "DELETE" });
   }
 
+  regenerateSiteSin(id: string): Promise<{ sin: string }> {
+    return this.request(`/sites/${id}/sin`, { method: "POST" });
+  }
+
   inviteClient(
     siteId: string,
     email?: string
@@ -741,6 +759,30 @@ class VetroApiClient {
 
   updateAlertStatus(id: string, status: "ACKNOWLEDGED" | "RESOLVED"): Promise<Alert> {
     return this.request(`/alerts/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+  }
+
+  // Kiosk (routes/kiosk.ts on the backend) is public — no Cognito session,
+  // no tenant header. These go through the same request() as everything
+  // else purely for the shared error handling; it just won't have a token
+  // or X-Vetro-Tenant to attach since nobody's signed in on this page.
+  getKioskSite(sin: string): Promise<{ siteName: string; organisationName: string }> {
+    return this.request(`/kiosk/site?sin=${encodeURIComponent(sin)}`);
+  }
+
+  kioskBookOn(input: { sin: string; pin: string } & ClockGps): Promise<{
+    officerName: string;
+    siteName: string;
+    clockInAt: string;
+  }> {
+    return this.request("/kiosk/book-on", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  kioskBookOff(input: { sin: string; pin: string } & ClockGps): Promise<{
+    officerName: string;
+    siteName: string;
+    clockOutAt: string;
+  }> {
+    return this.request("/kiosk/book-off", { method: "POST", body: JSON.stringify(input) });
   }
 
   listSiteReports(range?: { from?: string; to?: string }): Promise<SiteReport[]> {
