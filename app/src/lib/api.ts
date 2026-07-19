@@ -189,6 +189,9 @@ export interface Shift {
   clockOutLng: number | null;
   clockOutAccuracyM: number | null;
   clockOutDistanceM: number | null;
+  lastLat: number | null;
+  lastLng: number | null;
+  lastLocationAt: string | null;
   site?: Site;
   officer?: Officer | null;
 }
@@ -280,6 +283,23 @@ export interface Message {
 
 export interface MyMessage extends Message {
   read: boolean;
+}
+
+export type AlertStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
+
+export interface Alert {
+  id: string;
+  contractorId: string;
+  officerId: string;
+  latitude: number | null;
+  longitude: number | null;
+  accuracyM: number | null;
+  status: AlertStatus;
+  acknowledgedAt: string | null;
+  acknowledgedByEmail: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  officer?: Officer;
 }
 
 export interface SiteReport {
@@ -542,6 +562,17 @@ class VetroApiClient {
     });
   }
 
+  pingMyShiftLocation(id: string, gps: Required<Pick<ClockGps, "lat" | "lng">> & ClockGps) {
+    return this.request<{ lastLat: number; lastLng: number; lastLocationAt: string }>(
+      `/me/shifts/${id}/ping`,
+      { method: "PATCH", body: JSON.stringify(gps) }
+    );
+  }
+
+  triggerSos(gps?: ClockGps): Promise<Alert> {
+    return this.request("/me/sos", { method: "POST", body: JSON.stringify(gps ?? {}) });
+  }
+
   // The sites this officer has ever had a shift at — used to populate
   // site-pickers below without exposing the contractor's full site list to
   // an OFFICER login (see backend/src/routes/me.ts).
@@ -697,6 +728,19 @@ class VetroApiClient {
 
   deleteShift(id: string): Promise<void> {
     return this.request(`/shifts/${id}`, { method: "DELETE" });
+  }
+
+  // Everyone currently clocked in — the Live Ops map's officer roster.
+  listActiveShifts(): Promise<Shift[]> {
+    return this.request("/shifts/active");
+  }
+
+  listAlerts(status?: AlertStatus): Promise<Alert[]> {
+    return this.request(`/alerts${status ? `?status=${status}` : ""}`);
+  }
+
+  updateAlertStatus(id: string, status: "ACKNOWLEDGED" | "RESOLVED"): Promise<Alert> {
+    return this.request(`/alerts/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
   }
 
   listSiteReports(range?: { from?: string; to?: string }): Promise<SiteReport[]> {

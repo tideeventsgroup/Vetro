@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
+import { SosButton } from "../components/SosButton.js";
 import {
   CalendarIcon,
   DownloadIcon,
@@ -251,6 +252,7 @@ export function PortalLayout() {
         </button>
       </nav>
       </div>
+      <SosButton />
     </>
   );
 }

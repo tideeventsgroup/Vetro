@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { admin } from "./routes/admin.js";
+import { alerts } from "./routes/alerts.js";
 import { auditLog } from "./routes/auditLog.js";
 import { checkpoints } from "./routes/checkpoints.js";
 import { client } from "./routes/client.js";
@@ -111,6 +112,7 @@ const tenantAdminPrefixes = [
   "/patrol-log",
   "/visitor-log",
   "/messages",
+  "/alerts",
 ];
 for (const prefix of tenantAdminPrefixes) {
   api.use(prefix, requireContractor, requireAdmin);
@@ -134,5 +136,6 @@ api.route("/", incidents);
 api.route("/", checkpoints);
 api.route("/", visitorLog);
 api.route("/", messages);
+api.route("/", alerts);
 
 app.route("/", api);

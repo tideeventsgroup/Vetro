@@ -225,6 +225,66 @@ me.patch("/shifts/:id/clock-out", async (c) => {
   return c.json(updated);
 });
 
+// A periodic "still here, and this is where" update from the officer's own
+// device while clocked in — powers the admin Live Ops map's live position,
+// distinct from the fixed clockIn/clockOut snapshots. Gated by the same
+// requireVettingCompleted as the rest of "/shifts" since only a vetted
+// officer can ever have an active (clocked-in) shift to ping from anyway.
+// No audit entry: this fires every couple of minutes and is routine
+// telemetry, not an action worth an audit trail.
+me.patch("/shifts/:id/ping", async (c) => {
+  const db = await getDb();
+  const id = c.req.param("id");
+  const officerId = c.get("officerId")!;
+  const existing = await db.shift.findUnique({ where: { id } });
+  if (!existing || existing.officerId !== officerId) return c.json({ error: "Shift not found" }, 404);
+  if (!existing.clockInAt || existing.clockOutAt) {
+    return c.json({ error: "Shift is not currently clocked in" }, 400);
+  }
+
+  const gps = await c.req.json<ClockGpsBody>().catch(() => ({}) as ClockGpsBody);
+  if (gps.lat === undefined || gps.lng === undefined) {
+    return c.json({ error: "lat and lng are required" }, 400);
+  }
+
+  const updated = await db.shift.update({
+    where: { id },
+    data: { lastLat: gps.lat, lastLng: gps.lng, lastLocationAt: new Date() },
+  });
+  return c.json({ lastLat: updated.lastLat, lastLng: updated.lastLng, lastLocationAt: updated.lastLocationAt });
+});
+
+// Lone-worker panic button. Deliberately NOT among the requireVettingCompleted
+// prefixes above — a safety escape hatch has no business waiting on admin
+// approval of paperwork. GPS is best-effort: an alert with no location fix is
+// still far better than no alert at all.
+me.post("/sos", async (c) => {
+  const db = await getDb();
+  const officerId = c.get("officerId")!;
+  const contractorId = c.get("contractorId")!;
+  const gps = await c.req.json<ClockGpsBody>().catch(() => ({}) as ClockGpsBody);
+
+  const created = await db.alert.create({
+    data: {
+      contractorId,
+      officerId,
+      latitude: gps.lat ?? null,
+      longitude: gps.lng ?? null,
+      accuracyM: gps.accuracyM ?? null,
+    },
+  });
+
+  await recordAudit({
+    contractorId,
+    actorEmail: c.get("actorEmail") ?? "unknown",
+    action: "alert.sos_triggered",
+    entityType: "Alert",
+    entityId: created.id,
+  });
+
+  return c.json(created, 201);
+});
+
 // The sites this officer has ever had a shift at — used to populate
 // site-pickers for incidents/visitor log/checkpoints without exposing the
 // contractor's full site list to an OFFICER login.

@@ -81,6 +81,7 @@ model Contractor {
   checkpointScans   CheckpointScan[]
   visitorLogEntries VisitorLogEntry[]
   messages          Message[]
+  alerts            Alert[]
   createdAt         DateTime          @default(now())
 }
 
@@ -139,6 +140,14 @@ model Shift {
   clockOutLng       Float?
   clockOutAccuracyM Float?
   clockOutDistanceM Float?
+  // Live-tracking position, refreshed by a periodic ping from the officer's
+  // own device while clocked in (routes/me.ts's PATCH .../ping) — distinct
+  // from the one-time clockIn*/clockOut* snapshots above, which never move
+  // again once recorded. Powers the admin Live Ops map's "where is everyone
+  // right now" view.
+  lastLat           Float?
+  lastLng           Float?
+  lastLocationAt    DateTime?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -190,6 +199,7 @@ model Officer {
   visitorLogEntries            VisitorLogEntry[]
   messagesReceived             Message[]
   messageReads                 MessageRead[]
+  alerts                       Alert[]
   createdAt                    DateTime            @default(now())
   updatedAt                    DateTime            @updatedAt
 
@@ -409,6 +419,37 @@ model MessageRead {
 
   @@unique([messageId, officerId])
   @@index([officerId])
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+// A lone-worker panic/SOS alert — an officer presses one button (deliberately
+// not gated by requireVettingCompleted, since a safety escape hatch has no
+// business waiting on admin approval) and it lands here with a GPS fix if
+// one was available. OPEN means nobody at the office has seen it yet;
+// ACKNOWLEDGED means someone has and is responding; RESOLVED closes it out.
+model Alert {
+  id                  String      @id @default(cuid())
+  contractorId        String
+  contractor          Contractor  @relation(fields: [contractorId], references: [id])
+  officerId           String
+  officer             Officer     @relation(fields: [officerId], references: [id])
+  latitude            Float?
+  longitude           Float?
+  accuracyM           Float?
+  status              AlertStatus @default(OPEN)
+  acknowledgedAt      DateTime?
+  acknowledgedByEmail String?
+  resolvedAt          DateTime?
+  createdAt           DateTime    @default(now())
+
+  @@index([contractorId])
+  @@index([officerId])
+  @@index([status])
 }
 
 // Every write an ACS inspector or client export might need to prove happened.

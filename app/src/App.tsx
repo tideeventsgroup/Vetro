@@ -6,6 +6,7 @@ import { ClientLayout } from "./routes/ClientLayout.js";
 import { Dashboard } from "./routes/Dashboard.js";
 import { Dispatch } from "./routes/Dispatch.js";
 import { Incidents } from "./routes/Incidents.js";
+import { LiveOps } from "./routes/LiveOps.js";
 import { Login } from "./routes/Login.js";
 import { MyIncidents } from "./routes/MyIncidents.js";
 import { MyMessages } from "./routes/MyMessages.js";
@@ -47,6 +48,7 @@ export function App() {
           <Route path="/:tenant">
             <Route element={<ProtectedLayout />}>
               <Route index element={<Dashboard />} />
+              <Route path="live-ops" element={<LiveOps />} />
               <Route path="officers/:id" element={<OfficerDetail />} />
               <Route path="vetting-queue" element={<VettingQueue />} />
               <Route path="sites" element={<Sites />} />

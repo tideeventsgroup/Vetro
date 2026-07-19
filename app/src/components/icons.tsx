@@ -273,3 +273,26 @@ export function BarChartIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function RadarIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      <path d="M12 3V1.5M12 22.5V21M21 12H22.5M1.5 12H3" />
+    </Icon>
+  );
+}
+
+export function SirenIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M5 20V13C5 9.7 7.7 7 11 7H13C16.3 7 19 9.7 19 13V20H5Z" />
+      <path d="M12 7V3" />
+      <path d="M9 3H15" />
+      <path d="M3 20H21" />
+      <path d="M2 15L5 14M22 15L19 14" />
+    </Icon>
+  );
+}
+

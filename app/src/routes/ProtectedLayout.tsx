@@ -1,8 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
-import { useAuth } from "../lib/auth.js";
-import { useTenantSlug } from "../lib/tenant.js";
 import {
   BarChartIcon,
   CalendarIcon,
@@ -10,6 +8,7 @@ import {
   MapPinIcon,
   MenuIcon,
   MessageIcon,
+  RadarIcon,
   RosterIcon,
   RouteIcon,
   SettingsIcon,
@@ -18,11 +17,28 @@ import {
   UsersIcon,
   WarningIcon,
 } from "../components/icons.js";
+import { useApi } from "../lib/api.js";
+import { useAuth } from "../lib/auth.js";
+import { useTenantSlug } from "../lib/tenant.js";
+
+const ALERT_POLL_MS = 20_000;
 
 export function ProtectedLayout() {
   const { isAuthenticated, isLoading, logout, role } = useAuth();
   const tenant = useTenantSlug();
+  const api = useApi();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [openAlertCount, setOpenAlertCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthenticated || role !== "ADMIN") return;
+    function poll() {
+      void api.listAlerts("OPEN").then((rows) => setOpenAlertCount(rows.length));
+    }
+    poll();
+    const interval = setInterval(poll, ALERT_POLL_MS);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, role]);
 
   if (isLoading) return <p style={{ padding: 24, color: "var(--vetro-text-muted)" }}>Loading…</p>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -41,6 +57,11 @@ export function ProtectedLayout() {
           <NavLink to={`/${tenant}`} end>
             <RosterIcon />
             Roster
+          </NavLink>
+          <NavLink to={`/${tenant}/live-ops`}>
+            <RadarIcon />
+            Live ops
+            {openAlertCount > 0 && <span className="nav-badge">{openAlertCount}</span>}
           </NavLink>
           <NavLink to={`/${tenant}/vetting-queue`}>
             <ShieldCheckIcon />

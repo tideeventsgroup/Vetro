@@ -773,6 +773,38 @@ button {
 .btn-primary:hover:not(:disabled) { background: var(--vetro-teal-dark); box-shadow: 0 2px 8px rgba(14, 124, 123, 0.28); }
 .btn-secondary { background: var(--vetro-surface); color: var(--vetro-ink); border-color: var(--vetro-border); }
 .btn-secondary:hover:not(:disabled) { border-color: var(--vetro-border-strong); box-shadow: var(--vetro-shadow-sm); }
+.btn-sos { background: var(--vetro-status-red); color: var(--vetro-white); box-shadow: 0 1px 2px rgba(196, 52, 43, 0.25); }
+.btn-sos:hover:not(:disabled) { background: #A82A22; }
+
+/* Lone-worker panic button (components/SosButton.tsx) — fixed above
+   everything else including the mobile tab bar, on every officer portal
+   page regardless of vetting status. */
+.sos-fab {
+  position: fixed;
+  right: var(--vetro-space-4);
+  bottom: calc(var(--vetro-space-4) + env(safe-area-inset-bottom));
+  z-index: 60;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--vetro-status-red);
+  color: var(--vetro-white);
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--vetro-shadow-lifted);
+  transition: background-color var(--vetro-duration) var(--vetro-ease);
+}
+.sos-fab:hover { background: #A82A22; }
+.sos-fab-sent { background: #1C7A45; }
+
+@media (max-width: 860px) {
+  .sos-fab {
+    bottom: calc(56px + var(--vetro-space-4) + env(safe-area-inset-bottom));
+  }
+}
 
 /* Pill CTA — sign-in/sign-up submit buttons only, not a global button
    change; a full-width rounded-pill primary action reads as the one thing

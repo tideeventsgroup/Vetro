@@ -32,6 +32,25 @@ shifts.get("/shifts", async (c) => {
   return c.json(rows);
 });
 
+// Everyone currently clocked in right now (clockInAt set, clockOutAt not) —
+// the Live Ops map's officer roster. Prefers lastLat/lastLng (from the
+// periodic ping in routes/me.ts's PATCH .../ping) over the one-time
+// clockInLat/Lng snapshot, since it reflects where the officer actually is
+// now rather than just where they started the shift.
+shifts.get("/shifts/active", async (c) => {
+  const db = await getDb();
+  const rows = await db.shift.findMany({
+    where: {
+      contractorId: c.get("contractorId"),
+      clockInAt: { not: null },
+      clockOutAt: null,
+    },
+    include: { site: true, officer: true },
+    orderBy: { clockInAt: "asc" },
+  });
+  return c.json(rows);
+});
+
 shifts.post("/shifts", async (c) => {
   const db = await getDb();
   const contractorId = c.get("contractorId")!;

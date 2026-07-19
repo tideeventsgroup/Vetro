@@ -12,6 +12,11 @@ function formatTime(value: string): string {
   return new Date(value).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
+// How often to refresh the admin Live Ops map's "where are you now" position
+// while an officer is clocked in — distinct from the one-time clock-in/out
+// GPS snapshots, which never move again once recorded.
+const PING_INTERVAL_MS = 90_000;
+
 const BORDER_COLORS: Record<ShiftStatus, string> = {
   SCHEDULED: "var(--vetro-ink-300)",
   CONFIRMED: "var(--vetro-teal)",
@@ -103,6 +108,27 @@ export function MyShifts() {
       setBusyId(undefined);
     }
   }
+
+  const activeShift = useMemo(() => shifts.find((s) => s.clockInAt && !s.clockOutAt), [shifts]);
+
+  useEffect(() => {
+    if (!activeShift) return;
+    const id = activeShift.id;
+
+    async function ping() {
+      const gps = await getGpsPosition();
+      if (gps?.lat === undefined || gps?.lng === undefined) return;
+      try {
+        await api.pingMyShiftLocation(id, { lat: gps.lat, lng: gps.lng, accuracyM: gps.accuracyM });
+      } catch {
+        // Best-effort — a missed ping just leaves a stale position on the
+        // admin's Live Ops map until the next one lands, nothing to surface.
+      }
+    }
+    void ping();
+    const interval = setInterval(ping, PING_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [activeShift?.id]);
 
   const days = useMemo(() => groupByDay(shifts), [shifts]);
 
