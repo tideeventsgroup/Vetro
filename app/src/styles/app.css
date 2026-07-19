@@ -62,6 +62,19 @@ button {
   padding: var(--vetro-space-5) var(--vetro-space-3);
 }
 
+/* Above the mobile breakpoint (where the sidebar instead becomes a
+   position:fixed off-canvas drawer, see the max-width:860px query below),
+   pin the sidebar to the viewport so it stays in view while .app-main's
+   own content scrolls, instead of scrolling away with the page. */
+@media (min-width: 861px) {
+  .app-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
 .sidebar-logo {
   display: block;
   margin: 0 var(--vetro-space-2) var(--vetro-space-6);
