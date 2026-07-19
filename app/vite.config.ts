@@ -20,7 +20,12 @@ export default defineConfig({
         description: "Scotland's security workforce, verified — SIA licence and BS7858 vetting, checked automatically.",
         start_url: "/",
         display: "standalone",
-        background_color: "#F7F8FA",
+        // Matches --vetro-bg (src/styles/tokens.css) — this is what Chrome/
+        // Android renders as the install splash screen's background,
+        // generated automatically from the manifest (no separate asset
+        // needed there, unlike iOS — see the apple-touch-startup-image
+        // links in index.html).
+        background_color: "#F6F7F7",
         theme_color: "#0E7C7B",
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
