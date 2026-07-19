@@ -20,12 +20,14 @@ export default defineConfig({
         description: "Scotland's security workforce, verified — SIA licence and BS7858 vetting, checked automatically.",
         start_url: "/",
         display: "standalone",
-        // Matches --vetro-bg (src/styles/tokens.css) — this is what Chrome/
-        // Android renders as the install splash screen's background,
-        // generated automatically from the manifest (no separate asset
-        // needed there, unlike iOS — see the apple-touch-startup-image
-        // links in index.html).
-        background_color: "#F6F7F7",
+        // Matches --vetro-ink (src/styles/tokens.css) and the dark gradient
+        // in index.html/SplashScreen.tsx — this is what Chrome/Android
+        // renders as the install splash screen's background, generated
+        // automatically from the manifest (no separate asset needed there,
+        // unlike iOS — see the apple-touch-startup-image links in
+        // index.html). Kept dark so it doesn't flash white/light against
+        // the dark native iOS splash and the app's own animated one.
+        background_color: "#1F2933",
         theme_color: "#0E7C7B",
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },

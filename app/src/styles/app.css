@@ -1752,9 +1752,9 @@ button {
   }
 }
 
-/* Installed-PWA cold-launch splash (components/SplashScreen.tsx) — just the
-   V mark, drawing itself in and then breathing gently for the rest of the
-   six seconds on screen before crossfading into the app. */
+/* Installed-PWA cold-launch splash (components/SplashScreen.tsx) — the V
+   mark draws itself in, then radar-style rings pulse outward around it for
+   the rest of the six seconds on screen before crossfading into the app. */
 .pwa-splash {
   position: fixed;
   inset: 0;
@@ -1772,13 +1772,19 @@ button {
   pointer-events: none;
 }
 
+.pwa-splash-mark-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 134px;
+}
+
 .pwa-splash-mark {
+  position: relative;
+  z-index: 1;
   overflow: visible;
-  transform-origin: center;
-  /* Once both strokes have drawn in (~800ms), loop a slow, subtle breathe
-     for the rest of the hold — otherwise an icon-only splash just sits
-     dead on screen for the remaining ~4.5s. */
-  animation: pwa-splash-breathe 2200ms ease-in-out 800ms infinite;
 }
 
 .pwa-splash-stroke {
@@ -1787,7 +1793,7 @@ button {
      90 gives enough slack that the dash is fully hidden at offset 90. */
   stroke-dasharray: 90;
   stroke-dashoffset: 90;
-  animation: pwa-splash-draw 650ms ease-out forwards;
+  animation: pwa-splash-draw 650ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .pwa-splash-stroke-1 {
@@ -1805,12 +1811,59 @@ button {
   }
 }
 
-@keyframes pwa-splash-breathe {
-  0%,
-  100% {
-    transform: scale(1);
+/* A soft, static glow gives the mark some depth against the flat gradient —
+   deliberately not animated itself, so it doesn't compete with the rings. */
+.pwa-splash-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 220px;
+  height: 220px;
+  margin: -110px 0 0 -110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14, 124, 123, 0.4) 0%, rgba(14, 124, 123, 0) 70%);
+  opacity: 0;
+  animation: pwa-splash-glow-in 900ms ease-out 200ms forwards;
+}
+
+@keyframes pwa-splash-glow-in {
+  to {
+    opacity: 1;
   }
-  50% {
-    transform: scale(1.06);
+}
+
+/* Two rings pulsing outward and fading, offset in time, like a radar/sonar
+   sweep — the one continuously-moving element once the draw-in settles
+   (~800ms), echoing Live Ops' own radar iconography and standing in for
+   the "verified, not assumed" idea without needing any text on screen. */
+.pwa-splash-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140px;
+  height: 140px;
+  margin: -70px 0 0 -70px;
+  border-radius: 50%;
+  border: 2px solid var(--vetro-teal);
+  opacity: 0;
+  animation: pwa-splash-ping 2400ms cubic-bezier(0.25, 0.65, 0.3, 1) 850ms infinite;
+}
+
+.pwa-splash-ring-2 {
+  border-color: var(--vetro-white);
+  animation-delay: 2050ms;
+}
+
+@keyframes pwa-splash-ping {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.5;
+  }
+  70% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
   }
 }
