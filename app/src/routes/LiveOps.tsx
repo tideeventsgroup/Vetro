@@ -214,11 +214,15 @@ export function LiveOps() {
             <tbody>
               {checkCallsDue.map((shift) => {
                 const status = checkCallStatus(shift);
+                // lastCheckCallAt is the officer's most recent actual check-in;
+                // falls back to clock-in time only if they haven't checked in
+                // yet this shift.
+                const lastCheckIn = shift.lastCheckCallAt ?? shift.clockInAt;
                 return (
                   <tr key={shift.id}>
                     <td>{shift.officer ? `${shift.officer.firstName} ${shift.officer.lastName}` : "—"}</td>
                     <td>{shift.site?.name ?? "—"}</td>
-                    <td>{shift.clockInAt ? timeAgo(shift.clockInAt) : "—"}</td>
+                    <td>{lastCheckIn ? timeAgo(lastCheckIn) : "—"}</td>
                     <td>
                       {status && <span className={`status-badge ${status.className}`}>{status.label}</span>}
                     </td>

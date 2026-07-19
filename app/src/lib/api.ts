@@ -206,6 +206,7 @@ export interface Shift {
   // welfare check-ins, and if so when the next one is due / whether it's
   // already run more than 30 minutes overdue.
   requiresCheckCalls?: boolean;
+  lastCheckCallAt?: string | null;
   nextCheckCallDueAt?: string | null;
   checkCallOverdue?: boolean;
   site?: Site;

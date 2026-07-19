@@ -62,12 +62,23 @@ shifts.get("/shifts/active", async (c) => {
   const withCheckCalls = rows.map(({ alerts, ...shift }) => {
     const requiresCheckCalls = shiftRequiresCheckCalls(shift.startTime);
     if (!requiresCheckCalls) {
-      return { ...shift, requiresCheckCalls, nextCheckCallDueAt: null, checkCallOverdue: false };
+      return {
+        ...shift,
+        requiresCheckCalls,
+        lastCheckCallAt: null,
+        nextCheckCallDueAt: null,
+        checkCallOverdue: false,
+      };
     }
-    const baseline = alerts[0]?.createdAt ?? shift.clockInAt!;
+    // alerts[0] is the officer's own most recent CHECK_CALL on this shift, if
+    // any — surfaced as-is so the UI can show "last checked in 12m ago"
+    // rather than the shift's clock-in time, which never changes and made it
+    // look like check-ins weren't registering even when they were.
+    const lastCheckCallAt = alerts[0]?.createdAt ?? null;
+    const baseline = lastCheckCallAt ?? shift.clockInAt!;
     const nextCheckCallDueAt = new Date(baseline.getTime() + CHECK_CALL_INTERVAL_MS);
     const checkCallOverdue = Date.now() - nextCheckCallDueAt.getTime() > CHECK_CALL_GRACE_MS;
-    return { ...shift, requiresCheckCalls, nextCheckCallDueAt, checkCallOverdue };
+    return { ...shift, requiresCheckCalls, lastCheckCallAt, nextCheckCallDueAt, checkCallOverdue };
   });
 
   return c.json(withCheckCalls);
