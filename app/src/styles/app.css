@@ -1752,18 +1752,16 @@ button {
   }
 }
 
-/* Installed-PWA cold-launch splash (components/SplashScreen.tsx) — the V
-   mark draws itself in, then the wordmark and tagline rise in behind it,
-   held for six seconds total before crossfading into the app. */
+/* Installed-PWA cold-launch splash (components/SplashScreen.tsx) — just the
+   V mark, drawing itself in and then breathing gently for the rest of the
+   six seconds on screen before crossfading into the app. */
 .pwa-splash {
   position: fixed;
   inset: 0;
   z-index: 9999;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--vetro-space-3);
   background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
   opacity: 1;
   transition: opacity 500ms ease;
@@ -1776,7 +1774,11 @@ button {
 
 .pwa-splash-mark {
   overflow: visible;
-  animation: pwa-splash-pop 500ms ease-out 800ms both;
+  transform-origin: center;
+  /* Once both strokes have drawn in (~800ms), loop a slow, subtle breathe
+     for the rest of the hold — otherwise an icon-only splash just sits
+     dead on screen for the remaining ~4.5s. */
+  animation: pwa-splash-breathe 2200ms ease-in-out 800ms infinite;
 }
 
 .pwa-splash-stroke {
@@ -1803,42 +1805,12 @@ button {
   }
 }
 
-@keyframes pwa-splash-pop {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
+@keyframes pwa-splash-breathe {
+  0%,
   100% {
     transform: scale(1);
   }
-}
-
-.pwa-splash-wordmark {
-  font-family: var(--vetro-font-sans);
-  font-weight: var(--vetro-fw-bold);
-  font-size: var(--vetro-fs-h2);
-  color: var(--vetro-white);
-  opacity: 0;
-  transform: translateY(6px);
-  animation: pwa-splash-rise 500ms ease-out 550ms forwards;
-}
-
-.pwa-splash-tagline {
-  font-family: var(--vetro-font-sans);
-  font-size: var(--vetro-fs-label);
-  font-weight: var(--vetro-fw-semibold);
-  letter-spacing: var(--vetro-ls-label);
-  text-transform: uppercase;
-  color: var(--vetro-teal);
-  opacity: 0;
-  animation: pwa-splash-rise 500ms ease-out 800ms forwards;
-}
-
-@keyframes pwa-splash-rise {
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  50% {
+    transform: scale(1.06);
   }
 }

@@ -32,11 +32,11 @@ function initialPhase(): Phase {
   return "visible";
 }
 
-// The installed PWA's cold-launch splash: the V mark draws itself in, the
-// wordmark and tagline rise in behind it, then after six seconds on screen
-// the whole thing crossfades away to reveal the app — which has been
-// mounting underneath the whole time, so there's no extra wait stacked on
-// top of this.
+// The installed PWA's cold-launch splash: just the V mark, drawing itself
+// in stroke by stroke and then breathing gently for the rest of the six
+// seconds on screen, before the whole thing crossfades away to reveal the
+// app — which has been mounting underneath the whole time, so there's no
+// extra wait stacked on top of this.
 export function SplashScreen() {
   const [phase, setPhase] = useState<Phase>(initialPhase);
 
@@ -62,12 +62,10 @@ export function SplashScreen() {
 
   return (
     <div className={`pwa-splash${phase === "fading" ? " pwa-splash-fading" : ""}`} aria-hidden="true">
-      <svg className="pwa-splash-mark" width="88" height="84" viewBox="30 2 110 106">
+      <svg className="pwa-splash-mark" width="140" height="134" viewBox="30 2 110 106">
         <line className="pwa-splash-stroke pwa-splash-stroke-1" x1="46" y1="18" x2="85" y2="95" strokeWidth="20" strokeLinecap="round" />
         <line className="pwa-splash-stroke pwa-splash-stroke-2" x1="124" y1="18" x2="85" y2="95" strokeWidth="20" strokeLinecap="round" />
       </svg>
-      <div className="pwa-splash-wordmark">Vetro</div>
-      <div className="pwa-splash-tagline">Verified, not assumed</div>
     </div>
   );
 }
