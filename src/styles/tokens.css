@@ -24,10 +24,21 @@
      tones are tuned for badge fills/icons/borders (where WCAG's looser 3:1
      non-text contrast applies) and fall short of 4.5:1 for actual body text
      on a light surface. These are what status badges and any status-coloured
-     numeral/label should use instead. */
-  --vetro-status-green-text: #1C7A45;
-  --vetro-status-amber-text: #C24A16;
-  --vetro-status-red-text: #B23A3A;
+     numeral/label should use instead. Values match the Workforce Platform
+     design (claude.ai/design project 0c499cb6). */
+  --vetro-status-green-text: #1C7C4C;
+  --vetro-status-amber-text: #B5820A;
+  --vetro-status-red-text: #B3261E;
+
+  /* Pastel badge fills paired with the *-text colours above — literal
+     values from the same design rather than a computed color-mix, so
+     badges read exactly as designed regardless of the base tone's own
+     saturation (which stays bright for dots/bars/fills elsewhere). */
+  --vetro-badge-green-bg: #E3F3EA;
+  --vetro-badge-amber-bg: #FBF0D9;
+  --vetro-badge-red-bg: #FCE8E6;
+  --vetro-badge-blue-bg: #EAF1F8;
+  --vetro-badge-blue-text: #3E6690;
 
   /* Neutral text hierarchy, all derived from Ink */
   --vetro-ink-900: #1F2933;
@@ -36,7 +47,7 @@
   --vetro-ink-300: #CBD2D9;
 
   /* Surfaces & text */
-  --vetro-bg: #F7F8FA;
+  --vetro-bg: #F6F7F7;
   --vetro-surface: var(--vetro-white);
   --vetro-surface-muted: var(--vetro-slate);
   --vetro-border: #E1E4E9;

@@ -134,7 +134,7 @@ export function PortalLayout() {
       <div className="app-shell has-tab-bar">
         {mobileNavOpen && <div className="app-sidebar-scrim" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`app-sidebar${mobileNavOpen ? " open" : ""}`}>
-        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
+        <img src="/brand/vetro-logo-horizontal.svg" alt="Vetro" height="40" className="sidebar-logo" />
         <nav className="app-nav" onClick={() => setMobileNavOpen(false)}>
           <NavLink to={`/${tenant}/portal`} end>
             <HomeIcon />

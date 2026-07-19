@@ -117,7 +117,7 @@ export function Schedule() {
     <div>
       <div className="page-header">
         <div>
-          <h1>Schedule</h1>
+          <h1>Roster &amp; scheduling</h1>
           <p>Who's working where, and whether it happened.</p>
         </div>
         <div className="page-actions">

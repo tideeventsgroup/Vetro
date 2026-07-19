@@ -4,6 +4,7 @@ import { SidebarIdentity } from "../components/SidebarIdentity.js";
 import {
   BarChartIcon,
   CalendarIcon,
+  CheckIcon,
   ClockIcon,
   MapPinIcon,
   MenuIcon,
@@ -52,21 +53,30 @@ export function ProtectedLayout() {
     <div className="app-shell has-tab-bar">
       {mobileNavOpen && <div className="app-sidebar-scrim" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`app-sidebar${mobileNavOpen ? " open" : ""}`}>
-        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
+        <img src="/brand/vetro-logo-horizontal.svg" alt="Vetro" height="40" className="sidebar-logo" />
         <nav className="app-nav" onClick={() => setMobileNavOpen(false)}>
           <span className="app-nav-section">Overview</span>
           <NavLink to={`/${tenant}`} end>
             <RosterIcon />
-            Roster
+            Compliance dashboard
           </NavLink>
           <NavLink to={`/${tenant}/live-ops`}>
             <RadarIcon />
             Live ops
             {openAlertCount > 0 && <span className="nav-badge">{openAlertCount}</span>}
           </NavLink>
+          <NavLink to={`/${tenant}/alerts`}>
+            <WarningIcon />
+            Alerts center
+            {openAlertCount > 0 && <span className="nav-badge">{openAlertCount}</span>}
+          </NavLink>
           <NavLink to={`/${tenant}/vetting-queue`}>
             <ShieldCheckIcon />
             Vetting queue
+          </NavLink>
+          <NavLink to={`/${tenant}/staff`}>
+            <UsersIcon />
+            Staff directory
           </NavLink>
 
           <span className="app-nav-section">Operations</span>
@@ -74,9 +84,17 @@ export function ProtectedLayout() {
             <MapPinIcon />
             Sites
           </NavLink>
+          <NavLink to={`/${tenant}/occupancy`}>
+            <RadarIcon />
+            Live site occupancy
+          </NavLink>
           <NavLink to={`/${tenant}/schedule`}>
             <CalendarIcon />
-            Schedule
+            Roster &amp; scheduling
+          </NavLink>
+          <NavLink to={`/${tenant}/arbitration`}>
+            <CheckIcon />
+            Arbitration queue
           </NavLink>
           <NavLink to={`/${tenant}/incidents`}>
             <WarningIcon />
@@ -129,11 +147,11 @@ export function ProtectedLayout() {
       <nav className="mobile-tab-bar">
         <NavLink to={`/${tenant}`} end className="mobile-tab">
           <RosterIcon />
-          <span>Roster</span>
+          <span>Compliance</span>
         </NavLink>
         <NavLink to={`/${tenant}/schedule`} className="mobile-tab">
           <CalendarIcon />
-          <span>Schedule</span>
+          <span>Roster</span>
         </NavLink>
         <NavLink to={`/${tenant}/incidents`} className="mobile-tab">
           <WarningIcon />

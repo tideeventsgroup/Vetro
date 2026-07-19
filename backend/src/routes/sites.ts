@@ -36,6 +36,7 @@ sites.post("/sites", async (c) => {
     latitude?: number;
     longitude?: number;
     geofenceRadiusM?: number;
+    requiredHeadcount?: number;
   }>();
   if (!body.name?.trim()) return c.json({ error: "name is required" }, 400);
 
@@ -67,6 +68,7 @@ sites.patch("/sites/:id", async (c) => {
       latitude: number | null;
       longitude: number | null;
       geofenceRadiusM: number | null;
+      requiredHeadcount: number | null;
     }>
   >();
   // Explicit allowlist, not `data: body` — c.req.json<T>() only types the
@@ -81,6 +83,7 @@ sites.patch("/sites/:id", async (c) => {
     ...(body.latitude !== undefined && { latitude: body.latitude }),
     ...(body.longitude !== undefined && { longitude: body.longitude }),
     ...(body.geofenceRadiusM !== undefined && { geofenceRadiusM: body.geofenceRadiusM }),
+    ...(body.requiredHeadcount !== undefined && { requiredHeadcount: body.requiredHeadcount }),
   };
   const updated = await db.site.update({ where: { id }, data });
   await recordAudit({

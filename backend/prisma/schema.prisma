@@ -109,6 +109,10 @@ model Site {
   latitude           Float?
   longitude          Float?
   geofenceRadiusM    Int?
+  // Expected headcount for this site at any given time — what Live Site
+  // Occupancy compares the currently-clocked-in count against. Null means
+  // the site hasn't set a target yet (occupancy just isn't shown for it).
+  requiredHeadcount  Int?
   shifts             Shift[]
   incidents          Incident[]
   checkpoints        Checkpoint[]

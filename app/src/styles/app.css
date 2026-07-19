@@ -57,8 +57,9 @@ button {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--vetro-ink);
-  color: var(--vetro-white);
+  background: var(--vetro-surface);
+  color: var(--vetro-text);
+  border-right: 1px solid var(--vetro-border);
   padding: var(--vetro-space-5) var(--vetro-space-3);
 }
 
@@ -87,17 +88,17 @@ button {
 .sidebar-identity {
   margin: 0 var(--vetro-space-2);
   padding-top: var(--vetro-space-4);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--vetro-border);
 }
 
 .sidebar-org {
   padding-bottom: var(--vetro-space-3);
   margin-bottom: var(--vetro-space-3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--vetro-border);
 }
 
 .sidebar-org-label {
-  color: #7B8794;
+  color: #8A97A0;
   font-size: 10px;
   font-weight: var(--vetro-fw-semibold);
   text-transform: uppercase;
@@ -106,7 +107,7 @@ button {
 }
 
 .sidebar-org-name {
-  color: var(--vetro-white);
+  color: var(--vetro-text);
   font-size: var(--vetro-fs-body-sm);
   font-weight: var(--vetro-fw-semibold);
   white-space: nowrap;
@@ -140,7 +141,7 @@ button {
 }
 
 .sidebar-user-email {
-  color: var(--vetro-white);
+  color: var(--vetro-text);
   font-size: var(--vetro-fs-body-sm);
   font-weight: var(--vetro-fw-medium);
   white-space: nowrap;
@@ -153,8 +154,8 @@ button {
   margin-top: 4px;
   padding: 2px 8px;
   border-radius: var(--vetro-radius-pill);
-  background: rgba(255, 255, 255, 0.1);
-  color: #CBD5DC;
+  background: var(--vetro-surface-muted);
+  color: var(--vetro-text-secondary);
   font-size: 10px;
   font-weight: var(--vetro-fw-semibold);
   text-transform: uppercase;
@@ -175,11 +176,11 @@ button {
 .app-nav-section {
   margin: var(--vetro-space-4) 0 var(--vetro-space-1);
   padding: 0 var(--vetro-space-3);
-  font-size: 10px;
-  font-weight: var(--vetro-fw-semibold);
+  font-size: 10.5px;
+  font-weight: var(--vetro-fw-bold);
   text-transform: uppercase;
-  letter-spacing: var(--vetro-ls-label);
-  color: #7B8794;
+  letter-spacing: 1px;
+  color: #8A97A0;
 }
 
 .app-nav-section:first-child {
@@ -190,30 +191,50 @@ button {
   display: flex;
   align-items: center;
   gap: var(--vetro-space-3);
-  color: #A7B4BE;
-  font-size: var(--vetro-fs-body-sm);
+  color: #52606D;
+  font-size: 13.5px;
   font-weight: var(--vetro-fw-medium);
-  padding: 9px var(--vetro-space-3);
+  padding: 8px var(--vetro-space-3);
   border-radius: var(--vetro-radius-md);
-  border-left: 2px solid transparent;
+  border-left: 3px solid transparent;
   transition: background-color var(--vetro-duration) var(--vetro-ease), color var(--vetro-duration) var(--vetro-ease);
 }
 
-.app-nav a .icon {
-  opacity: 0.85;
+/* Icon-badge treatment (Workforce Platform design, project 0c499cb6): every
+   nav icon sits in its own small rounded box rather than floating bare next
+   to the label, filled solid teal once active. Targets the icon svg
+   directly (the Icon wrapper in components/icons.tsx renders no wrapping
+   span) rather than needing markup changes at every call site. */
+.app-nav a > svg,
+.app-nav-locked > svg:first-child {
+  width: 26px;
+  height: 26px;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  background: #F1F3F3;
+  color: #8A97A0;
+  flex-shrink: 0;
+  transition: background-color var(--vetro-duration) var(--vetro-ease), color var(--vetro-duration) var(--vetro-ease);
 }
 
 .app-nav a:hover {
-  color: var(--vetro-white);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--vetro-text);
+  background: var(--vetro-bg);
   text-decoration: none;
 }
 
 .app-nav a.active {
-  color: var(--vetro-white);
-  background: rgba(14, 124, 123, 0.24);
+  color: var(--vetro-teal);
+  font-weight: var(--vetro-fw-semibold);
+  background: #E4F2F1;
   border-left-color: var(--vetro-teal);
   text-decoration: none;
+}
+
+.app-nav a.active > svg {
+  background: var(--vetro-teal);
+  color: var(--vetro-white);
 }
 
 /* Locked nav items (PortalLayout, before vetting is complete) — same shape
@@ -223,12 +244,12 @@ button {
   display: flex;
   align-items: center;
   gap: var(--vetro-space-3);
-  color: #5B6770;
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text-muted);
+  font-size: 13.5px;
   font-weight: var(--vetro-fw-medium);
-  padding: 9px var(--vetro-space-3);
+  padding: 8px var(--vetro-space-3);
   border-radius: var(--vetro-radius-md);
-  border-left: 2px solid transparent;
+  border-left: 3px solid transparent;
   cursor: not-allowed;
 }
 
@@ -300,7 +321,7 @@ button {
 }
 
 .app-sidebar-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--vetro-border);
   padding-top: var(--vetro-space-3);
   margin-top: var(--vetro-space-3);
 }
@@ -309,7 +330,7 @@ button {
   display: flex;
   align-items: center;
   gap: var(--vetro-space-3);
-  color: #A7B4BE;
+  color: #52606D;
   font-size: var(--vetro-fs-body-sm);
   font-weight: var(--vetro-fw-medium);
   padding: 9px var(--vetro-space-3);
@@ -318,8 +339,8 @@ button {
 }
 
 .app-sidebar-footer a:hover {
-  color: var(--vetro-white);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--vetro-status-red-text);
+  background: var(--vetro-badge-red-bg);
   text-decoration: none;
 }
 
@@ -493,6 +514,90 @@ button {
   font-size: 12px;
   font-weight: var(--vetro-fw-semibold);
   flex-shrink: 0;
+}
+
+/* Staff Directory master-detail (Staff.tsx) — a 300px officer list beside
+   a detail panel, matching the Workforce Platform design's two-pane layout. */
+.staff-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--vetro-space-5);
+  align-items: start;
+}
+
+.staff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--vetro-space-2);
+}
+
+.staff-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--vetro-radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: none;
+  text-align: left;
+  width: 100%;
+}
+
+.staff-list-item:hover {
+  background: var(--vetro-bg);
+}
+
+.staff-list-item.active {
+  background: var(--vetro-teal-light);
+  border-color: var(--vetro-teal);
+}
+
+.staff-list-item-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: var(--vetro-fw-semibold);
+  color: var(--vetro-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-list-item-meta {
+  font-size: 12px;
+  color: var(--vetro-text-muted);
+  margin-left: 16px;
+}
+
+.staff-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.detail-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--vetro-space-4);
+  margin: var(--vetro-space-3) 0 var(--vetro-space-5);
+}
+
+.detail-field-label {
+  font-size: 11px;
+  font-weight: var(--vetro-fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--vetro-ls-label);
+  color: var(--vetro-text-muted);
+  margin-bottom: 4px;
+}
+
+.detail-field-value {
+  font-size: var(--vetro-fs-body-sm);
+  color: var(--vetro-text);
 }
 
 /* Forms */
@@ -849,9 +954,13 @@ button {
   flex-shrink: 0;
 }
 
-.status-active { color: var(--vetro-status-green-text); background: color-mix(in srgb, var(--vetro-status-green) 14%, white); }
-.status-expiring { color: var(--vetro-status-amber-text); background: color-mix(in srgb, var(--vetro-status-amber) 14%, white); }
-.status-expired { color: var(--vetro-status-red-text); background: color-mix(in srgb, var(--vetro-status-red) 12%, white); }
+.status-active { color: var(--vetro-status-green-text); background: var(--vetro-badge-green-bg); }
+.status-expiring { color: var(--vetro-status-amber-text); background: var(--vetro-badge-amber-bg); }
+.status-expired { color: var(--vetro-status-red-text); background: var(--vetro-badge-red-bg); }
+/* Vetting submitted to a provider, result not back yet — distinct from
+   ACTIVE/EXPIRING/EXPIRED (all of which describe a *result* Vetro already
+   holds); see VettingSubmission.status PENDING_REVIEW. */
+.status-pending { color: var(--vetro-badge-blue-text); background: var(--vetro-badge-blue-bg); }
 
 /* Shift statuses (Schedule/ClientHome/Reports) — same pill/dot language,
    two additions for "hasn't happened yet" states that compliance status
@@ -1345,6 +1454,10 @@ button {
   .login-shell { grid-template-columns: 1fr; }
   .login-brand-panel { display: none; }
 
+  .staff-layout {
+    grid-template-columns: 1fr;
+  }
+
   /* Below 860px the fixed sidebar becomes an off-canvas drawer, toggled by
      the hamburger button — there's no room for a permanent 232px rail once
      the viewport itself is narrower than that. */
@@ -1383,9 +1496,10 @@ button {
     width: 38px;
     height: 38px;
     border-radius: var(--vetro-radius-md);
-    background: rgba(255, 255, 255, 0.16);
-    color: var(--vetro-white);
-    border: none;
+    background: var(--vetro-surface);
+    color: var(--vetro-text);
+    border: 1px solid var(--vetro-border);
+    box-shadow: var(--vetro-shadow-sm);
     cursor: pointer;
   }
 
@@ -1469,8 +1583,8 @@ button {
     bottom: 0;
     z-index: 56;
     justify-content: space-around;
-    background: var(--vetro-ink);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--vetro-surface);
+    border-top: 1px solid var(--vetro-border);
     padding: 6px var(--vetro-space-2) calc(6px + env(safe-area-inset-bottom));
   }
 
@@ -1487,7 +1601,7 @@ button {
     background: none;
     border: none;
     cursor: pointer;
-    color: #8A96A3;
+    color: #8A97A0;
     font-size: 10px;
     font-weight: var(--vetro-fw-medium);
     text-decoration: none;
@@ -1499,11 +1613,11 @@ button {
   }
 
   .mobile-tab.active {
-    color: var(--vetro-white);
+    color: var(--vetro-teal);
   }
 
   .mobile-tab-locked {
-    color: #4A555F;
+    color: var(--vetro-ink-300);
     cursor: not-allowed;
   }
 }

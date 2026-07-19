@@ -40,6 +40,7 @@ export function Sites() {
     const lat = String(form.get("latitude") || "");
     const lng = String(form.get("longitude") || "");
     const radius = String(form.get("geofenceRadiusM") || "");
+    const headcount = String(form.get("requiredHeadcount") || "");
     await api.createSite({
       name: String(form.get("name")),
       address: String(form.get("address") || "") || undefined,
@@ -48,9 +49,24 @@ export function Sites() {
       latitude: lat ? Number(lat) : undefined,
       longitude: lng ? Number(lng) : undefined,
       geofenceRadiusM: radius ? Number(radius) : undefined,
+      requiredHeadcount: headcount ? Number(headcount) : undefined,
     });
     setShowAddSite(false);
     await load();
+  }
+
+  async function handleSaveHeadcount(e: FormEvent<HTMLFormElement>, siteId: string) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const headcount = String(form.get("requiredHeadcount") || "");
+    setGeofenceStatus(undefined);
+    try {
+      await api.updateSite(siteId, { requiredHeadcount: headcount ? Number(headcount) : null });
+      setGeofenceStatus("Required headcount saved");
+      await load();
+    } catch (err) {
+      setGeofenceStatus(err instanceof Error ? err.message : "Could not save required headcount");
+    }
   }
 
   async function handleSaveGeofence(e: FormEvent<HTMLFormElement>, siteId: string) {
@@ -142,6 +158,10 @@ export function Sites() {
             <div className="form-field">
               <label htmlFor="clientContactEmail">Client contact email (optional)</label>
               <input id="clientContactEmail" name="clientContactEmail" type="email" />
+            </div>
+            <div className="form-field" style={{ maxWidth: 220 }}>
+              <label htmlFor="requiredHeadcount">Required headcount (optional)</label>
+              <input id="requiredHeadcount" name="requiredHeadcount" type="number" min="0" placeholder="e.g. 2" />
             </div>
 
             <p style={{ fontSize: 13, color: "var(--vetro-text-muted)", marginBottom: 8 }}>
@@ -272,6 +292,30 @@ export function Sites() {
                     </form>
                     {editLocation.status && <p className="subtle-meta">{editLocation.status}</p>}
                     {geofenceStatus && <p className="subtle-meta">{geofenceStatus}</p>}
+
+                    <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid var(--vetro-border)" }} />
+                    <p style={{ fontSize: 13, marginBottom: 12, color: "var(--vetro-text-muted)" }}>
+                      Expected headcount for Live Site Occupancy to compare the currently clocked-in count
+                      against.
+                    </p>
+                    <form
+                      onSubmit={(e) => handleSaveHeadcount(e, site.id)}
+                      style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
+                    >
+                      <div className="form-field" style={{ marginBottom: 0, maxWidth: 160 }}>
+                        <label htmlFor={`headcount-${site.id}`}>Required headcount</label>
+                        <input
+                          id={`headcount-${site.id}`}
+                          name="requiredHeadcount"
+                          type="number"
+                          min="0"
+                          defaultValue={site.requiredHeadcount ?? ""}
+                        />
+                      </div>
+                      <button type="submit" className="btn btn-primary">
+                        Save
+                      </button>
+                    </form>
 
                     <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid var(--vetro-border)" }} />
                     <p style={{ fontSize: 13, marginBottom: 12, color: "var(--vetro-text-muted)" }}>

@@ -23,7 +23,7 @@ const SUBMISSION_LABELS: Record<SubmissionStatus, string> = {
 };
 
 const SUBMISSION_CLASSES: Record<SubmissionStatus, string> = {
-  PENDING_REVIEW: "status-expiring",
+  PENDING_REVIEW: "status-pending",
   APPROVED: "status-active",
   REJECTED: "status-expired",
 };

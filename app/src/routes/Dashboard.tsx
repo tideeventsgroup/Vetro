@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AddOfficerModal } from "../components/AddOfficerModal.js";
-import { StatusBadge } from "../components/StatusBadge.js";
-import { DownloadIcon, PlusIcon, RosterIcon, ShieldCheckIcon } from "../components/icons.js";
-import { Contractor, DashboardSummary, Officer, OfficerHrInput, useApi } from "../lib/api.js";
+import { PinBadge, VettingBadge } from "../components/OfficerBadges.js";
+import { DownloadIcon, PlusIcon, RosterIcon, ShieldCheckIcon, WarningIcon } from "../components/icons.js";
+import { Contractor, DashboardSummary, Officer, OfficerHrInput, Shift, Site, useApi } from "../lib/api.js";
 import { useAuth } from "../lib/auth.js";
 import { useTenantSlug } from "../lib/tenant.js";
 import { worstStatus } from "../lib/status.js";
@@ -12,6 +12,17 @@ const SKIP_AUTH = import.meta.env.VITE_SKIP_AUTH === "true";
 
 function initials(officer: Officer): string {
   return `${officer.firstName[0] ?? ""}${officer.lastName[0] ?? ""}`.toUpperCase();
+}
+
+function formatShiftWhen(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOfDay(d) - startOfDay(now)) / 86_400_000);
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (days === 0) return `Today ${time}`;
+  if (days === 1) return `Tomorrow ${time}`;
+  return `${d.toLocaleDateString([], { weekday: "short" })} ${time}`;
 }
 
 function slugify(value: string): string {
@@ -43,6 +54,8 @@ export function Dashboard() {
   const [newContractorSlug, setNewContractorSlug] = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
   const [officers, setOfficers] = useState<Officer[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [shifts, setShifts] = useState<Shift[]>([]);
   const [summary, setSummary] = useState<DashboardSummary | undefined>(undefined);
   const [pendingReviewCount, setPendingReviewCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,14 +82,21 @@ export function Dashboard() {
   }
 
   async function loadRoster() {
-    const [officerRows, summaryRow, pendingSubmissions] = await Promise.all([
+    const now = new Date();
+    const from = now.toISOString();
+    const to = new Date(now.getTime() + 30 * 86_400_000).toISOString();
+    const [officerRows, summaryRow, pendingSubmissions, siteRows, shiftRows] = await Promise.all([
       api.listOfficers(),
       api.getDashboardSummary(),
       api.listVettingSubmissionsForReview("PENDING_REVIEW"),
+      api.listSites(),
+      api.listShifts({ from, to }),
     ]);
     setOfficers(officerRows);
     setSummary(summaryRow);
     setPendingReviewCount(pendingSubmissions.length);
+    setSites(siteRows);
+    setShifts(shiftRows);
   }
 
   function handleNameChange(value: string) {
@@ -169,8 +189,28 @@ export function Dashboard() {
     );
   }
 
-  const tally = { ACTIVE: 0, EXPIRING: 0, EXPIRED: 0 };
-  for (const officer of officers) tally[worstStatus(officer)]++;
+  const blockedOfficers = officers.filter((o) => worstStatus(o) === "EXPIRED");
+  const expiringOfficers = officers.filter((o) => worstStatus(o) === "EXPIRING");
+  const activeCount = officers.length - blockedOfficers.length;
+
+  const siteById = new Map(sites.map((s) => [s.id, s]));
+  const nextShiftByOfficer = new Map<string, Shift>();
+  for (const shift of [...shifts].sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime))) {
+    if (shift.officerId && !nextShiftByOfficer.has(shift.officerId)) nextShiftByOfficer.set(shift.officerId, shift);
+  }
+  const sitesAtRisk = new Set(
+    officers
+      .filter((o) => worstStatus(o) !== "ACTIVE")
+      .map((o) => nextShiftByOfficer.get(o.id)?.siteId)
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  const kpis = [
+    { label: "Active operatives", value: activeCount, color: "var(--vetro-text)" },
+    { label: "Expiring within 30 days", value: expiringOfficers.length, color: "var(--vetro-status-amber-text)" },
+    { label: "Expired / PIN blocked", value: blockedOfficers.length, color: "var(--vetro-status-red-text)" },
+    { label: "Sites currently at risk", value: sitesAtRisk.size, color: "var(--vetro-status-amber-text)" },
+  ];
 
   return (
     <div>
@@ -190,43 +230,45 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="summary-grid">
-        <div className="summary-tile">
-          <div>
-            <div className="count">{officers.length}</div>
-            <div className="label">Officers</div>
-          </div>
-          <span className="tile-icon">
-            <RosterIcon />
-          </span>
-        </div>
-        <div className="summary-tile">
-          <div>
-            <div className="count" style={{ color: "var(--vetro-status-green-text)" }}>
-              {tally.ACTIVE}
-            </div>
-            <div className="label">Active</div>
-          </div>
-        </div>
-        <div className="summary-tile">
-          <div>
-            <div className="count" style={{ color: "var(--vetro-status-amber-text)" }}>
-              {tally.EXPIRING}
-            </div>
-            <div className="label">Expiring soon</div>
-          </div>
-        </div>
-        <div className="summary-tile">
-          <div>
-            <div className="count" style={{ color: "var(--vetro-status-red-text)" }}>
-              {tally.EXPIRED}
-            </div>
-            <div className="label">Expired</div>
-          </div>
-        </div>
-      </div>
-
       {error && <p className="error-text">{error}</p>}
+
+      {blockedOfficers.length > 0 && (
+        <div
+          className="card"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 16,
+            marginBottom: 20,
+            background: "var(--vetro-badge-red-bg)",
+            borderColor: "var(--vetro-status-red-text)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 240 }}>
+            <span style={{ color: "var(--vetro-status-red-text)", flexShrink: 0 }}>
+              <WarningIcon />
+            </span>
+            <div>
+              <strong style={{ color: "var(--vetro-status-red-text)" }}>
+                {blockedOfficers.length} PIN{blockedOfficers.length === 1 ? "" : "s"} blocked by an expired licence or vetting record
+              </strong>
+              <p style={{ color: "var(--vetro-status-red-text)", fontSize: 13, margin: 0 }}>
+                Shifts left unassigned as a result. Licence and vetting status gate kiosk PIN access automatically —
+                no manual step required.
+              </p>
+            </div>
+          </div>
+          <a
+            href="#operative-status"
+            className="btn"
+            style={{ background: "var(--vetro-status-red-text)", color: "var(--vetro-white)", whiteSpace: "nowrap", textDecoration: "none" }}
+          >
+            Review blocked operatives
+          </a>
+        </div>
+      )}
 
       {pendingReviewCount > 0 && (
         <Link
@@ -236,7 +278,7 @@ export function Dashboard() {
             display: "flex",
             alignItems: "center",
             gap: 12,
-            marginBottom: 24,
+            marginBottom: 20,
             borderLeft: "3px solid var(--vetro-status-amber)",
             textDecoration: "none",
             color: "inherit",
@@ -256,13 +298,18 @@ export function Dashboard() {
         </Link>
       )}
 
-      {summary && (
-        <p className="subtle-meta">
-          Licences — {summary.licences.ACTIVE ?? 0} active, {summary.licences.EXPIRING ?? 0} expiring,{" "}
-          {summary.licences.EXPIRED ?? 0} expired · Vetting — {summary.vetting.ACTIVE ?? 0} active,{" "}
-          {summary.vetting.EXPIRING ?? 0} expiring, {summary.vetting.EXPIRED ?? 0} expired
-        </p>
-      )}
+      <div className="summary-grid">
+        {kpis.map((kpi) => (
+          <div className="summary-tile" key={kpi.label}>
+            <div>
+              <div className="count" style={{ color: kpi.color }}>
+                {kpi.value}
+              </div>
+              <div className="label">{kpi.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {officers.length === 0 ? (
         <div className="card empty-state">
@@ -272,33 +319,57 @@ export function Dashboard() {
           <p>No officers added yet. Add your first officer to start automatic checks.</p>
         </div>
       ) : (
-        <table className="data-table">
+        <table className="data-table" id="operative-status">
           <thead>
             <tr>
-              <th>Officer</th>
-              <th>Status</th>
-              <th>Licences</th>
-              <th>Vetting</th>
+              <th>Operative</th>
+              <th>Site</th>
+              <th>Vetting status</th>
+              <th>PIN</th>
+              <th>Next shift</th>
             </tr>
           </thead>
           <tbody>
-            {officers.map((officer) => (
-              <tr key={officer.id} className="clickable" onClick={() => navigate(`/${tenant}/officers/${officer.id}`)}>
-                <td>
-                  <div className="officer-cell">
-                    <span className="officer-avatar">{initials(officer)}</span>
-                    {officer.firstName} {officer.lastName}
-                  </div>
-                </td>
-                <td>
-                  <StatusBadge status={worstStatus(officer)} />
-                </td>
-                <td>{officer.licences.length}</td>
-                <td>{officer.vettingRecords.length}</td>
-              </tr>
-            ))}
+            {officers.map((officer) => {
+              const nextShift = nextShiftByOfficer.get(officer.id);
+              const site = nextShift ? siteById.get(nextShift.siteId) : undefined;
+              return (
+                <tr key={officer.id} className="clickable" onClick={() => navigate(`/${tenant}/officers/${officer.id}`)}>
+                  <td>
+                    <div className="officer-cell">
+                      <span className="officer-avatar">{initials(officer)}</span>
+                      {officer.firstName} {officer.lastName}
+                    </div>
+                  </td>
+                  <td>{site?.name ?? "—"}</td>
+                  <td>
+                    <VettingBadge officer={officer} />
+                  </td>
+                  <td>
+                    <PinBadge officer={officer} />
+                  </td>
+                  <td>
+                    {worstStatus(officer) === "EXPIRED" ? (
+                      <span style={{ color: "var(--vetro-status-red-text)" }}>Unassigned</span>
+                    ) : nextShift ? (
+                      formatShiftWhen(nextShift.startTime)
+                    ) : (
+                      <span style={{ color: "var(--vetro-text-muted)" }}>Unassigned</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+      )}
+
+      {summary && (
+        <p className="subtle-meta" style={{ marginTop: 16, marginBottom: 0 }}>
+          Licences — {summary.licences.ACTIVE ?? 0} active, {summary.licences.EXPIRING ?? 0} expiring,{" "}
+          {summary.licences.EXPIRED ?? 0} expired · Vetting — {summary.vetting.ACTIVE ?? 0} active,{" "}
+          {summary.vetting.EXPIRING ?? 0} expiring, {summary.vetting.EXPIRED ?? 0} expired
+        </p>
       )}
 
       {showAddOfficer && (

@@ -1,5 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./lib/auth.js";
+import { Alerts } from "./routes/Alerts.js";
+import { Arbitration } from "./routes/Arbitration.js";
 import { AuditLog } from "./routes/AuditLog.js";
 import { ClientHome } from "./routes/ClientHome.js";
 import { ClientLayout } from "./routes/ClientLayout.js";
@@ -15,6 +17,7 @@ import { MyPatrols } from "./routes/MyPatrols.js";
 import { MyShifts } from "./routes/MyShifts.js";
 import { MyVisitorLog } from "./routes/MyVisitorLog.js";
 import { NoTenant } from "./routes/NoTenant.js";
+import { Occupancy } from "./routes/Occupancy.js";
 import { OfficerDetail } from "./routes/OfficerDetail.js";
 import { Patrols } from "./routes/Patrols.js";
 import { PortalHome } from "./routes/PortalHome.js";
@@ -25,6 +28,7 @@ import { Schedule } from "./routes/Schedule.js";
 import { Settings } from "./routes/Settings.js";
 import { Signup } from "./routes/Signup.js";
 import { Sites } from "./routes/Sites.js";
+import { Staff } from "./routes/Staff.js";
 import { Team } from "./routes/Team.js";
 import { VettingQueue } from "./routes/VettingQueue.js";
 import { VettingWizard } from "./routes/VettingWizard.js";
@@ -53,12 +57,16 @@ export function App() {
               <Route path="live-ops" element={<LiveOps />} />
               <Route path="officers/:id" element={<OfficerDetail />} />
               <Route path="vetting-queue" element={<VettingQueue />} />
+              <Route path="staff" element={<Staff />} />
               <Route path="sites" element={<Sites />} />
+              <Route path="occupancy" element={<Occupancy />} />
               <Route path="schedule" element={<Schedule />} />
+              <Route path="arbitration" element={<Arbitration />} />
               <Route path="incidents" element={<Incidents />} />
               <Route path="patrols" element={<Patrols />} />
               <Route path="visitor-log" element={<VisitorLog />} />
               <Route path="dispatch" element={<Dispatch />} />
+              <Route path="alerts" element={<Alerts />} />
               <Route path="reports" element={<Reports />} />
               <Route path="team" element={<Team />} />
               <Route path="settings" element={<Settings />} />

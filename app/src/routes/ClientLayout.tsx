@@ -28,7 +28,7 @@ export function ClientLayout() {
       </button>
       {mobileNavOpen && <div className="app-sidebar-scrim" onClick={() => setMobileNavOpen(false)} />}
       <aside className={`app-sidebar${mobileNavOpen ? " open" : ""}`}>
-        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="40" className="sidebar-logo" />
+        <img src="/brand/vetro-logo-horizontal.svg" alt="Vetro" height="40" className="sidebar-logo" />
         <div style={{ flex: 1 }} />
         <SidebarIdentity />
         <div className="app-sidebar-footer">

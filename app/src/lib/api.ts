@@ -170,6 +170,9 @@ export interface Site {
   latitude: number | null;
   longitude: number | null;
   geofenceRadiusM: number | null;
+  // Expected headcount for Live Site Occupancy to compare the currently
+  // clocked-in count against. Null until an admin sets a target.
+  requiredHeadcount: number | null;
   createdAt: string;
 }
 
@@ -693,6 +696,7 @@ class VetroApiClient {
     latitude?: number;
     longitude?: number;
     geofenceRadiusM?: number;
+    requiredHeadcount?: number;
   }) {
     return this.request<Site>("/sites", { method: "POST", body: JSON.stringify(input) });
   }
@@ -707,6 +711,7 @@ class VetroApiClient {
       latitude: number | null;
       longitude: number | null;
       geofenceRadiusM: number | null;
+      requiredHeadcount: number | null;
     }>
   ) {
     return this.request<Site>(`/sites/${id}`, { method: "PATCH", body: JSON.stringify(input) });
