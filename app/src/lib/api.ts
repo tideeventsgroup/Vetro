@@ -566,7 +566,7 @@ class VetroApiClient {
   }
 
   // The admin-facing review queue for officer self-service vetting
-  // submissions — see routes/VettingQueue.tsx and backend/src/routes/vettingSubmissions.ts.
+  // submissions — see routes/Vetting.tsx and backend/src/routes/vettingSubmissions.ts.
   listVettingSubmissionsForReview(status?: SubmissionStatus): Promise<VettingSubmissionForReview[]> {
     return this.request(`/vetting-submissions${status ? `?status=${status}` : ""}`);
   }

@@ -1,4 +1,4 @@
-import type { ComplianceStatus, Officer, VettingRecord } from "./api.js";
+import type { ComplianceStatus, DbsCheck, Officer, VettingRecord } from "./api.js";
 
 const PRIORITY: Record<ComplianceStatus, number> = { EXPIRED: 0, EXPIRING: 1, ACTIVE: 2 };
 
@@ -23,4 +23,11 @@ export function worstVettingRecord(records: VettingRecord[]): VettingRecord | un
   const worst = worstOf(records.map((r) => r.status));
   if (!worst) return undefined;
   return records.find((r) => r.status === worst);
+}
+
+/** The DBS check driving the worst DBS status, if any — mirrors worstVettingRecord. */
+export function worstDbsCheck(checks: DbsCheck[]): DbsCheck | undefined {
+  const worst = worstOf(checks.map((d) => d.status));
+  if (!worst) return undefined;
+  return checks.find((d) => d.status === worst);
 }

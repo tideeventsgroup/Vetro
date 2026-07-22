@@ -12,7 +12,7 @@ officers.get("/", async (c) => {
   const db = await getDb();
   const rows = await db.officer.findMany({
     where: { contractorId: c.get("contractorId") },
-    include: { licences: true, vettingRecords: true, dbsChecks: true },
+    include: { licences: true, vettingRecords: true, dbsChecks: true, referenceChecks: true },
     orderBy: { lastName: "asc" },
   });
   return c.json(rows);

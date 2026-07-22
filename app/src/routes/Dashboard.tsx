@@ -272,7 +272,7 @@ export function Dashboard() {
 
       {pendingReviewCount > 0 && (
         <Link
-          to={`/${tenant}/vetting-queue`}
+          to={`/${tenant}/vetting`}
           className="card"
           style={{
             display: "flex",

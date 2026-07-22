@@ -32,7 +32,7 @@ import { Signup } from "./routes/Signup.js";
 import { Sites } from "./routes/Sites.js";
 import { Staff } from "./routes/Staff.js";
 import { Team } from "./routes/Team.js";
-import { VettingQueue } from "./routes/VettingQueue.js";
+import { Vetting } from "./routes/Vetting.js";
 import { VettingWizard } from "./routes/VettingWizard.js";
 import { VisitorLog } from "./routes/VisitorLog.js";
 
@@ -67,7 +67,7 @@ export function App() {
               <Route path="compliance" element={<Dashboard />} />
               <Route path="officers/:id" element={<OfficerDetail />} />
               <Route path="officers/:id/compliance-report" element={<ComplianceReport />} />
-              <Route path="vetting-queue" element={<VettingQueue />} />
+              <Route path="vetting" element={<Vetting />} />
               <Route path="staff" element={<Staff />} />
               <Route path="sites" element={<Sites />} />
               <Route path="occupancy" element={<Occupancy />} />

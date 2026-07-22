@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PinBadge, VettingBadge, formatCompactDate } from "../components/OfficerBadges.js";
+import { StatusBadge } from "../components/StatusBadge.js";
 import { ArrowLeftIcon, ShieldCheckIcon } from "../components/icons.js";
 import {
   ComplianceStatus,
@@ -11,7 +12,7 @@ import {
   useApi,
 } from "../lib/api.js";
 import { useTenantSlug } from "../lib/tenant.js";
-import { worstStatus } from "../lib/status.js";
+import { worstDbsCheck, worstStatus } from "../lib/status.js";
 
 const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
   FULL_TIME: "Full-time",
@@ -86,6 +87,7 @@ export function Staff() {
 
   const selected = officers.find((o) => o.id === selectedId);
   const pendingSubmission = selected ? pendingByOfficer.get(selected.id) : undefined;
+  const selectedDbs = selected ? worstDbsCheck(selected.dbsChecks) : undefined;
 
   async function handleReview(status: "APPROVED" | "REJECTED") {
     if (!pendingSubmission) return;
@@ -247,6 +249,12 @@ export function Staff() {
                     <span className={`status-badge ${selected.rightToWorkConfirmed ? "status-active" : "status-expiring"}`}>
                       {selected.rightToWorkConfirmed ? "Verified" : "Pending"}
                     </span>
+                  </div>
+                </div>
+                <div>
+                  <div className="detail-field-label">DBS check</div>
+                  <div className="detail-field-value">
+                    {selectedDbs ? <StatusBadge status={selectedDbs.status} /> : "—"}
                   </div>
                 </div>
               </div>

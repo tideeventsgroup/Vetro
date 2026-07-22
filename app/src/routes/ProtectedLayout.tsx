@@ -70,9 +70,9 @@ export function ProtectedLayout() {
             Alerts center
             {openAlertCount > 0 && <span className="nav-badge">{openAlertCount}</span>}
           </NavLink>
-          <NavLink to={`/${tenant}/vetting-queue`}>
+          <NavLink to={`/${tenant}/vetting`}>
             <ShieldCheckIcon />
-            Vetting queue
+            Vetting
           </NavLink>
           <NavLink to={`/${tenant}/staff`}>
             <UsersIcon />

@@ -1,8 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { SubmissionStatusBadge } from "../components/StatusBadge.js";
+import { StatusBadge, SubmissionStatusBadge } from "../components/StatusBadge.js";
 import { CheckIcon, ShieldCheckIcon, XIcon } from "../components/icons.js";
-import { useApi, VettingSubmissionForReview } from "../lib/api.js";
+import { Officer, useApi, VettingSubmissionForReview } from "../lib/api.js";
+import { worstDbsCheck, worstVettingRecord } from "../lib/status.js";
 import { useTenantSlug } from "../lib/tenant.js";
 
 function formatDate(value: string): string {
@@ -18,13 +19,23 @@ function listPreview(value: unknown): string {
     .join(" · ");
 }
 
-// Vetro still doesn't perform the BS7858 check itself — this is where an
-// admin looks at what an officer submitted through the self-service portal
-// (see routes/PortalHome.tsx) and decides whether it becomes the
-// authoritative record.
-export function VettingQueue() {
+function referenceSummary(officer: Officer): string {
+  const refs = officer.referenceChecks ?? [];
+  if (refs.length === 0) return "—";
+  if (refs.some((r) => r.status === "FLAGGED")) return "Flagged";
+  if (refs.some((r) => r.status === "UNABLE_TO_CONTACT")) return "Unable to contact";
+  if (refs.some((r) => r.status === "PENDING")) return "Pending";
+  return "Received";
+}
+
+// This org still doesn't perform BS7858/DBS/RTW checks itself — this page
+// is where that stays visible: a roster-wide view of every check Vetro
+// tracks, plus the queue where an admin turns an officer's self-service
+// submission (see routes/PortalHome.tsx) into the authoritative record.
+export function Vetting() {
   const api = useApi();
   const tenant = useTenantSlug();
+  const [officers, setOfficers] = useState<Officer[]>([]);
   const [submissions, setSubmissions] = useState<VettingSubmissionForReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | undefined>(undefined);
@@ -40,9 +51,14 @@ export function VettingQueue() {
   async function load() {
     setIsLoading(true);
     try {
-      setSubmissions(await api.listVettingSubmissionsForReview());
+      const [officerRows, submissionRows] = await Promise.all([
+        api.listOfficers(),
+        api.listVettingSubmissionsForReview(),
+      ]);
+      setOfficers(officerRows);
+      setSubmissions(submissionRows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load vetting queue");
+      setError(err instanceof Error ? err.message : "Could not load vetting records");
     } finally {
       setIsLoading(false);
     }
@@ -82,12 +98,61 @@ export function VettingQueue() {
     <div>
       <div className="page-header">
         <div>
-          <h1>Vetting queue</h1>
-          <p>What officers have submitted through self-service, awaiting your review.</p>
+          <h1>Vetting</h1>
+          <p>BS7858, DBS, right to work and reference checks across your roster — plus submissions awaiting review.</p>
         </div>
       </div>
 
       {error && !expandedId && <p className="error-text">{error}</p>}
+
+      <div className="card">
+        <div className="card-header">
+          <h2>Vetting records ({officers.length})</h2>
+        </div>
+        {officers.length === 0 ? (
+          <div className="empty-state">
+            <span className="empty-icon">
+              <ShieldCheckIcon />
+            </span>
+            <p>No officers added yet.</p>
+          </div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Officer</th>
+                <th>BS7858</th>
+                <th>DBS</th>
+                <th>Right to work</th>
+                <th>References</th>
+              </tr>
+            </thead>
+            <tbody>
+              {officers.map((o) => {
+                const vetting = worstVettingRecord(o.vettingRecords);
+                const dbs = worstDbsCheck(o.dbsChecks);
+                return (
+                  <tr key={o.id}>
+                    <td>
+                      <Link to={`/${tenant}/officers/${o.id}`}>
+                        {o.firstName} {o.lastName}
+                      </Link>
+                    </td>
+                    <td>{vetting ? <StatusBadge status={vetting.status} /> : "—"}</td>
+                    <td>{dbs ? <StatusBadge status={dbs.status} /> : "—"}</td>
+                    <td>
+                      <span className={`status-badge ${o.rightToWorkConfirmed ? "status-active" : "status-expiring"}`}>
+                        {o.rightToWorkConfirmed ? "Verified" : "Pending"}
+                      </span>
+                    </td>
+                    <td>{referenceSummary(o)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {pending.length === 0 ? (
         <div className="card empty-state">

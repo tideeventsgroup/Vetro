@@ -234,7 +234,7 @@ export function Alerts() {
       )}
 
       <p className="subtle-meta">
-        Live, map-based tracking of currently clocked-in officers lives on{" "}
+        Live tracking of active sites, working officers, and real-time incidents lives on{" "}
         <Link to={`/${tenant}`}>Live ops</Link>.
       </p>
     </div>
