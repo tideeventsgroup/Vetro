@@ -33,7 +33,18 @@ export const handler: ScheduledHandler = async () => {
     }
   }
 
+  const dbsChecks = await db.dbsCheck.findMany();
+  for (const check of dbsChecks) {
+    const status = deriveStatus(check.expiryDate, now);
+    if (status !== check.status) {
+      await db.dbsCheck.update({
+        where: { id: check.id },
+        data: { status },
+      });
+    }
+  }
+
   console.log(
-    `Expiry check complete: ${licences.length} licences, ${vettingRecords.length} vetting records reviewed.`
+    `Expiry check complete: ${licences.length} licences, ${vettingRecords.length} vetting records, ${dbsChecks.length} DBS checks reviewed.`
   );
 };

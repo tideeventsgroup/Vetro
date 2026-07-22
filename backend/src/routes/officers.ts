@@ -12,7 +12,7 @@ officers.get("/", async (c) => {
   const db = await getDb();
   const rows = await db.officer.findMany({
     where: { contractorId: c.get("contractorId") },
-    include: { licences: true, vettingRecords: true },
+    include: { licences: true, vettingRecords: true, dbsChecks: true },
     orderBy: { lastName: "asc" },
   });
   return c.json(rows);
@@ -22,7 +22,14 @@ officers.get("/:id", async (c) => {
   const db = await getDb();
   const row = await db.officer.findUnique({
     where: { id: c.req.param("id") },
-    include: { licences: true, vettingRecords: true, qualifications: true, documents: true },
+    include: {
+      licences: true,
+      vettingRecords: true,
+      dbsChecks: true,
+      referenceChecks: true,
+      qualifications: true,
+      documents: true,
+    },
   });
   if (!row || row.contractorId !== c.get("contractorId")) return c.json({ error: "Officer not found" }, 404);
   return c.json(row);
@@ -55,6 +62,8 @@ interface OfficerHrFields {
   payRateType?: string | null;
   rightToWorkConfirmed?: boolean;
   rightToWorkCheckedAt?: string | null;
+  rightToWorkExpiryDate?: string | null;
+  rightToWorkDocumentType?: string | null;
 }
 
 const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "CASUAL", "ZERO_HOURS"] as const;
@@ -105,6 +114,8 @@ function buildOfficerHrData(body: OfficerHrFields) {
     ...(body.payRateType !== undefined && { payRateType: body.payRateType as PayRateType | null }),
     ...(body.rightToWorkConfirmed !== undefined && { rightToWorkConfirmed: body.rightToWorkConfirmed }),
     ...(body.rightToWorkCheckedAt !== undefined && { rightToWorkCheckedAt: toDate(body.rightToWorkCheckedAt) }),
+    ...(body.rightToWorkExpiryDate !== undefined && { rightToWorkExpiryDate: toDate(body.rightToWorkExpiryDate) }),
+    ...(body.rightToWorkDocumentType !== undefined && { rightToWorkDocumentType: body.rightToWorkDocumentType }),
   };
 }
 

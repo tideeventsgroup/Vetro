@@ -27,6 +27,33 @@ export interface VettingRecord {
   notes: string | null;
 }
 
+export type DbsLevel = "BASIC" | "STANDARD" | "ENHANCED";
+
+export interface DbsCheck {
+  id: string;
+  officerId: string;
+  level: DbsLevel;
+  certificateNumber: string;
+  issueDate: string;
+  expiryDate: string | null;
+  status: ComplianceStatus;
+  lastCheckedAt: string | null;
+}
+
+export type ReferenceCheckStatus = "PENDING" | "RECEIVED" | "UNABLE_TO_CONTACT" | "FLAGGED";
+
+export interface ReferenceCheck {
+  id: string;
+  officerId: string;
+  refereeName: string;
+  contact: string;
+  relationship: string | null;
+  requestedAt: string;
+  respondedAt: string | null;
+  status: ReferenceCheckStatus;
+  notes: string | null;
+}
+
 export interface Qualification {
   id: string;
   officerId: string;
@@ -112,11 +139,15 @@ export interface Officer {
   payRateType: PayRateType | null;
   rightToWorkConfirmed: boolean;
   rightToWorkCheckedAt: string | null;
+  rightToWorkExpiryDate: string | null;
+  rightToWorkDocumentType: string | null;
   // Kiosk book-on/off identity — see lib/identityCodes.ts on the backend.
   // Null until an admin generates one from OfficerDetail.tsx.
   pin: string | null;
   licences: SiaLicence[];
   vettingRecords: VettingRecord[];
+  dbsChecks: DbsCheck[];
+  referenceChecks?: ReferenceCheck[];
   qualifications?: Qualification[];
   documents?: OfficerDocument[];
   vettingSubmissions?: VettingSubmission[];
@@ -144,6 +175,8 @@ export interface OfficerHrInput {
   payRateType?: PayRateType | null;
   rightToWorkConfirmed?: boolean;
   rightToWorkCheckedAt?: string | null;
+  rightToWorkExpiryDate?: string | null;
+  rightToWorkDocumentType?: string | null;
 }
 
 export interface Contractor {
@@ -431,6 +464,31 @@ class VetroApiClient {
       method: "POST",
       body: JSON.stringify(input),
     });
+  }
+
+  createDbsCheck(
+    officerId: string,
+    input: { level: DbsLevel; certificateNumber: string; issueDate: string; expiryDate?: string }
+  ) {
+    return this.request<DbsCheck>(`/officers/${officerId}/dbs`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  }
+
+  updateDbsCheck(id: string, input: Partial<{ certificateNumber: string; expiryDate: string }>) {
+    return this.request<DbsCheck>(`/dbs/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  }
+
+  createReferenceCheck(officerId: string, input: { refereeName: string; contact: string; relationship?: string }) {
+    return this.request<ReferenceCheck>(`/officers/${officerId}/reference-checks`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  }
+
+  updateReferenceCheck(id: string, input: Partial<{ status: ReferenceCheckStatus; notes: string }>) {
+    return this.request<ReferenceCheck>(`/reference-checks/${id}`, { method: "PATCH", body: JSON.stringify(input) });
   }
 
   createQualification(

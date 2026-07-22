@@ -9,7 +9,13 @@ function worstOf(statuses: ComplianceStatus[]): ComplianceStatus | undefined {
 
 /** The one badge a roster row shows: the worst status across everything held. */
 export function worstStatus(officer: Officer): ComplianceStatus {
-  return worstOf([...officer.licences.map((l) => l.status), ...officer.vettingRecords.map((v) => v.status)]) ?? "ACTIVE";
+  return (
+    worstOf([
+      ...officer.licences.map((l) => l.status),
+      ...officer.vettingRecords.map((v) => v.status),
+      ...officer.dbsChecks.map((d) => d.status),
+    ]) ?? "ACTIVE"
+  );
 }
 
 /** The vetting record (BS7858 etc.) driving the worst vetting status, if any — used to show its expiry alongside the badge. */

@@ -14,7 +14,7 @@ exports_.get("/officers.csv", async (c) => {
   const db = await getDb();
   const officerRows = await db.officer.findMany({
     where: { contractorId: c.get("contractorId") },
-    include: { licences: true, vettingRecords: true },
+    include: { licences: true, vettingRecords: true, dbsChecks: true },
     orderBy: { lastName: "asc" },
   });
 
@@ -37,6 +37,17 @@ exports_.get("/officers.csv", async (c) => {
     for (const record of officer.vettingRecords) {
       lines.push(
         toCsvRow([name, record.standard, "", record.status, record.expiryDate?.toISOString().slice(0, 10) ?? ""])
+      );
+    }
+    for (const check of officer.dbsChecks) {
+      lines.push(
+        toCsvRow([
+          name,
+          `DBS — ${check.level}`,
+          check.certificateNumber,
+          check.status,
+          check.expiryDate?.toISOString().slice(0, 10) ?? "",
+        ])
       );
     }
   }

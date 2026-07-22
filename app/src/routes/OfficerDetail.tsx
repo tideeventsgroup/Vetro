@@ -3,8 +3,16 @@ import { Link, useParams } from "react-router-dom";
 import { DocumentsSection } from "../components/DocumentsSection.js";
 import { EmploymentStatusBadge, StatusBadge } from "../components/StatusBadge.js";
 import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
-import { ArrowLeftIcon, MailIcon, PlusIcon } from "../components/icons.js";
-import { EmploymentStatus, EmploymentType, Officer, PayRateType, useApi } from "../lib/api.js";
+import { ArrowLeftIcon, FileIcon, MailIcon, PlusIcon } from "../components/icons.js";
+import {
+  DbsLevel,
+  EmploymentStatus,
+  EmploymentType,
+  Officer,
+  PayRateType,
+  ReferenceCheckStatus,
+  useApi,
+} from "../lib/api.js";
 import { useTenantSlug } from "../lib/tenant.js";
 
 function formatDate(value: string | null): string {
@@ -42,6 +50,19 @@ const PAY_RATE_TYPE_LABELS: Record<PayRateType, string> = {
   SALARY: "Per year (salary)",
 };
 
+const DBS_LEVEL_LABELS: Record<DbsLevel, string> = {
+  BASIC: "Basic",
+  STANDARD: "Standard",
+  ENHANCED: "Enhanced",
+};
+
+const REFERENCE_CHECK_STATUS_LABELS: Record<ReferenceCheckStatus, string> = {
+  PENDING: "Pending",
+  RECEIVED: "Received",
+  UNABLE_TO_CONTACT: "Unable to contact",
+  FLAGGED: "Flagged",
+};
+
 export function OfficerDetail() {
   const { id } = useParams<{ id: string }>();
   const api = useApi();
@@ -49,6 +70,8 @@ export function OfficerDetail() {
   const [officer, setOfficer] = useState<Officer | undefined>(undefined);
   const [showAddLicence, setShowAddLicence] = useState(false);
   const [showAddVetting, setShowAddVetting] = useState(false);
+  const [showAddDbs, setShowAddDbs] = useState(false);
+  const [showAddReference, setShowAddReference] = useState(false);
   const [showAddQualification, setShowAddQualification] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteStatus, setInviteStatus] = useState<string | undefined>(undefined);
@@ -93,6 +116,39 @@ export function OfficerDetail() {
       expiryDate: String(form.get("expiryDate") || "") || undefined,
     });
     setShowAddVetting(false);
+    await load(id);
+  }
+
+  async function handleAddDbs(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!id) return;
+    const form = new FormData(e.currentTarget);
+    await api.createDbsCheck(id, {
+      level: String(form.get("level")) as DbsLevel,
+      certificateNumber: String(form.get("certificateNumber")),
+      issueDate: String(form.get("dbsIssueDate")),
+      expiryDate: String(form.get("dbsExpiryDate") || "") || undefined,
+    });
+    setShowAddDbs(false);
+    await load(id);
+  }
+
+  async function handleAddReference(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!id) return;
+    const form = new FormData(e.currentTarget);
+    await api.createReferenceCheck(id, {
+      refereeName: String(form.get("refereeName")),
+      contact: String(form.get("contact")),
+      relationship: String(form.get("relationship") || "") || undefined,
+    });
+    setShowAddReference(false);
+    await load(id);
+  }
+
+  async function handleReferenceStatusChange(referenceId: string, status: ReferenceCheckStatus) {
+    if (!id) return;
+    await api.updateReferenceCheck(referenceId, { status });
     await load(id);
   }
 
@@ -150,6 +206,9 @@ export function OfficerDetail() {
         payRate: form.get("payRate") ? Number(form.get("payRate")) : undefined,
         payRateType: str("payRateType") as PayRateType | undefined,
         rightToWorkConfirmed: form.get("rightToWorkConfirmed") === "on",
+        rightToWorkCheckedAt: str("rightToWorkCheckedAt"),
+        rightToWorkDocumentType: str("rightToWorkDocumentType"),
+        rightToWorkExpiryDate: str("rightToWorkExpiryDate"),
       });
       setHrStatus("Saved");
       await load(id);
@@ -192,6 +251,10 @@ export function OfficerDetail() {
           </span>
           {officer.firstName} {officer.lastName}
         </h1>
+        <Link to={`/${tenant}/officers/${id}/compliance-report`} className="btn btn-secondary">
+          <FileIcon width={14} height={14} />
+          Compliance report
+        </Link>
       </div>
       <Link
         to={`/${tenant}`}
@@ -352,7 +415,10 @@ export function OfficerDetail() {
               </select>
             </div>
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, margin: "8px 0 16px" }}>
+          <h3 style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: 0.4, color: "var(--vetro-text-muted)", margin: "16px 0 8px" }}>
+            Right to work
+          </h3>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, margin: "0 0 8px" }}>
             <input
               type="checkbox"
               name="rightToWorkConfirmed"
@@ -361,6 +427,35 @@ export function OfficerDetail() {
             />
             Right to work confirmed
           </label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="form-field" style={{ flex: 1, minWidth: 160 }}>
+              <label htmlFor="rightToWorkCheckedAt">Checked on</label>
+              <input
+                id="rightToWorkCheckedAt"
+                name="rightToWorkCheckedAt"
+                type="date"
+                defaultValue={toDateInputValue(officer.rightToWorkCheckedAt)}
+              />
+            </div>
+            <div className="form-field" style={{ flex: 1, minWidth: 160 }}>
+              <label htmlFor="rightToWorkDocumentType">Document type</label>
+              <input
+                id="rightToWorkDocumentType"
+                name="rightToWorkDocumentType"
+                placeholder="e.g. British passport, BRP, eVisa"
+                defaultValue={officer.rightToWorkDocumentType ?? ""}
+              />
+            </div>
+            <div className="form-field" style={{ flex: 1, minWidth: 160 }}>
+              <label htmlFor="rightToWorkExpiryDate">Expiry (blank = ongoing)</label>
+              <input
+                id="rightToWorkExpiryDate"
+                name="rightToWorkExpiryDate"
+                type="date"
+                defaultValue={toDateInputValue(officer.rightToWorkExpiryDate)}
+              />
+            </div>
+          </div>
 
           {hrStatus && <p className={hrStatus === "Saved" ? "subtle-meta" : "error-text"}>{hrStatus}</p>}
           <button className="btn btn-primary" type="submit" disabled={isSavingHr}>
@@ -508,6 +603,142 @@ export function OfficerDetail() {
                     <StatusBadge status={v.status} />
                   </td>
                   <td>{formatDate(v.expiryDate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h2>DBS checks</h2>
+          <button className="btn btn-secondary" onClick={() => setShowAddDbs((v) => !v)}>
+            {!showAddDbs && <PlusIcon width={14} height={14} />}
+            {showAddDbs ? "Cancel" : "Add check"}
+          </button>
+        </div>
+        <p style={{ color: "var(--vetro-text-muted)", fontSize: 14, marginBottom: 12 }}>
+          Vetro doesn't apply for or perform DBS checks itself (that's a DBS Registered Body function) — this
+          tracks a certificate the organisation already holds.
+        </p>
+
+        {showAddDbs && (
+          <form onSubmit={handleAddDbs} style={{ marginBottom: 16 }}>
+            <div className="form-field">
+              <label htmlFor="level">Level</label>
+              <select id="level" name="level" required defaultValue="STANDARD">
+                <option value="BASIC">Basic</option>
+                <option value="STANDARD">Standard</option>
+                <option value="ENHANCED">Enhanced</option>
+              </select>
+            </div>
+            <div className="form-field">
+              <label htmlFor="certificateNumber">Certificate number</label>
+              <input id="certificateNumber" name="certificateNumber" required />
+            </div>
+            <div className="form-field">
+              <label htmlFor="dbsIssueDate">Issue date</label>
+              <input id="dbsIssueDate" name="dbsIssueDate" type="date" required />
+            </div>
+            <div className="form-field">
+              <label htmlFor="dbsExpiryDate">Re-check due (optional)</label>
+              <input id="dbsExpiryDate" name="dbsExpiryDate" type="date" />
+            </div>
+            <button className="btn btn-primary" type="submit">
+              Save check
+            </button>
+          </form>
+        )}
+
+        {officer.dbsChecks.length === 0 ? (
+          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>No DBS checks on file.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Certificate</th>
+                <th>Status</th>
+                <th>Re-check due</th>
+              </tr>
+            </thead>
+            <tbody>
+              {officer.dbsChecks.map((d) => (
+                <tr key={d.id}>
+                  <td>{DBS_LEVEL_LABELS[d.level]}</td>
+                  <td>{d.certificateNumber}</td>
+                  <td>
+                    <StatusBadge status={d.status} />
+                  </td>
+                  <td>{formatDate(d.expiryDate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h2>Reference checks</h2>
+          <button className="btn btn-secondary" onClick={() => setShowAddReference((v) => !v)}>
+            {!showAddReference && <PlusIcon width={14} height={14} />}
+            {showAddReference ? "Cancel" : "Add referee"}
+          </button>
+        </div>
+
+        {showAddReference && (
+          <form onSubmit={handleAddReference} style={{ marginBottom: 16 }}>
+            <div className="form-field">
+              <label htmlFor="refereeName">Referee name</label>
+              <input id="refereeName" name="refereeName" required />
+            </div>
+            <div className="form-field">
+              <label htmlFor="contact">Contact (email or phone)</label>
+              <input id="contact" name="contact" required />
+            </div>
+            <div className="form-field">
+              <label htmlFor="relationship">Relationship (optional)</label>
+              <input id="relationship" name="relationship" placeholder="e.g. Previous employer" />
+            </div>
+            <button className="btn btn-primary" type="submit">
+              Save referee
+            </button>
+          </form>
+        )}
+
+        {(officer.referenceChecks ?? []).length === 0 ? (
+          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>No reference checks on file.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Referee</th>
+                <th>Contact</th>
+                <th>Relationship</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(officer.referenceChecks ?? []).map((r) => (
+                <tr key={r.id}>
+                  <td>{r.refereeName}</td>
+                  <td>{r.contact}</td>
+                  <td>{r.relationship ?? "—"}</td>
+                  <td>
+                    <select
+                      value={r.status}
+                      onChange={(e) => handleReferenceStatusChange(r.id, e.target.value as ReferenceCheckStatus)}
+                      style={{ fontSize: 13 }}
+                    >
+                      {Object.entries(REFERENCE_CHECK_STATUS_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                 </tr>
               ))}
             </tbody>

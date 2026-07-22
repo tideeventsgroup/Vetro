@@ -18,6 +18,8 @@ import { signup } from "./routes/signup.js";
 import { sites } from "./routes/sites.js";
 import { team } from "./routes/team.js";
 import { licences } from "./routes/licences.js";
+import { dbs } from "./routes/dbs.js";
+import { referenceChecks } from "./routes/referenceChecks.js";
 import { vetting } from "./routes/vetting.js";
 import { vettingSubmissions } from "./routes/vettingSubmissions.js";
 import { qualifications } from "./routes/qualifications.js";
@@ -101,6 +103,8 @@ api.route("/", client);
 const tenantAdminPrefixes = [
   "/officers",
   "/licences",
+  "/dbs",
+  "/reference-checks",
   "/vetting",
   "/vetting-submissions",
   "/qualifications",
@@ -126,6 +130,8 @@ for (const prefix of tenantAdminPrefixes) {
 }
 api.route("/officers", officers);
 api.route("/", licences);
+api.route("/", dbs);
+api.route("/", referenceChecks);
 api.route("/", vetting);
 api.route("/", vettingSubmissions);
 api.route("/", qualifications);

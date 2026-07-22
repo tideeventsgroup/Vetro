@@ -11,6 +11,13 @@ html, body, #root {
 
 html {
   scroll-behavior: smooth;
+  /* index.html sets html/body to a dark background inline, so first paint
+     doesn't flash white before this stylesheet loads (see the splash
+     screen). body's own background below overrides that back once this
+     loads — html needs the same override, or its dark background shows
+     through on any page taller than one viewport, past body's 100%-height
+     box. */
+  background: var(--vetro-bg);
 }
 
 body {
@@ -1909,5 +1916,31 @@ button {
 @keyframes pwa-splash-sweep-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Compliance report (routes/ComplianceReport.tsx) print output — hide the
+   app chrome entirely so "Print / save as PDF" produces just the report,
+   not the sidebar and nav around it. .no-print covers anything else that
+   shouldn't appear on the printed page (the report's own back link/print
+   button). */
+@media print {
+  .app-sidebar,
+  .app-sidebar-scrim,
+  .mobile-tab-bar,
+  .mobile-nav-toggle,
+  .no-print {
+    display: none !important;
+  }
+
+  .app-main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .compliance-report .card {
+    box-shadow: none !important;
+    border: 1px solid var(--vetro-border);
+    break-inside: avoid;
   }
 }

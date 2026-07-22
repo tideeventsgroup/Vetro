@@ -6,6 +6,7 @@ import { Arbitration } from "./routes/Arbitration.js";
 import { AuditLog } from "./routes/AuditLog.js";
 import { ClientHome } from "./routes/ClientHome.js";
 import { ClientLayout } from "./routes/ClientLayout.js";
+import { ComplianceReport } from "./routes/ComplianceReport.js";
 import { Dashboard } from "./routes/Dashboard.js";
 import { Dispatch } from "./routes/Dispatch.js";
 import { Incidents } from "./routes/Incidents.js";
@@ -65,6 +66,7 @@ export function App() {
               <Route index element={<LiveOps />} />
               <Route path="compliance" element={<Dashboard />} />
               <Route path="officers/:id" element={<OfficerDetail />} />
+              <Route path="officers/:id/compliance-report" element={<ComplianceReport />} />
               <Route path="vetting-queue" element={<VettingQueue />} />
               <Route path="staff" element={<Staff />} />
               <Route path="sites" element={<Sites />} />

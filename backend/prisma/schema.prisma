@@ -23,6 +23,23 @@ enum SubmissionStatus {
   REJECTED
 }
 
+enum DbsLevel {
+  BASIC
+  STANDARD
+  ENHANCED
+}
+
+// PENDING until the referee actually responds; RECEIVED is the normal close;
+// UNABLE_TO_CONTACT and FLAGGED both need an admin's eyes but for different
+// reasons (the former is a dead end worth chasing a second referee for, the
+// latter is a response that came back with something concerning in it).
+enum ReferenceCheckStatus {
+  PENDING
+  RECEIVED
+  UNABLE_TO_CONTACT
+  FLAGGED
+}
+
 enum ShiftStatus {
   SCHEDULED
   CONFIRMED
@@ -199,6 +216,11 @@ model Officer {
   payRateType                  PayRateType?
   rightToWorkConfirmed         Boolean             @default(false)
   rightToWorkCheckedAt         DateTime?
+  // Null expiryDate means an ongoing right (British/Irish citizen, settled
+  // status) rather than a time-limited one (visa, pre-settled status) — the
+  // same "no expiry = never lapses" convention SiaLicence/VettingRecord use.
+  rightToWorkExpiryDate        DateTime?
+  rightToWorkDocumentType      String?
   // Personnel Identity Number — the officer-side counterpart to Site.sin,
   // typed into a shared kiosk device instead of signing into the officer's
   // own Cognito login (routes/kiosk.ts). Its validity is gated live against
@@ -209,6 +231,8 @@ model Officer {
   pin                          String?
   licences                     SiaLicence[]
   vettingRecords               VettingRecord[]
+  dbsChecks                    DbsCheck[]
+  referenceChecks              ReferenceCheck[]
   qualifications               Qualification[]
   documents                    Document[]
   vettingSubmissions           VettingSubmission[]
@@ -260,6 +284,49 @@ model VettingRecord {
 
   @@index([officerId])
   @@index([expiryDate])
+}
+
+// A DBS certificate — Vetro doesn't apply for or perform the check itself
+// (that's a DBS Registered Body function, a separate accreditation), just
+// tracks the certificate an org already holds the same way SiaLicence
+// tracks a licence: status kept in sync by the same nightly expiry job,
+// expiryDate optional since a DBS certificate itself never expires — it's
+// only the org's own re-check policy that gives it one, when it sets one.
+model DbsCheck {
+  id                String           @id @default(cuid())
+  officerId         String
+  officer           Officer          @relation(fields: [officerId], references: [id])
+  level             DbsLevel
+  certificateNumber String
+  issueDate         DateTime
+  expiryDate        DateTime?
+  status            ComplianceStatus @default(ACTIVE)
+  lastCheckedAt     DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([officerId])
+  @@index([expiryDate])
+}
+
+// One row per referee an admin has reached out to as part of an officer's
+// vetting — a first-class, trackable counterpart to the free-text
+// `references` blob an officer submits themselves in VettingSubmission.
+model ReferenceCheck {
+  id           String                @id @default(cuid())
+  officerId    String
+  officer      Officer               @relation(fields: [officerId], references: [id])
+  refereeName  String
+  contact      String
+  relationship String?
+  requestedAt  DateTime              @default(now())
+  respondedAt  DateTime?
+  status       ReferenceCheckStatus  @default(PENDING)
+  notes        String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([officerId])
 }
 
 // What an officer submits themselves through the self-service portal —
