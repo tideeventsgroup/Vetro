@@ -1,3 +1,33 @@
+-- Fresh start: this replaces the old Vetro workforce-management product
+-- entirely with Lunara Screening's compliance-vetting data model. Every
+-- old table/enum is dropped up front (CASCADE handles the FKs between
+-- them, IF EXISTS makes this safe to run whether or not they're still
+-- there) rather than diffed column-by-column, since nothing in the old
+-- shape survives into the new one — see docs/PIVOT_PLAN.md and the
+-- product brief this migration implements. No production data is
+-- preserved by design (confirmed with the org before writing this).
+DROP TABLE IF EXISTS "VettingInviteDocument" CASCADE;
+DROP TABLE IF EXISTS "VettingInvite" CASCADE;
+DROP TABLE IF EXISTS "VettingSubmission" CASCADE;
+DROP TABLE IF EXISTS "ReferenceCheck" CASCADE;
+DROP TABLE IF EXISTS "DbsCheck" CASCADE;
+DROP TABLE IF EXISTS "VettingRecord" CASCADE;
+DROP TABLE IF EXISTS "SiaLicence" CASCADE;
+DROP TABLE IF EXISTS "Qualification" CASCADE;
+DROP TABLE IF EXISTS "Document" CASCADE;
+DROP TABLE IF EXISTS "Officer" CASCADE;
+DROP TABLE IF EXISTS "Contractor" CASCADE;
+DROP TABLE IF EXISTS "AuditLogEntry" CASCADE;
+
+DROP TYPE IF EXISTS "ComplianceStatus" CASCADE;
+DROP TYPE IF EXISTS "SubmissionStatus" CASCADE;
+DROP TYPE IF EXISTS "VettingInviteStatus" CASCADE;
+DROP TYPE IF EXISTS "DbsLevel" CASCADE;
+DROP TYPE IF EXISTS "ReferenceCheckStatus" CASCADE;
+DROP TYPE IF EXISTS "EmploymentType" CASCADE;
+DROP TYPE IF EXISTS "EmploymentStatus" CASCADE;
+DROP TYPE IF EXISTS "PayRateType" CASCADE;
+
 -- CreateEnum
 CREATE TYPE "CheckType" AS ENUM ('SIA_LICENCE', 'FIRST_AID', 'RIGHT_TO_WORK', 'ID_DOCUMENT', 'TRAINING', 'DBS_CHECK');
 
