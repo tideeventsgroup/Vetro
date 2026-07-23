@@ -1,4 +1,4 @@
-import type { ComplianceStatus, EmploymentStatus, ShiftStatus, SubmissionStatus } from "../lib/api.js";
+import type { ComplianceStatus, EmploymentStatus, ShiftStatus, SubmissionStatus, VettingInviteStatus } from "../lib/api.js";
 
 const LABELS: Record<ComplianceStatus, string> = {
   ACTIVE: "Active",
@@ -68,4 +68,20 @@ const EMPLOYMENT_CLASSES: Record<EmploymentStatus, string> = {
 
 export function EmploymentStatusBadge({ status }: { status: EmploymentStatus }) {
   return <span className={`status-badge ${EMPLOYMENT_CLASSES[status]}`}>{EMPLOYMENT_LABELS[status]}</span>;
+}
+
+const VETTING_INVITE_LABELS: Record<VettingInviteStatus, string> = {
+  PENDING: "Link sent",
+  SUBMITTED: "Submitted",
+  CONVERTED: "Added to roster",
+};
+
+const VETTING_INVITE_CLASSES: Record<VettingInviteStatus, string> = {
+  PENDING: "status-pending",
+  SUBMITTED: "status-confirmed",
+  CONVERTED: "status-active",
+};
+
+export function VettingInviteStatusBadge({ status }: { status: VettingInviteStatus }) {
+  return <span className={`status-badge ${VETTING_INVITE_CLASSES[status]}`}>{VETTING_INVITE_LABELS[status]}</span>;
 }

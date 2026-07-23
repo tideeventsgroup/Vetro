@@ -1,10 +1,12 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { StatusBadge, SubmissionStatusBadge } from "../components/StatusBadge.js";
-import { CheckIcon, ShieldCheckIcon, XIcon } from "../components/icons.js";
-import { Officer, useApi, VettingSubmissionForReview } from "../lib/api.js";
+import { StatusBadge, SubmissionStatusBadge, VettingInviteStatusBadge } from "../components/StatusBadge.js";
+import { CheckIcon, MailIcon, ShieldCheckIcon, TrashIcon, XIcon } from "../components/icons.js";
+import { Officer, useApi, VettingInvite, VettingSubmissionForReview } from "../lib/api.js";
 import { worstDbsCheck, worstVettingRecord } from "../lib/status.js";
 import { useTenantSlug } from "../lib/tenant.js";
+
+const EMPTY_INVITE_FORM = { firstName: "", lastName: "", email: "", phone: "" };
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" });
@@ -37,12 +39,22 @@ export function Vetting() {
   const tenant = useTenantSlug();
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [submissions, setSubmissions] = useState<VettingSubmissionForReview[]>([]);
+  const [invites, setInvites] = useState<VettingInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | undefined>(undefined);
   const [reviewNotes, setReviewNotes] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [error, setError] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [inviteForm, setInviteForm] = useState(EMPTY_INVITE_FORM);
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | undefined>(undefined);
+  const [newInviteLink, setNewInviteLink] = useState<string | undefined>(undefined);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [expandedInviteId, setExpandedInviteId] = useState<string | undefined>(undefined);
+  const [isConverting, setIsConverting] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
 
   useEffect(() => {
     void load();
@@ -51,16 +63,78 @@ export function Vetting() {
   async function load() {
     setIsLoading(true);
     try {
-      const [officerRows, submissionRows] = await Promise.all([
+      const [officerRows, submissionRows, inviteRows] = await Promise.all([
         api.listOfficers(),
         api.listVettingSubmissionsForReview(),
+        api.listVettingInvites(),
       ]);
       setOfficers(officerRows);
       setSubmissions(submissionRows);
+      setInvites(inviteRows);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load vetting records");
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleInvite(e: FormEvent) {
+    e.preventDefault();
+    setInviteError(undefined);
+    setIsInviting(true);
+    try {
+      const created = await api.createVettingInvite({
+        firstName: inviteForm.firstName.trim(),
+        lastName: inviteForm.lastName.trim(),
+        email: inviteForm.email.trim(),
+        phone: inviteForm.phone.trim() || undefined,
+      });
+      setNewInviteLink(`${window.location.origin}/candidate-vetting/${created.token}`);
+      setLinkCopied(false);
+      setInviteForm(EMPTY_INVITE_FORM);
+      await load();
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : "Could not send the invite");
+    } finally {
+      setIsInviting(false);
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!newInviteLink) return;
+    await navigator.clipboard.writeText(newInviteLink);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }
+
+  function toggleExpandInvite(id: string) {
+    setExpandedInviteId((current) => (current === id ? undefined : id));
+  }
+
+  async function handleConvert(id: string) {
+    setError(undefined);
+    setIsConverting(true);
+    try {
+      await api.convertVettingInvite(id);
+      setExpandedInviteId(undefined);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add this candidate to the roster");
+    } finally {
+      setIsConverting(false);
+    }
+  }
+
+  async function handleRevoke(id: string) {
+    if (!window.confirm("Revoke this invite? The link will stop working.")) return;
+    setIsRevoking(true);
+    try {
+      await api.revokeVettingInvite(id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not revoke this invite");
+    } finally {
+      setIsRevoking(false);
     }
   }
 
@@ -99,11 +173,172 @@ export function Vetting() {
       <div className="page-header">
         <div>
           <h1>Vetting</h1>
-          <p>BS7858, DBS, right to work and reference checks across your roster — plus submissions awaiting review.</p>
+          <p>
+            Invite candidates to complete vetting before they join the roster, then review BS7858, DBS, right to work
+            and reference checks across everyone already on it.
+          </p>
         </div>
       </div>
 
       {error && !expandedId && <p className="error-text">{error}</p>}
+
+      <div className="card" style={{ maxWidth: 560 }}>
+        <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)" }}>
+          <MailIcon />
+        </span>
+        <h2 style={{ fontSize: 18, marginBottom: 8 }}>Invite a candidate</h2>
+        <p style={{ color: "var(--vetro-text-muted)", fontSize: 14, marginBottom: 16 }}>
+          Send a link so someone can complete BS7858-style vetting before they're added to the roster at all.
+        </p>
+        <form onSubmit={handleInvite}>
+          {inviteError && <p className="error-text">{inviteError}</p>}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="form-field" style={{ minWidth: 160, flex: 1 }}>
+              <label htmlFor="inviteFirstName">First name</label>
+              <input
+                id="inviteFirstName"
+                required
+                value={inviteForm.firstName}
+                onChange={(e) => setInviteForm((f) => ({ ...f, firstName: e.target.value }))}
+              />
+            </div>
+            <div className="form-field" style={{ minWidth: 160, flex: 1 }}>
+              <label htmlFor="inviteLastName">Last name</label>
+              <input
+                id="inviteLastName"
+                required
+                value={inviteForm.lastName}
+                onChange={(e) => setInviteForm((f) => ({ ...f, lastName: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="form-field" style={{ minWidth: 200, flex: 1 }}>
+              <label htmlFor="inviteEmail">Email</label>
+              <input
+                id="inviteEmail"
+                type="email"
+                required
+                value={inviteForm.email}
+                onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))}
+              />
+            </div>
+            <div className="form-field" style={{ minWidth: 160, flex: 1 }}>
+              <label htmlFor="invitePhone">Phone (optional)</label>
+              <input
+                id="invitePhone"
+                value={inviteForm.phone}
+                onChange={(e) => setInviteForm((f) => ({ ...f, phone: e.target.value }))}
+              />
+            </div>
+          </div>
+          <button className="btn btn-primary" type="submit" disabled={isInviting}>
+            <MailIcon width={14} height={14} />
+            {isInviting ? "Sending…" : "Send invite"}
+          </button>
+        </form>
+        {newInviteLink && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 12,
+              padding: "8px 12px",
+              background: "var(--vetro-bg)",
+              border: "1px solid var(--vetro-border)",
+              borderRadius: 6,
+            }}
+          >
+            <code style={{ fontSize: 13, flex: 1, wordBreak: "break-all" }}>{newInviteLink}</code>
+            <button type="button" className="btn btn-secondary" onClick={handleCopyLink}>
+              {linkCopied ? "Copied" : "Copy"}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {invites.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <h2>Candidates ({invites.length})</h2>
+          </div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {invites.map((invite) => (
+                <Fragment key={invite.id}>
+                  <tr
+                    className={invite.status === "SUBMITTED" ? "clickable" : ""}
+                    onClick={() => invite.status === "SUBMITTED" && toggleExpandInvite(invite.id)}
+                  >
+                    <td>
+                      {invite.status === "CONVERTED" && invite.convertedOfficerId ? (
+                        <Link to={`/${tenant}/officers/${invite.convertedOfficerId}`} onClick={(e) => e.stopPropagation()}>
+                          {invite.firstName} {invite.lastName}
+                        </Link>
+                      ) : (
+                        `${invite.firstName} ${invite.lastName}`
+                      )}
+                    </td>
+                    <td>{invite.email}</td>
+                    <td>
+                      <VettingInviteStatusBadge status={invite.status} />
+                    </td>
+                    <td>
+                      {invite.status === "PENDING" && (
+                        <button
+                          className="btn btn-secondary"
+                          disabled={isRevoking}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleRevoke(invite.id);
+                          }}
+                        >
+                          <TrashIcon width={14} height={14} />
+                          Revoke
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                  {expandedInviteId === invite.id && (
+                    <tr>
+                      <td colSpan={4} style={{ background: "var(--vetro-bg)" }}>
+                        <div style={{ padding: "12px 4px" }}>
+                          <p style={{ fontSize: 13, marginBottom: 4 }}>
+                            <strong>Address history:</strong> {listPreview(invite.addressHistory)}
+                          </p>
+                          <p style={{ fontSize: 13, marginBottom: 4 }}>
+                            <strong>Employment history:</strong> {listPreview(invite.employmentHistory)}
+                          </p>
+                          <p style={{ fontSize: 13, marginBottom: 12 }}>
+                            <strong>References:</strong> {listPreview(invite.references)}
+                          </p>
+                          <button
+                            className="btn btn-primary"
+                            disabled={isConverting}
+                            onClick={() => handleConvert(invite.id)}
+                          >
+                            <CheckIcon width={14} height={14} />
+                            Add to roster
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="card">
         <div className="card-header">

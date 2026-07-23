@@ -22,6 +22,8 @@ import { dbs } from "./routes/dbs.js";
 import { referenceChecks } from "./routes/referenceChecks.js";
 import { vetting } from "./routes/vetting.js";
 import { vettingSubmissions } from "./routes/vettingSubmissions.js";
+import { vettingInvites } from "./routes/vettingInvites.js";
+import { vettingInvitePublic } from "./routes/vettingInvitePublic.js";
 import { qualifications } from "./routes/qualifications.js";
 import { documents } from "./routes/documents.js";
 import { dashboard } from "./routes/dashboard.js";
@@ -65,6 +67,13 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 // mounted here, before requireAuth below, not inside the api sub-app.
 app.route("/", kiosk);
 
+// Public in the same sense as kiosk above: a candidate invited via
+// routes/vettingInvites.ts has no Cognito account yet — the token in the
+// URL is what authorises this, not a session. Mounted under its own path
+// (not /vetting-invites) so it can't collide with that admin-only prefix's
+// requireContractor/requireAdmin guard below.
+app.route("/", vettingInvitePublic);
+
 // Verifies identity for everything below, but doesn't require a resolved
 // tenant yet — /contractors/me and /contractors (dev-only creation) need to
 // work for an account that doesn't have one assigned.
@@ -107,6 +116,7 @@ const tenantAdminPrefixes = [
   "/reference-checks",
   "/vetting",
   "/vetting-submissions",
+  "/vetting-invites",
   "/qualifications",
   "/documents",
   "/dashboard",
@@ -134,6 +144,7 @@ api.route("/", dbs);
 api.route("/", referenceChecks);
 api.route("/", vetting);
 api.route("/", vettingSubmissions);
+api.route("/", vettingInvites);
 api.route("/", qualifications);
 api.route("/", documents);
 api.route("/dashboard", dashboard);

@@ -91,6 +91,34 @@ export interface VettingSubmissionForReview extends VettingSubmission {
   officer: { id: string; firstName: string; lastName: string };
 }
 
+export type VettingInviteStatus = "PENDING" | "SUBMITTED" | "CONVERTED";
+
+export interface VettingInvite {
+  id: string;
+  contractorId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  token: string;
+  status: VettingInviteStatus;
+  addressHistory: unknown;
+  employmentHistory: unknown;
+  references: unknown;
+  consentGiven: boolean;
+  submittedAt: string | null;
+  convertedOfficerId: string | null;
+  invitedByEmail: string;
+  createdAt: string;
+}
+
+export interface PublicVettingInvite {
+  firstName: string;
+  lastName: string;
+  organisationName: string;
+  status: VettingInviteStatus;
+}
+
 export interface TeamMember {
   username: string;
   email: string;
@@ -576,6 +604,42 @@ class VetroApiClient {
     input: { status: "APPROVED" | "REJECTED"; reviewNotes?: string; expiryDate?: string }
   ): Promise<VettingSubmission> {
     return this.request(`/vetting-submissions/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  }
+
+  // Sending a candidate a link before they're added to the roster at all —
+  // see routes/Vetting.tsx and backend/src/routes/vettingInvites.ts.
+  listVettingInvites(): Promise<VettingInvite[]> {
+    return this.request("/vetting-invites");
+  }
+
+  createVettingInvite(input: { firstName: string; lastName: string; email: string; phone?: string }): Promise<VettingInvite> {
+    return this.request("/vetting-invites", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  revokeVettingInvite(id: string): Promise<void> {
+    return this.request(`/vetting-invites/${id}`, { method: "DELETE" });
+  }
+
+  convertVettingInvite(id: string): Promise<{ invite: VettingInvite; officer: Officer }> {
+    return this.request(`/vetting-invites/${id}/convert`, { method: "POST" });
+  }
+
+  // The candidate-facing side — no session, no tenant header (see
+  // backend/src/routes/vettingInvitePublic.ts). Goes through the same
+  // request() as everything else purely for the shared error handling, same
+  // as the kiosk methods below.
+  getPublicVettingInvite(token: string): Promise<PublicVettingInvite> {
+    return this.request(`/candidate-vetting/${encodeURIComponent(token)}`);
+  }
+
+  submitPublicVettingInvite(
+    token: string,
+    input: { addressHistory: unknown; employmentHistory: unknown; references: unknown; consentGiven: boolean }
+  ): Promise<{ status: VettingInviteStatus }> {
+    return this.request(`/candidate-vetting/${encodeURIComponent(token)}/submit`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
   }
 
   inviteOfficer(

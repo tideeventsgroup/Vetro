@@ -23,6 +23,12 @@ enum SubmissionStatus {
   REJECTED
 }
 
+enum VettingInviteStatus {
+  PENDING
+  SUBMITTED
+  CONVERTED
+}
+
 enum DbsLevel {
   BASIC
   STANDARD
@@ -99,6 +105,7 @@ model Contractor {
   visitorLogEntries VisitorLogEntry[]
   messages          Message[]
   alerts            Alert[]
+  vettingInvites    VettingInvite[]
   createdAt         DateTime          @default(now())
 }
 
@@ -243,11 +250,14 @@ model Officer {
   messagesReceived             Message[]
   messageReads                 MessageRead[]
   alerts                       Alert[]
+  // Set only if this officer was created by converting a VettingInvite
+  // (routes/vettingInvites.ts) rather than added directly.
+  vettingInvite                VettingInvite?
   createdAt                    DateTime            @default(now())
   updatedAt                    DateTime            @updatedAt
 
-  @@index([contractorId])
   @@unique([contractorId, pin])
+  @@index([contractorId])
 }
 
 // SIA licence held by an officer. `status` is derived by the scheduled
@@ -313,18 +323,18 @@ model DbsCheck {
 // vetting — a first-class, trackable counterpart to the free-text
 // `references` blob an officer submits themselves in VettingSubmission.
 model ReferenceCheck {
-  id           String                @id @default(cuid())
+  id           String               @id @default(cuid())
   officerId    String
-  officer      Officer               @relation(fields: [officerId], references: [id])
+  officer      Officer              @relation(fields: [officerId], references: [id])
   refereeName  String
   contact      String
   relationship String?
-  requestedAt  DateTime              @default(now())
+  requestedAt  DateTime             @default(now())
   respondedAt  DateTime?
-  status       ReferenceCheckStatus  @default(PENDING)
+  status       ReferenceCheckStatus @default(PENDING)
   notes        String?
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
   @@index([officerId])
 }
@@ -347,6 +357,37 @@ model VettingSubmission {
   submittedAt       DateTime         @default(now())
 
   @@index([officerId])
+}
+
+// A candidate who hasn't been added to the roster yet — sent a link (see
+// routes/vettingInvitePublic.ts) to complete BS7858-style vetting before an
+// admin decides whether to bring them into the system as an Officer at all.
+// Submitting doesn't create an Officer by itself; converting does (see
+// POST /vetting-invites/:id/convert), at which point the submitted answers
+// become a normal VettingSubmission on the new Officer, going through the
+// same review queue as self-service submissions.
+model VettingInvite {
+  id                 String              @id @default(cuid())
+  contractorId       String
+  contractor         Contractor          @relation(fields: [contractorId], references: [id])
+  firstName          String
+  lastName           String
+  email              String
+  phone              String?
+  token              String              @unique
+  status             VettingInviteStatus @default(PENDING)
+  addressHistory     Json?
+  employmentHistory  Json?
+  references         Json?
+  consentGiven       Boolean             @default(false)
+  submittedAt        DateTime?
+  convertedOfficerId String?             @unique
+  convertedOfficer   Officer?            @relation(fields: [convertedOfficerId], references: [id])
+  invitedByEmail     String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([contractorId])
 }
 
 model Qualification {

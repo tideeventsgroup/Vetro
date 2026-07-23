@@ -4,6 +4,7 @@ import { AuthProvider } from "./lib/auth.js";
 import { Alerts } from "./routes/Alerts.js";
 import { Arbitration } from "./routes/Arbitration.js";
 import { AuditLog } from "./routes/AuditLog.js";
+import { CandidateVetting } from "./routes/CandidateVetting.js";
 import { ClientHome } from "./routes/ClientHome.js";
 import { ClientLayout } from "./routes/ClientLayout.js";
 import { ComplianceReport } from "./routes/ComplianceReport.js";
@@ -57,6 +58,7 @@ export function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/kiosk" element={<Kiosk />} />
+          <Route path="/candidate-vetting/:token" element={<CandidateVetting />} />
           <Route path="/:tenant">
             <Route element={<ProtectedLayout />}>
               {/* Live ops is the landing page — an on-site manager opening
