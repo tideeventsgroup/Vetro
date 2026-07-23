@@ -99,6 +99,14 @@ export interface VettingInviteDocument {
   fileName: string;
 }
 
+// BS7858/BPSS gap-check findings — see backend/src/lib/vettingCompliance.ts
+// for the actual standard requirements these encode.
+export interface GapFinding {
+  standard: "BS7858" | "BPSS";
+  severity: "warning" | "critical";
+  message: string;
+}
+
 export interface VettingInvite {
   id: string;
   contractorId: string;
@@ -659,6 +667,30 @@ class VetroApiClient {
       `/vetting-invites/${inviteId}/documents/${documentId}/download-url`
     );
     return downloadUrl;
+  }
+
+  async getVettingInviteComplianceGaps(inviteId: string): Promise<GapFinding[]> {
+    const { findings } = await this.request<{ findings: GapFinding[] }>(`/vetting-invites/${inviteId}/compliance-gaps`);
+    return findings;
+  }
+
+  async getVettingInviteAiReview(inviteId: string): Promise<string> {
+    const { review } = await this.request<{ review: string }>(`/vetting-invites/${inviteId}/compliance-gaps/ai-review`, {
+      method: "POST",
+    });
+    return review;
+  }
+
+  async getOfficerComplianceGaps(officerId: string): Promise<GapFinding[]> {
+    const { findings } = await this.request<{ findings: GapFinding[] }>(`/officers/${officerId}/compliance-gaps`);
+    return findings;
+  }
+
+  async getOfficerAiReview(officerId: string): Promise<string> {
+    const { review } = await this.request<{ review: string }>(`/officers/${officerId}/compliance-gaps/ai-review`, {
+      method: "POST",
+    });
+    return review;
   }
 
   // The candidate-facing side — no session, no tenant header (see

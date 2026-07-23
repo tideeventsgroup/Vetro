@@ -1,5 +1,6 @@
 import { Fragment, FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ComplianceGapPanel } from "../components/ComplianceGapPanel.js";
 import { StatusBadge, SubmissionStatusBadge, VettingInviteStatusBadge } from "../components/StatusBadge.js";
 import { CheckIcon, MailIcon, ShieldCheckIcon, TrashIcon, XIcon } from "../components/icons.js";
 import { Officer, useApi, VettingInvite, VettingSubmissionForReview } from "../lib/api.js";
@@ -411,6 +412,12 @@ export function Vetting() {
                             <CheckIcon width={14} height={14} />
                             Add to roster
                           </button>
+                          <div style={{ marginTop: 16 }}>
+                            <ComplianceGapPanel
+                              loadGaps={() => api.getVettingInviteComplianceGaps(invite.id)}
+                              loadAiReview={() => api.getVettingInviteAiReview(invite.id)}
+                            />
+                          </div>
                         </div>
                       </td>
                     </tr>

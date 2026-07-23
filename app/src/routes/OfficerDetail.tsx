@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ComplianceGapPanel } from "../components/ComplianceGapPanel.js";
 import { DocumentsSection } from "../components/DocumentsSection.js";
 import { EmploymentStatusBadge, StatusBadge } from "../components/StatusBadge.js";
 import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
@@ -809,6 +810,13 @@ export function OfficerDetail() {
           onUpload={(file, kind) => api.uploadDocument(id, file, kind)}
           onGetDownloadUrl={(docId) => api.getDocumentDownloadUrl(docId)}
           onChange={() => load(id)}
+        />
+      )}
+
+      {id && (
+        <ComplianceGapPanel
+          loadGaps={() => api.getOfficerComplianceGaps(id)}
+          loadAiReview={() => api.getOfficerAiReview(id)}
         />
       )}
     </div>

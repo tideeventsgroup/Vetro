@@ -3,7 +3,9 @@ import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
 import { createDownloadUrl } from "../lib/documents.js";
+import { GroqNotConfiguredError, getAiComplianceReview } from "../lib/groq.js";
 import { deriveStatus } from "../lib/status.js";
+import { asHistoryRows, checkVettingCompliance } from "../lib/vettingCompliance.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
 export const vettingInvites = new Hono<AppEnv>();
@@ -42,6 +44,66 @@ vettingInvites.get("/vetting-invites/:id/documents/:docId/download-url", async (
 
   const downloadUrl = await createDownloadUrl(doc.s3Key);
   return c.json({ downloadUrl });
+});
+
+// The same BS7858/BPSS gap-check officers.ts runs, checked here against
+// what the candidate has submitted so far — this is the point where
+// catching a gap actually matters most, before the "add to roster" call is
+// made at all.
+vettingInvites.get("/vetting-invites/:id/compliance-gaps", async (c) => {
+  const db = await getDb();
+  const invite = await db.vettingInvite.findUnique({
+    where: { id: c.req.param("id") },
+    include: { documents: true },
+  });
+  if (!invite || invite.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Invite not found" }, 404);
+  }
+
+  const findings = checkVettingCompliance({
+    addressHistory: asHistoryRows(invite.addressHistory),
+    employmentHistory: asHistoryRows(invite.employmentHistory),
+    hasReferences: Array.isArray(invite.references) && invite.references.length > 0,
+    hasDbsCheck: invite.requiresDbs ? Boolean(invite.dbsCertificateNumber) : true,
+    rightToWorkConfirmed: invite.requiresRightToWork ? invite.rightToWorkConfirmed : true,
+    hasIdentityDocument: invite.documents.some((d) => d.kind === "Identity document"),
+  });
+
+  return c.json({ findings });
+});
+
+vettingInvites.post("/vetting-invites/:id/compliance-gaps/ai-review", async (c) => {
+  const db = await getDb();
+  const invite = await db.vettingInvite.findUnique({
+    where: { id: c.req.param("id") },
+    include: { documents: true },
+  });
+  if (!invite || invite.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Invite not found" }, 404);
+  }
+
+  const findings = checkVettingCompliance({
+    addressHistory: asHistoryRows(invite.addressHistory),
+    employmentHistory: asHistoryRows(invite.employmentHistory),
+    hasReferences: Array.isArray(invite.references) && invite.references.length > 0,
+    hasDbsCheck: invite.requiresDbs ? Boolean(invite.dbsCertificateNumber) : true,
+    rightToWorkConfirmed: invite.requiresRightToWork ? invite.rightToWorkConfirmed : true,
+    hasIdentityDocument: invite.documents.some((d) => d.kind === "Identity document"),
+  });
+
+  try {
+    const review = await getAiComplianceReview({
+      officerName: `${invite.firstName} ${invite.lastName}`,
+      findings,
+      addressHistory: invite.addressHistory ?? [],
+      employmentHistory: invite.employmentHistory ?? [],
+      references: invite.references ?? [],
+    });
+    return c.json({ review });
+  } catch (err) {
+    if (err instanceof GroqNotConfiguredError) return c.json({ error: err.message }, 503);
+    throw err;
+  }
 });
 
 vettingInvites.post("/vetting-invites", async (c) => {

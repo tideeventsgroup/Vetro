@@ -5,6 +5,8 @@ import { recordAudit } from "../lib/audit.js";
 import { buildInviteClientMetadata, CognitoUserExistsError, createCognitoUser } from "../lib/cognito.js";
 import type { AppEnv } from "../lib/hono-env.js";
 import { generateOfficerPin } from "../lib/identityCodes.js";
+import { GroqNotConfiguredError, getAiComplianceReview } from "../lib/groq.js";
+import { asHistoryRows, checkVettingCompliance } from "../lib/vettingCompliance.js";
 
 export const officers = new Hono<AppEnv>();
 
@@ -40,6 +42,78 @@ officers.get("/:id", async (c) => {
   });
   if (!row || row.contractorId !== c.get("contractorId")) return c.json({ error: "Officer not found" }, 404);
   return c.json(row);
+});
+
+// BS7858/BPSS gap-checking against the officer's most recent self-service
+// submission (routes/me.ts's vetting-submissions) — see
+// lib/vettingCompliance.ts for the actual standard requirements this
+// encodes. Read-only and computed on request; nothing here is persisted.
+officers.get("/:id/compliance-gaps", async (c) => {
+  const db = await getDb();
+  const id = c.req.param("id");
+  const officer = await db.officer.findUnique({
+    where: { id },
+    include: { dbsChecks: true, documents: true },
+  });
+  if (!officer || officer.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Officer not found" }, 404);
+  }
+
+  const latestSubmission = await db.vettingSubmission.findFirst({
+    where: { officerId: id },
+    orderBy: { submittedAt: "desc" },
+  });
+
+  const findings = checkVettingCompliance({
+    addressHistory: asHistoryRows(latestSubmission?.addressHistory),
+    employmentHistory: asHistoryRows(latestSubmission?.employmentHistory),
+    hasReferences: Array.isArray(latestSubmission?.references) && latestSubmission.references.length > 0,
+    hasDbsCheck: officer.dbsChecks.length > 0,
+    rightToWorkConfirmed: officer.rightToWorkConfirmed,
+    hasIdentityDocument: officer.documents.some((d) => d.kind === "Identity document"),
+  });
+
+  return c.json({ findings });
+});
+
+officers.post("/:id/compliance-gaps/ai-review", async (c) => {
+  const db = await getDb();
+  const id = c.req.param("id");
+  const officer = await db.officer.findUnique({
+    where: { id },
+    include: { dbsChecks: true, documents: true },
+  });
+  if (!officer || officer.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Officer not found" }, 404);
+  }
+
+  const latestSubmission = await db.vettingSubmission.findFirst({
+    where: { officerId: id },
+    orderBy: { submittedAt: "desc" },
+  });
+
+  const findings = checkVettingCompliance({
+    addressHistory: asHistoryRows(latestSubmission?.addressHistory),
+    employmentHistory: asHistoryRows(latestSubmission?.employmentHistory),
+    hasReferences: Array.isArray(latestSubmission?.references) && latestSubmission.references.length > 0,
+    hasDbsCheck: officer.dbsChecks.length > 0,
+    rightToWorkConfirmed: officer.rightToWorkConfirmed,
+    hasIdentityDocument: officer.documents.some((d) => d.kind === "Identity document"),
+  });
+
+  try {
+    const review = await getAiComplianceReview({
+      officerName: `${officer.firstName} ${officer.lastName}`,
+      findings,
+      addressHistory: latestSubmission?.addressHistory ?? [],
+      employmentHistory: latestSubmission?.employmentHistory ?? [],
+      references: latestSubmission?.references ?? [],
+    });
+    return c.json({ review });
+  } catch (err) {
+    if (err instanceof GroqNotConfiguredError) return c.json({ error: err.message }, 503);
+    throw err;
+  }
 });
 
 // The full HR profile an officer create/update can carry — everything
