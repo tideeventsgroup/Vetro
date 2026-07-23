@@ -2,13 +2,13 @@
 <title>Lunara Screening logo</title>
 <desc>Lunara Screening full lockup for dark backgrounds: the indigo icon with cream L and gold dot, the wordmark in white, and "Screening" beneath it in grey.</desc>
 <defs>
-<style>@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@700;500&amp;display=swap');</style>
+<style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700;500&amp;display=swap');</style>
 </defs>
 <g transform="translate(4,10)">
-<rect x="0" y="0" width="90" height="90" rx="20" fill="#16234A"/>
+<rect x="0" y="0" width="90" height="90" rx="20" fill="#1B2340"/>
 <path d="M34 27 L34 62 L60 62" fill="none" stroke="#F4EEE6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="45" cy="22" r="5.4" fill="#B08A2E"/>
+<circle cx="45" cy="22" r="5.4" fill="#C9A15C"/>
 </g>
-<text x="112" y="58" font-family="'Manrope', Arial, sans-serif" font-size="42" font-weight="700" letter-spacing="0" fill="#FFFFFF">Lunara</text>
-<text x="114" y="90" font-family="'Manrope', Arial, sans-serif" font-size="19" font-weight="500" letter-spacing="4" fill="#9AA3B8">SCREENING</text>
+<text x="112" y="58" font-family="'Poppins', Arial, sans-serif" font-size="42" font-weight="700" letter-spacing="0" fill="#FFFFFF">Lunara</text>
+<text x="114" y="90" font-family="'Poppins', Arial, sans-serif" font-size="19" font-weight="500" letter-spacing="4" fill="#9A9FA6">SCREENING</text>
 </svg>

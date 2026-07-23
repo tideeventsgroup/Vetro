@@ -19,6 +19,7 @@ export function InviteCandidateModal({
   const [error, setError] = useState<string | undefined>(undefined);
 
   const selectedRoleType = roleTypes.find((rt) => rt.id === roleTypeId);
+  const isDisabled = isSubmitting || !firstName.trim() || !lastName.trim() || !email.trim();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -36,23 +37,33 @@ export function InviteCandidateModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="card modal-panel" onClick={(e) => e.stopPropagation()} style={{ width: 460 }}>
-        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Invite a candidate</h2>
+      <div className="card modal-panel" onClick={(e) => e.stopPropagation()} style={{ width: 440 }}>
+        <h2 style={{ fontSize: 19, marginBottom: 4 }}>Invite candidate</h2>
+        <p style={{ fontSize: 13, color: "var(--lunara-text-muted)", marginBottom: 20 }}>
+          Send a magic link so they can submit their documents.
+        </p>
         <form onSubmit={handleSubmit}>
           {error && <p className="error-text">{error}</p>}
           <div style={{ display: "flex", gap: 8 }}>
             <div className="form-field" style={{ flex: 1 }}>
               <label htmlFor="candidateFirstName">First name</label>
-              <input id="candidateFirstName" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              <input id="candidateFirstName" required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. Jordan" />
             </div>
             <div className="form-field" style={{ flex: 1 }}>
               <label htmlFor="candidateLastName">Last name</label>
-              <input id="candidateLastName" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              <input id="candidateLastName" required value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Blake" />
             </div>
           </div>
           <div className="form-field">
-            <label htmlFor="candidateEmail">Email</label>
-            <input id="candidateEmail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label htmlFor="candidateEmail">Email address</label>
+            <input
+              id="candidateEmail"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jordan@example.com"
+            />
           </div>
           <div className="form-field">
             <label htmlFor="candidateRoleType">Role type</label>
@@ -64,21 +75,18 @@ export function InviteCandidateModal({
                 </option>
               ))}
             </select>
-            {selectedRoleType && (
-              <p className="subtle-meta">
-                Required: {selectedRoleType.requiredCheckTypes.map(checkTypeLabel).join(", ")}
-              </p>
-            )}
+            <div style={{ fontSize: 11, color: "var(--lunara-silver)", marginTop: 6 }}>
+              {selectedRoleType
+                ? `Determines which checks ${selectedRoleType.name} candidates are asked to submit: ${selectedRoleType.requiredCheckTypes.map(checkTypeLabel).join(", ")}.`
+                : "Determines which checks this candidate is asked to submit."}
+            </div>
           </div>
-          <p className="subtle-meta">
-            They'll get a magic link by email to upload their own documents — no account needed on their end.
-          </p>
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+          <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
+            <button type="button" className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? "Inviting…" : "Send invite"}
+            <button type="submit" className="btn btn-primary" disabled={isDisabled} style={{ flex: 1 }}>
+              {isSubmitting ? "Sending…" : "Send invite"}
             </button>
           </div>
         </form>

@@ -27,8 +27,8 @@ export default defineConfig({
         // unlike iOS — see the apple-touch-startup-image links in
         // index.html). Kept dark so it doesn't flash white/light against
         // the dark native iOS splash and the app's own animated one.
-        background_color: "#10182B",
-        theme_color: "#B08A2E",
+        background_color: "#1B2340",
+        theme_color: "#C9A15C",
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },

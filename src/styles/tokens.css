@@ -2,70 +2,75 @@
   Lunara Screening design tokens.
   An original palette and type system for a standalone compliance-workflow
   product — no colours, type, or naming conventions carried over from any
-  other brand. "Luna" (moon) informs the mark and the deep-night palette,
-  but the system itself is built for a B2B compliance audience: direct,
-  legible, unfussy.
+  other brand. "Luna" (moon) informs the mark; the ink/cream/muted-gold
+  palette and Poppins/Inter pairing are tuned for a B2B compliance
+  audience: direct, legible, unfussy.
 */
 
 :root {
   /* Colour palette */
-  --lunara-ink: #10182B;
-  --lunara-indigo: #16234A;
-  --lunara-indigo-dark: #0B1430;
-  --lunara-indigo-light: #E8ECF6;
+  --lunara-ink: #1B2340;
+  --lunara-indigo: #1B2340;
+  --lunara-indigo-dark: #12182B;
+  --lunara-indigo-light: #EDEAE0;
   --lunara-white: #FFFFFF;
-  --lunara-mist: #E6E9F0;
+  --lunara-cream: #F4EFE6;
+  --lunara-mist: #F0ECE3;
 
-  /* Accents — gold is the primary call-to-action/highlight tone; silver is
-     the quieter secondary used for borders, dividers, and muted accents. */
-  --lunara-gold: #B08A2E;
-  --lunara-gold-dark: #8C6D23;
-  --lunara-gold-light: #FBF3DF;
-  --lunara-silver: #8D95A6;
-  --lunara-silver-light: #F1F2F5;
+  /* Accents — muted gold is the primary call-to-action/highlight tone. */
+  --lunara-gold: #C9A15C;
+  --lunara-gold-dark: #BC9550;
+  --lunara-gold-light: #F0ECE3;
+  --lunara-silver: #9A9FA6;
+  --lunara-silver-light: #F0ECE3;
 
-  /* Status colours — reserved strictly for check/candidate state, never decorative */
-  --lunara-status-amber: #C97C1F;
-  --lunara-status-red: #C23B3B;
-  --lunara-status-green: #24825A;
+  /* Status colours — reserved strictly for check/candidate state, never
+     decorative. Each has three tuned shades: a pale bg tint, a text/fg
+     tone that clears 4.5:1 on that tint, and a brighter "dot" tone used
+     only for the small state indicator, never as text. */
+  --lunara-status-green: #2E9E5C;
+  --lunara-status-amber: #D99A2B;
+  --lunara-status-red: #D9584A;
 
-  /* Darker "as text" variants — badge base tones are tuned for fills/icons/
-     borders (WCAG's looser 3:1 non-text contrast); these are what status
-     text/labels use instead, to clear 4.5:1 on a light surface. */
-  --lunara-status-green-text: #1A6944;
-  --lunara-status-amber-text: #9C6314;
-  --lunara-status-red-text: #A32F2F;
+  --lunara-status-green-text: #1E7A46;
+  --lunara-status-amber-text: #9A6B0B;
+  --lunara-status-red-text: #B23B2E;
 
-  --lunara-badge-green-bg: #E4F3EC;
-  --lunara-badge-amber-bg: #FBEFDD;
-  --lunara-badge-red-bg: #FAE7E6;
+  --lunara-badge-green-bg: #E5F3EA;
+  --lunara-badge-amber-bg: #FCF1DD;
+  --lunara-badge-red-bg: #FBEAE8;
+  --lunara-badge-neutral-bg: #F0ECE3;
+  --lunara-status-neutral-text: #9A9FA6;
+  --lunara-status-neutral: #C7C2B6;
   --lunara-badge-blue-bg: #E9EEF8;
   --lunara-badge-blue-text: #3A537D;
 
   /* Neutral text hierarchy, all derived from Ink */
-  --lunara-ink-900: #10182B;
-  --lunara-ink-700: #3C455C;
-  --lunara-ink-500: #7A8299;
-  --lunara-ink-300: #CCD1DE;
+  --lunara-ink-900: #1B2340;
+  --lunara-ink-700: #41454C;
+  --lunara-ink-500: #71757D;
+  --lunara-ink-300: #D8D2C6;
 
   /* Surfaces & text */
-  --lunara-bg: #F7F8FB;
+  --lunara-bg: #FAF8F3;
   --lunara-surface: var(--lunara-white);
   --lunara-surface-muted: var(--lunara-mist);
-  --lunara-border: #E3E6EE;
-  --lunara-border-strong: var(--lunara-ink-300);
+  --lunara-border: #E6E1D6;
+  --lunara-border-strong: #D8D2C6;
   --lunara-text: var(--lunara-ink-900);
   --lunara-text-secondary: var(--lunara-ink-700);
   /* Deliberately darker than --lunara-ink-500 — used as real, readable text
      throughout (empty states, table meta, "Loading…"), not just a decorative
      tint, so it needs to actually meet AA on a light surface. */
-  --lunara-text-muted: #565E73;
+  --lunara-text-muted: #71757D;
   --lunara-accent: var(--lunara-gold);
   --lunara-accent-hover: var(--lunara-gold-dark);
-  --lunara-focus-ring: #B08A2E66;
+  --lunara-focus-ring: #C9A15C66;
 
-  /* Typography — 12/13/14/16/18/20/24/32/40/56 scale */
-  --lunara-font-sans: 'Manrope', Arial, Helvetica, sans-serif;
+  /* Typography — Poppins for headings/primary CTAs, Inter for body/UI text.
+     12/13/14/16/18/20/24/32/40/56 scale */
+  --lunara-font-sans: 'Inter', Arial, Helvetica, sans-serif;
+  --lunara-font-display: 'Poppins', 'Inter', Arial, Helvetica, sans-serif;
   --lunara-fs-label: 12px;
   --lunara-fs-body-sm: 14px;
   --lunara-fs-body: 16px;
@@ -100,11 +105,11 @@
   --lunara-radius-lg: 12px;
   --lunara-radius-pill: 999px;
 
-  /* Shadow — cool-tinted two-layer elevation, plus a hairline-border
+  /* Shadow — warm-tinted two-layer elevation, plus a hairline-border
      alternative for flatter surfaces */
-  --lunara-shadow-sm: 0 1px 2px rgba(16, 24, 43, 0.06);
-  --lunara-shadow-card: 0 1px 2px rgba(16, 24, 43, 0.04), 0 4px 12px rgba(16, 24, 43, 0.06);
-  --lunara-shadow-lifted: 0 2px 4px rgba(16, 24, 43, 0.06), 0 12px 24px rgba(16, 24, 43, 0.10);
+  --lunara-shadow-sm: 0 1px 2px rgba(27, 35, 64, 0.06);
+  --lunara-shadow-card: 0 1px 2px rgba(27, 35, 64, 0.04), 0 4px 12px rgba(27, 35, 64, 0.06);
+  --lunara-shadow-lifted: 0 2px 4px rgba(27, 35, 64, 0.06), 0 12px 24px rgba(27, 35, 64, 0.10);
   --lunara-shadow-focus: 0 0 0 3px var(--lunara-focus-ring);
 
   /* Motion */

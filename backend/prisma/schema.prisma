@@ -13,16 +13,22 @@ datasource db {
 
 // The checks Lunara Screening actually performs itself (Phase 1-2, no
 // accreditation required) — see docs/BRAND_GUIDELINES.md and the product
-// brief for what's deliberately NOT here: no DBS/PVG/Disclosure Scotland
-// check type exists anywhere in this schema. Adding one is a Phase 3
-// decision that needs an accredited partner integration first, not a
-// migration.
+// brief for what's deliberately NOT here: DBS_CHECK is tracked status only,
+// never a real disclosure check. It exists so an org can note "this role
+// needs a DBS and here's where that stands," not to collect or process any
+// actual criminal record data — there is deliberately no document upload
+// path for it (see candidatePublic.ts's upload endpoints, which reject it),
+// and every check of this type is disclaimed in the UI as "pending partner
+// integration." An actual PVG/Disclosure Scotland/DBS *check* is still a
+// Phase 3 decision that needs an accredited partner integration first, not
+// a migration.
 enum CheckType {
   SIA_LICENCE
   FIRST_AID
   RIGHT_TO_WORK
   ID_DOCUMENT
   TRAINING
+  DBS_CHECK
 }
 
 enum CheckStatus {
@@ -118,7 +124,11 @@ model Candidate {
 // public Register of Licence Holders (no public API exists to automate
 // this — see lib/siaRegister.ts); FIRST_AID/RIGHT_TO_WORK/TRAINING track a
 // self-reported expiry date an admin can review; ID_DOCUMENT has no expiry
-// concept and is purely human-reviewed.
+// concept and is purely human-reviewed; DBS_CHECK never gets a document at
+// all (candidatePublic.ts's upload routes reject it) — an admin can only
+// move it between NOT_STARTED/PENDING/REJECTED by hand as a plain status
+// note, since Lunara Screening doesn't perform or receive an actual DBS
+// check.
 model Check {
   id            String      @id @default(cuid())
   candidateId   String

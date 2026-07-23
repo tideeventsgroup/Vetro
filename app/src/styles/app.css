@@ -29,10 +29,18 @@ body {
 }
 
 h1, h2, h3 {
-  font-weight: var(--lunara-fw-bold);
+  font-family: var(--lunara-font-display);
+  font-weight: var(--lunara-fw-semibold);
   letter-spacing: var(--lunara-ls-tight);
   color: var(--lunara-ink);
   margin: 0;
+}
+
+/* Primary CTAs carry the display face too — the mockup uses Poppins on
+   every filled/gold button, Inter everywhere else (secondary buttons,
+   inputs, table text). */
+.btn-primary {
+  font-family: var(--lunara-font-display);
 }
 
 a { color: var(--lunara-accent); text-decoration: none; }
@@ -421,19 +429,61 @@ button {
   box-shadow: var(--lunara-shadow-card);
 }
 
+/* A coloured left edge on the status tiles (verified/pending/expiring),
+   left plain on tiles with no single status of their own (e.g. "Total"). */
+.summary-tile-green { border-color: var(--lunara-badge-green-bg); border-left: 4px solid var(--lunara-status-green); }
+.summary-tile-amber { border-color: #F0DCB0; border-left: 4px solid var(--lunara-status-amber); }
+.summary-tile-red { border-color: #EFC9C2; border-left: 4px solid var(--lunara-status-red); }
+
+.summary-tile .label {
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-medium);
+  color: var(--lunara-text-muted);
+}
+
 .summary-tile .count {
+  font-family: var(--lunara-font-display);
   font-size: var(--lunara-fs-h1);
-  font-weight: var(--lunara-fw-bold);
+  font-weight: var(--lunara-fw-semibold);
   letter-spacing: var(--lunara-ls-tight);
   color: var(--lunara-ink);
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  margin-top: var(--lunara-space-2);
 }
 
-.summary-tile .label {
-  font-size: var(--lunara-fs-body-sm);
+/* "All candidates verified" banner (Dashboard.tsx) — same tint as the
+   verified badge, just roomier. */
+.dashboard-all-clear {
+  margin: var(--lunara-space-5) 0 0;
+  padding: 14px 18px;
+  background: var(--lunara-badge-green-bg);
+  border: 1px solid #C7E4D2;
+  border-radius: var(--lunara-radius-md);
+  color: var(--lunara-status-green-text);
+  font-size: 14px;
+  font-weight: var(--lunara-fw-medium);
+}
+
+.dashboard-check-na {
+  color: var(--lunara-status-neutral);
+  font-size: 13px;
+}
+
+.dashboard-sort-header {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  font-weight: var(--lunara-fw-semibold);
   color: var(--lunara-text-muted);
-  margin-top: var(--lunara-space-2);
+  text-transform: uppercase;
+  letter-spacing: var(--lunara-ls-label);
+}
+
+.dashboard-table th {
+  white-space: nowrap;
 }
 
 .summary-tile .tile-icon {
@@ -622,7 +672,8 @@ button {
 
 .form-field input,
 .form-field select,
-.form-field textarea {
+.form-field textarea,
+.input {
   font-family: var(--lunara-font-sans);
   font-size: var(--lunara-fs-body-sm);
   padding: 9px 12px;
@@ -640,13 +691,15 @@ button {
 
 .form-field input:hover,
 .form-field select:hover,
-.form-field textarea:hover {
+.form-field textarea:hover,
+.input:hover {
   border-color: var(--lunara-border-strong);
 }
 
 .form-field input:focus,
 .form-field select:focus,
-.form-field textarea:focus {
+.form-field textarea:focus,
+.input:focus {
   outline: none;
   border-color: var(--lunara-gold);
   box-shadow: var(--lunara-shadow-focus);
@@ -694,6 +747,61 @@ button {
 .consent-box input {
   margin-top: 3px;
   flex-shrink: 0;
+}
+
+/* Candidate self-service (CandidateSelfService.tsx) — the branded
+   magic-link page a candidate uploads their own documents through. */
+.selfserve-progress-track {
+  height: 8px;
+  background: var(--lunara-border);
+  border-radius: var(--lunara-radius-pill);
+  overflow: hidden;
+}
+
+.selfserve-progress-fill {
+  height: 100%;
+  background: var(--lunara-gold);
+  transition: width var(--lunara-duration) var(--lunara-ease);
+}
+
+.selfserve-upload-button {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1.5px dashed var(--lunara-border-strong);
+  background: var(--lunara-bg);
+  color: var(--lunara-text-muted);
+  font-size: 12px;
+  font-weight: var(--lunara-fw-semibold);
+  cursor: pointer;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.selfserve-upload-button.uploaded {
+  border-color: var(--lunara-status-green);
+  background: var(--lunara-badge-green-bg);
+  color: var(--lunara-status-green-text);
+}
+
+.selfserve-submit-button {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--lunara-font-display);
+  font-weight: var(--lunara-fw-semibold);
+  font-size: 15px;
+  cursor: pointer;
+  background: var(--lunara-border);
+  color: var(--lunara-silver);
+}
+
+.selfserve-submit-button:not(:disabled) {
+  background: var(--lunara-gold);
+  color: var(--lunara-ink);
+  cursor: pointer;
 }
 
 /* Vetting submission wizard (PortalHome) — one section at a time instead of
@@ -891,10 +999,15 @@ button {
   cursor: not-allowed;
 }
 
-.btn-primary { background: var(--lunara-gold); color: var(--lunara-white); box-shadow: 0 1px 2px rgba(14, 124, 123, 0.2); }
-.btn-primary:hover:not(:disabled) { background: var(--lunara-gold-dark); box-shadow: 0 2px 8px rgba(14, 124, 123, 0.28); }
-.btn-secondary { background: var(--lunara-surface); color: var(--lunara-ink); border-color: var(--lunara-border); }
-.btn-secondary:hover:not(:disabled) { border-color: var(--lunara-border-strong); box-shadow: var(--lunara-shadow-sm); }
+.btn-primary { background: var(--lunara-gold); color: var(--lunara-ink); box-shadow: 0 1px 2px rgba(27, 35, 64, 0.15); }
+.btn-primary:hover:not(:disabled) { background: var(--lunara-gold-dark); box-shadow: 0 2px 8px rgba(27, 35, 64, 0.2); }
+.btn-secondary { background: var(--lunara-surface); color: var(--lunara-ink); border-color: var(--lunara-border-strong); }
+.btn-secondary:hover:not(:disabled) { background: var(--lunara-mist); }
+/* Dark filled button — the mockup's "Generate report"/"Print / export PDF"
+   actions use the ink navy rather than the gold accent, reserved for the
+   one primary invite/submit CTA per screen. */
+.btn-dark { background: var(--lunara-ink); color: var(--lunara-cream); }
+.btn-dark:hover:not(:disabled) { background: var(--lunara-indigo-dark); }
 .btn-sos { background: var(--lunara-status-red); color: var(--lunara-white); box-shadow: 0 1px 2px rgba(196, 52, 43, 0.25); }
 .btn-sos:hover:not(:disabled) { background: #A82A22; }
 
@@ -956,23 +1069,25 @@ button {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: currentColor;
+  /* A brighter, more saturated tone than the badge's own text colour —
+     the dot is a separate custom property per status (set alongside
+     color/background below) rather than currentColor, since the two are
+     deliberately different shades, not the same colour at different
+     opacities. Falls back to currentColor for any badge variant that
+     doesn't set one. */
+  background: var(--status-dot, currentColor);
   flex-shrink: 0;
 }
 
-.status-active { color: var(--lunara-status-green-text); background: var(--lunara-badge-green-bg); }
-.status-expiring { color: var(--lunara-status-amber-text); background: var(--lunara-badge-amber-bg); }
-.status-expired { color: var(--lunara-status-red-text); background: var(--lunara-badge-red-bg); }
-/* Vetting submitted to a provider, result not back yet — distinct from
-   ACTIVE/EXPIRING/EXPIRED (all of which describe a *result* Vetro already
-   holds); see VettingSubmission.status PENDING_REVIEW. */
-.status-pending { color: var(--lunara-badge-blue-text); background: var(--lunara-badge-blue-bg); }
+.status-active { color: var(--lunara-status-green-text); background: var(--lunara-badge-green-bg); --status-dot: var(--lunara-status-green); }
+.status-expiring { color: var(--lunara-status-amber-text); background: var(--lunara-badge-amber-bg); --status-dot: var(--lunara-status-amber); }
+.status-expired { color: var(--lunara-status-red-text); background: var(--lunara-badge-red-bg); --status-dot: var(--lunara-status-red); }
+/* Pending — awaiting review/upload, not yet a result either way. */
+.status-pending { color: var(--lunara-status-amber-text); background: var(--lunara-badge-amber-bg); --status-dot: var(--lunara-status-amber); }
 
-/* Shift statuses (Schedule/ClientHome/Reports) — same pill/dot language,
-   two additions for "hasn't happened yet" states that compliance status
-   never needed: a neutral "planned" and the teal accent for "on track". */
-.status-neutral { color: var(--lunara-ink-500); background: var(--lunara-surface-muted); }
-.status-confirmed { color: var(--lunara-gold-dark); background: var(--lunara-gold-light); }
+/* Not started / not applicable — genuinely neutral, no result yet at all. */
+.status-neutral { color: var(--lunara-status-neutral-text); background: var(--lunara-badge-neutral-bg); --status-dot: var(--lunara-status-neutral); }
+.status-confirmed { color: var(--lunara-gold-dark); background: var(--lunara-gold-light); --status-dot: var(--lunara-gold); }
 
 /* Segmented control — Today/This week/All on Schedule, same pattern
    reusable anywhere a small set of mutually-exclusive filters is needed. */
@@ -1004,6 +1119,25 @@ button {
   background: var(--lunara-surface);
   color: var(--lunara-text);
   box-shadow: var(--lunara-shadow-sm);
+}
+
+/* Report mode toggle (ComplianceReport.tsx) — same pill-track idea as
+   .segmented-control, but the active state is filled ink/cream rather than
+   a raised light chip, matching the mockup's single/all-candidates switch. */
+.report-mode-pill {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: var(--lunara-fw-semibold);
+  padding: 6px 14px;
+  border-radius: var(--lunara-radius-pill);
+  color: var(--lunara-text-muted);
+}
+
+.report-mode-pill.active {
+  background: var(--lunara-ink);
+  color: var(--lunara-cream);
 }
 
 /* Schedule board — a shift-per-card, day-grouped view in place of a flat
@@ -1256,6 +1390,113 @@ button {
 
 .card-header h2 {
   font-size: var(--lunara-fs-h4);
+}
+
+/* Candidate detail (CandidateDetail.tsx) — one check card per required
+   check, laid out two-across (file icon + label/description, status pill),
+   then review actions below. */
+.check-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--lunara-space-4);
+}
+
+.check-card-file-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--lunara-radius-md);
+  flex-shrink: 0;
+  background: repeating-linear-gradient(135deg, var(--lunara-mist), var(--lunara-mist) 4px, var(--lunara-border) 4px, var(--lunara-border) 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 9px;
+  color: var(--lunara-silver);
+  text-align: center;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.check-card-partner-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--lunara-space-2);
+  padding: 4px 10px;
+  background: var(--lunara-mist);
+  border-radius: var(--lunara-radius-pill);
+  font-size: 11px;
+  color: var(--lunara-text-muted);
+}
+
+.check-card-partner-pending .info-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--lunara-silver);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-style: italic;
+  font-family: Georgia, serif;
+}
+
+.check-card-actions {
+  display: flex;
+  gap: var(--lunara-space-2);
+  margin-top: var(--lunara-space-4);
+}
+
+.check-card-action {
+  font-weight: var(--lunara-fw-semibold);
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.check-card-action-approve { background: var(--lunara-badge-green-bg); border: 1px solid #C7E4D2; color: var(--lunara-status-green-text); }
+.check-card-action-approve:hover:not(:disabled) { background: #D8ECE0; }
+.check-card-action-reject { background: var(--lunara-badge-red-bg); border: 1px solid #EFC9C2; color: var(--lunara-status-red-text); }
+.check-card-action-reject:hover:not(:disabled) { background: #F7DBD7; }
+.check-card-action-info { background: var(--lunara-surface); border: 1px solid var(--lunara-border-strong); color: var(--lunara-text-secondary); }
+.check-card-action-info:hover:not(:disabled) { background: var(--lunara-mist); }
+
+/* Audit trail sidebar — a vertical line with a dot per entry, most recent
+   first. */
+.audit-timeline-item {
+  padding: 0 0 var(--lunara-space-4) var(--lunara-space-4);
+  border-left: 2px solid var(--lunara-border);
+  position: relative;
+  margin-left: 4px;
+}
+
+.audit-timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.audit-timeline-dot {
+  position: absolute;
+  left: -5px;
+  top: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lunara-gold);
+}
+
+.audit-timeline-date {
+  font-size: 11px;
+  color: var(--lunara-silver);
+}
+
+.audit-timeline-text {
+  font-size: 13px;
+  color: var(--lunara-ink);
+  margin-top: 2px;
 }
 
 /* Empty states */

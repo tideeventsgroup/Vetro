@@ -4,7 +4,7 @@ import { getTenantSlug } from "./tenant.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-export type CheckType = "SIA_LICENCE" | "FIRST_AID" | "RIGHT_TO_WORK" | "ID_DOCUMENT" | "TRAINING";
+export type CheckType = "SIA_LICENCE" | "FIRST_AID" | "RIGHT_TO_WORK" | "ID_DOCUMENT" | "TRAINING" | "DBS_CHECK";
 export type CheckStatus = "NOT_STARTED" | "PENDING" | "VERIFIED" | "EXPIRED" | "REJECTED";
 export type CandidateStatus = "INVITED" | "IN_PROGRESS" | "SUBMITTED" | "ARCHIVED";
 export type DataRequestType = "ACCESS" | "DELETE";

@@ -34,6 +34,11 @@ candidatePublic.post("/public/candidates/:token/checks/:checkId/upload-url", asy
   if (!candidate) return c.json({ error: "Invite not found" }, 404);
   const check = candidate.checks.find((existing) => existing.id === c.req.param("checkId"));
   if (!check) return c.json({ error: "Check not found" }, 404);
+  // DBS_CHECK is status-only — Lunara Screening never collects a document
+  // against it (see prisma/schema.prisma's CheckType comment).
+  if (check.checkType === "DBS_CHECK") {
+    return c.json({ error: "This check does not accept documents" }, 400);
+  }
 
   const body = await c.req.json<{ fileName: string; contentType: string }>();
   if (!body.fileName?.trim() || !body.contentType?.trim()) {
@@ -59,6 +64,9 @@ candidatePublic.post("/public/candidates/:token/checks/:checkId/documents", asyn
   if (!candidate) return c.json({ error: "Invite not found" }, 404);
   const check = candidate.checks.find((existing) => existing.id === c.req.param("checkId"));
   if (!check) return c.json({ error: "Check not found" }, 404);
+  if (check.checkType === "DBS_CHECK") {
+    return c.json({ error: "This check does not accept documents" }, 400);
+  }
 
   const body = await c.req.json<{
     storagePath: string;

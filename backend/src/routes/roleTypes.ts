@@ -6,7 +6,7 @@ import type { AppEnv } from "../lib/hono-env.js";
 
 export const roleTypes = new Hono<AppEnv>();
 
-const CHECK_TYPES: CheckType[] = ["SIA_LICENCE", "FIRST_AID", "RIGHT_TO_WORK", "ID_DOCUMENT", "TRAINING"];
+const CHECK_TYPES: CheckType[] = ["SIA_LICENCE", "FIRST_AID", "RIGHT_TO_WORK", "ID_DOCUMENT", "TRAINING", "DBS_CHECK"];
 
 function parseCheckTypes(input: unknown): CheckType[] {
   if (!Array.isArray(input)) return [];
