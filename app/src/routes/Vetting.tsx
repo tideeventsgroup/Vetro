@@ -127,6 +127,15 @@ export function Vetting() {
     }
   }
 
+  async function handleViewDocument(inviteId: string, documentId: string) {
+    try {
+      const url = await api.getVettingInviteDocumentDownloadUrl(inviteId, documentId);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not open this document");
+    }
+  }
+
   async function handleRevoke(id: string) {
     if (!window.confirm("Revoke this invite? The link will stop working.")) return;
     setIsRevoking(true);
@@ -359,13 +368,41 @@ export function Vetting() {
                             </p>
                           )}
                           {invite.requiresRightToWork && (
-                            <p style={{ fontSize: 13, marginBottom: 12 }}>
+                            <p style={{ fontSize: 13, marginBottom: 4 }}>
                               <strong>Right to work:</strong>{" "}
                               {invite.rightToWorkConfirmed ? "Confirmed" : "Not confirmed"}
                               {invite.rightToWorkDocumentType ? ` — ${invite.rightToWorkDocumentType}` : ""}
                               {invite.rightToWorkExpiryDate ? `, expires ${formatDate(invite.rightToWorkExpiryDate)}` : ""}
                             </p>
                           )}
+                          <p style={{ fontSize: 13, marginBottom: 12 }}>
+                            <strong>Documents:</strong>{" "}
+                            {invite.documents.length === 0 ? (
+                              "None uploaded"
+                            ) : (
+                              invite.documents.map((doc, i) => (
+                                <span key={doc.id}>
+                                  {i > 0 && ", "}
+                                  {doc.kind}{" "}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleViewDocument(invite.id, doc.id)}
+                                    style={{
+                                      background: "none",
+                                      border: "none",
+                                      padding: 0,
+                                      color: "var(--vetro-teal-dark)",
+                                      textDecoration: "underline",
+                                      cursor: "pointer",
+                                      fontSize: 13,
+                                    }}
+                                  >
+                                    View
+                                  </button>
+                                </span>
+                              ))
+                            )}
+                          </p>
                           <button
                             className="btn btn-primary"
                             disabled={isConverting}

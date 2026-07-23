@@ -1,17 +1,28 @@
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { StepIndicator } from "../components/StepIndicator.js";
-import { PlusIcon, ShieldCheckIcon, TrashIcon } from "../components/icons.js";
-import { DbsLevel, PublicVettingInvite, useApi } from "../lib/api.js";
+import { CheckIcon, PlusIcon, ShieldCheckIcon, TrashIcon, UploadIcon } from "../components/icons.js";
+import { DbsLevel, PublicVettingInvite, VettingInviteDocument, useApi } from "../lib/api.js";
 
 const DBS_LEVEL_OPTIONS: DbsLevel[] = ["BASIC", "STANDARD", "ENHANCED"];
+
+// Plain, human-readable strings — same convention OfficerDetail's own
+// document upload already uses (see DocumentsSection.tsx's free-text
+// "kind" field) — rather than an internal enum, so these show up exactly
+// as-is in the officer's document list once the invite converts.
+const DOC_KIND_ID = "Identity document";
+const DOC_KIND_DBS = "DBS certificate";
+const DOC_KIND_RTW = "Right to work document";
 
 // The admin picks which checks apply to this role at invite time (see
 // routes/Vetting.tsx's "Vetting workflow" checkboxes) — mirroring EBC
 // Global's "screening under the appropriate vetting workflow" step — so the
-// candidate only sees the sections that check actually needs.
+// candidate only sees the sections that check actually needs. "Identity
+// document" always appears — the baseline photo-ID upload EBC Global's own
+// process collects for every candidate regardless of which other checks
+// apply.
 function buildSteps(requiresDbs: boolean, requiresRightToWork: boolean): string[] {
-  const steps = ["Addresses", "Employment", "References"];
+  const steps = ["Addresses", "Employment", "References", "Identity document"];
   if (requiresDbs) steps.push("DBS details");
   if (requiresRightToWork) steps.push("Right to work");
   steps.push("Review");
@@ -35,6 +46,64 @@ interface ReferenceRow {
   name: string;
   relationship: string;
   contact: string;
+}
+
+// A single presigned-upload slot, one per document kind — EBC Global's own
+// process is built around collecting the actual document (a photo/scan),
+// not just a self-reported certificate number, so this is what "look at how
+// they take the information" turned into here.
+function DocumentUploadField({
+  kind,
+  documents,
+  uploadingKind,
+  onUpload,
+  onRemove,
+}: {
+  kind: string;
+  documents: VettingInviteDocument[];
+  uploadingKind: string | undefined;
+  onUpload: (e: ChangeEvent<HTMLInputElement>, kind: string) => void;
+  onRemove: (kind: string) => void;
+}) {
+  const doc = documents.find((d) => d.kind === kind);
+  const isUploading = uploadingKind === kind;
+  return (
+    <div className="form-field">
+      <label>{kind}</label>
+      {doc ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px",
+            background: "var(--vetro-bg)",
+            border: "1px solid var(--vetro-border)",
+            borderRadius: 6,
+          }}
+        >
+          <CheckIcon width={14} height={14} style={{ color: "var(--vetro-status-green-text)", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, flex: 1, wordBreak: "break-all" }}>{doc.fileName}</span>
+          <button type="button" className="btn btn-secondary" onClick={() => onRemove(kind)}>
+            <TrashIcon width={14} height={14} />
+            Remove
+          </button>
+        </div>
+      ) : (
+        <label className="btn btn-secondary" style={{ display: "inline-flex", width: "fit-content", cursor: isUploading ? "default" : "pointer" }}>
+          <UploadIcon width={14} height={14} />
+          {isUploading ? "Uploading…" : "Upload file"}
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            style={{ display: "none" }}
+            disabled={isUploading}
+            onChange={(e) => onUpload(e, kind)}
+          />
+        </label>
+      )}
+    </div>
+  );
 }
 
 // The candidate-facing counterpart to VettingWizard.tsx — reached via a
@@ -62,6 +131,9 @@ export function CandidateVetting() {
   const [error, setError] = useState<string | undefined>(undefined);
   const [submitted, setSubmitted] = useState(false);
   const [step, setStep] = useState(0);
+  const [documents, setDocuments] = useState<VettingInviteDocument[]>([]);
+  const [uploadingKind, setUploadingKind] = useState<string | undefined>(undefined);
+  const [uploadError, setUploadError] = useState<string | undefined>(undefined);
 
   const steps = buildSteps(invite?.requiresDbs ?? false, invite?.requiresRightToWork ?? false);
 
@@ -69,10 +141,41 @@ export function CandidateVetting() {
     if (!token) return;
     api
       .getPublicVettingInvite(token)
-      .then(setInvite)
+      .then((result) => {
+        setInvite(result);
+        setDocuments(result.documents);
+      })
       .catch((err) => setLoadError(err instanceof Error ? err.message : "This link is invalid or has expired"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  async function handleUploadDocument(e: ChangeEvent<HTMLInputElement>, kind: string) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !token) return;
+    setUploadError(undefined);
+    setUploadingKind(kind);
+    try {
+      const doc = await api.uploadCandidateDocument(token, file, kind);
+      setDocuments((docs) => [...docs.filter((d) => d.kind !== kind), doc]);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Could not upload file");
+    } finally {
+      setUploadingKind(undefined);
+    }
+  }
+
+  async function handleRemoveDocument(kind: string) {
+    if (!token) return;
+    const doc = documents.find((d) => d.kind === kind);
+    if (!doc) return;
+    try {
+      await api.deleteCandidateDocument(token, doc.id);
+      setDocuments((docs) => docs.filter((d) => d.id !== doc.id));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Could not remove file");
+    }
+  }
 
   function goNext() {
     setStep((s) => Math.min(s + 1, steps.length - 1));
@@ -383,6 +486,23 @@ export function CandidateVetting() {
               </>
             )}
 
+            {steps[step] === "Identity document" && (
+              <>
+                <h3 style={{ fontSize: 14, marginBottom: 8 }}>Identity document</h3>
+                <p style={{ fontSize: 13, color: "var(--vetro-text-muted)", marginBottom: 12 }}>
+                  Upload a photo or scan of your passport, driving licence, or other photo ID.
+                </p>
+                {uploadError && <p className="error-text">{uploadError}</p>}
+                <DocumentUploadField
+                  kind={DOC_KIND_ID}
+                  documents={documents}
+                  uploadingKind={uploadingKind}
+                  onUpload={handleUploadDocument}
+                  onRemove={handleRemoveDocument}
+                />
+              </>
+            )}
+
             {steps[step] === "DBS details" && (
               <>
                 <h3 style={{ fontSize: 14, marginBottom: 8 }}>DBS check</h3>
@@ -415,6 +535,14 @@ export function CandidateVetting() {
                     />
                   </div>
                 </div>
+                {uploadError && <p className="error-text">{uploadError}</p>}
+                <DocumentUploadField
+                  kind={DOC_KIND_DBS}
+                  documents={documents}
+                  uploadingKind={uploadingKind}
+                  onUpload={handleUploadDocument}
+                  onRemove={handleRemoveDocument}
+                />
               </>
             )}
 
@@ -449,6 +577,14 @@ export function CandidateVetting() {
                     />
                   </div>
                 </div>
+                {uploadError && <p className="error-text">{uploadError}</p>}
+                <DocumentUploadField
+                  kind={DOC_KIND_RTW}
+                  documents={documents}
+                  uploadingKind={uploadingKind}
+                  onUpload={handleUploadDocument}
+                  onRemove={handleRemoveDocument}
+                />
               </>
             )}
 
@@ -525,6 +661,18 @@ export function CandidateVetting() {
                       </div>
                     </div>
                   )}
+                  <div className="review-summary-group">
+                    <h4>Documents</h4>
+                    {documents.length === 0 ? (
+                      <p className="subtle-meta">None uploaded.</p>
+                    ) : (
+                      documents.map((d) => (
+                        <div className="review-summary-row" key={d.id}>
+                          {d.kind}: <strong>{d.fileName}</strong>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
 
                 <label className="consent-box">

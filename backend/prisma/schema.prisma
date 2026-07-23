@@ -141,6 +141,9 @@ model Site {
   incidents          Incident[]
   checkpoints        Checkpoint[]
   visitorLogEntries  VisitorLogEntry[]
+  // A direct, persistent placement — "who works here" — rather than a
+  // scheduled slot with a start/end time.
+  assignedOfficers   Officer[]         @relation("SiteAssignment")
   createdAt          DateTime          @default(now())
 
   @@index([contractorId])
@@ -200,6 +203,10 @@ model Officer {
   lastName                     String
   email                        String?
   phone                        String?
+  // Direct, persistent placement at a site — replaces shift scheduling as
+  // "who works where". Null means unassigned/bench.
+  siteId                       String?
+  site                         Site?               @relation("SiteAssignment", fields: [siteId], references: [id])
   // Personal details
   dateOfBirth                  DateTime?
   nationalInsuranceNumber      String?
@@ -373,35 +380,54 @@ model VettingSubmission {
 // reference answers become a normal VettingSubmission on the new Officer,
 // going through the same review queue as self-service submissions.
 model VettingInvite {
-  id                      String              @id @default(cuid())
+  id                      String                  @id @default(cuid())
   contractorId            String
-  contractor              Contractor          @relation(fields: [contractorId], references: [id])
+  contractor              Contractor              @relation(fields: [contractorId], references: [id])
   firstName               String
   lastName                String
   email                   String
   phone                   String?
-  token                   String              @unique
-  status                  VettingInviteStatus @default(PENDING)
-  requiresDbs             Boolean             @default(false)
-  requiresRightToWork     Boolean             @default(false)
+  token                   String                  @unique
+  status                  VettingInviteStatus     @default(PENDING)
+  requiresDbs             Boolean                 @default(false)
+  requiresRightToWork     Boolean                 @default(false)
   addressHistory          Json?
   employmentHistory       Json?
   references              Json?
   dbsLevel                DbsLevel?
   dbsCertificateNumber    String?
   dbsIssueDate            DateTime?
-  rightToWorkConfirmed    Boolean             @default(false)
+  rightToWorkConfirmed    Boolean                 @default(false)
   rightToWorkDocumentType String?
   rightToWorkExpiryDate   DateTime?
-  consentGiven            Boolean             @default(false)
+  consentGiven            Boolean                 @default(false)
   submittedAt             DateTime?
-  convertedOfficerId      String?             @unique
-  convertedOfficer        Officer?            @relation(fields: [convertedOfficerId], references: [id])
+  convertedOfficerId      String?                 @unique
+  convertedOfficer        Officer?                @relation(fields: [convertedOfficerId], references: [id])
   invitedByEmail          String
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
+  documents               VettingInviteDocument[]
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
 
   @@index([contractorId])
+}
+
+// A file a candidate uploaded as part of their vetting invite — the same
+// presigned-upload flow as Document (lib/documents.ts), just against an
+// invite instead of an Officer, since the Officer doesn't exist yet.
+// Copied into a real Document row on the officer once the invite converts
+// (see POST /vetting-invites/:id/convert), so it shows up in the normal
+// OfficerDetail documents section from that point on.
+model VettingInviteDocument {
+  id              String        @id @default(cuid())
+  vettingInviteId String
+  vettingInvite   VettingInvite @relation(fields: [vettingInviteId], references: [id])
+  kind            String
+  fileName        String
+  s3Key           String
+  uploadedAt      DateTime      @default(now())
+
+  @@index([vettingInviteId])
 }
 
 model Qualification {

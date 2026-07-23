@@ -27,7 +27,6 @@ import { PortalHome } from "./routes/PortalHome.js";
 import { PortalLayout } from "./routes/PortalLayout.js";
 import { ProtectedLayout } from "./routes/ProtectedLayout.js";
 import { Reports } from "./routes/Reports.js";
-import { Schedule } from "./routes/Schedule.js";
 import { Settings } from "./routes/Settings.js";
 import { Signup } from "./routes/Signup.js";
 import { Sites } from "./routes/Sites.js";
@@ -73,7 +72,6 @@ export function App() {
               <Route path="staff" element={<Staff />} />
               <Route path="sites" element={<Sites />} />
               <Route path="occupancy" element={<Occupancy />} />
-              <Route path="schedule" element={<Schedule />} />
               <Route path="arbitration" element={<Arbitration />} />
               <Route path="incidents" element={<Incidents />} />
               <Route path="patrols" element={<Patrols />} />

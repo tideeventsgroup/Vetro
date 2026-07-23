@@ -1,12 +1,16 @@
 import { FormEvent, useEffect, useState } from "react";
-import { MailIcon, MapPinIcon, PlusIcon } from "../components/icons.js";
+import { Link } from "react-router-dom";
+import { MailIcon, MapPinIcon, PlusIcon, TrashIcon, UsersIcon } from "../components/icons.js";
 import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
-import { Site, useApi } from "../lib/api.js";
+import { Officer, Site, useApi } from "../lib/api.js";
 import { useCurrentLocation } from "../lib/geo.js";
+import { useTenantSlug } from "../lib/tenant.js";
 
 export function Sites() {
   const api = useApi();
+  const tenant = useTenantSlug();
   const [sites, setSites] = useState<Site[]>([]);
+  const [officers, setOfficers] = useState<Officer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddSite, setShowAddSite] = useState(false);
   const [expandedId, setExpandedId] = useState<string | undefined>(undefined);
@@ -16,6 +20,8 @@ export function Sites() {
   const [error, setError] = useState<string | undefined>(undefined);
   const [geofenceStatus, setGeofenceStatus] = useState<string | undefined>(undefined);
   const [isGeneratingSin, setIsGeneratingSin] = useState(false);
+  const [assignOfficerId, setAssignOfficerId] = useState("");
+  const [isAssigning, setIsAssigning] = useState(false);
   const addSiteLocation = useCurrentLocation("newSiteLat", "newSiteLng");
   const editLocation = useCurrentLocation("editSiteLat", "editSiteLng");
 
@@ -26,11 +32,39 @@ export function Sites() {
   async function load() {
     setIsLoading(true);
     try {
-      setSites(await api.listSites());
+      const [siteRows, officerRows] = await Promise.all([api.listSites(), api.listOfficers()]);
+      setSites(siteRows);
+      setOfficers(officerRows);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load sites");
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleAssignOfficer(siteId: string) {
+    if (!assignOfficerId) return;
+    setIsAssigning(true);
+    try {
+      await api.updateOfficer(assignOfficerId, { siteId });
+      setAssignOfficerId("");
+      await load();
+    } catch (err) {
+      setGeofenceStatus(err instanceof Error ? err.message : "Could not assign officer");
+    } finally {
+      setIsAssigning(false);
+    }
+  }
+
+  async function handleUnassignOfficer(officerId: string) {
+    setIsAssigning(true);
+    try {
+      await api.updateOfficer(officerId, { siteId: null });
+      await load();
+    } catch (err) {
+      setGeofenceStatus(err instanceof Error ? err.message : "Could not unassign officer");
+    } finally {
+      setIsAssigning(false);
     }
   }
 
@@ -94,6 +128,8 @@ export function Sites() {
     setInviteEmail(site.clientContactEmail ?? "");
     setInviteStatus(undefined);
     setInvitedPassword(undefined);
+    setAssignOfficerId("");
+    setGeofenceStatus(undefined);
   }
 
   async function handleInviteClient(siteId: string) {
@@ -128,7 +164,7 @@ export function Sites() {
       <div className="page-header">
         <div>
           <h1>Sites</h1>
-          <p>The client sites and contracts your officers are scheduled against.</p>
+          <p>The client sites your officers are placed at.</p>
         </div>
         <div className="page-actions">
           <button className="btn btn-primary" onClick={() => setShowAddSite((v) => !v)}>
@@ -197,7 +233,7 @@ export function Sites() {
 
       {sites.length === 0 ? (
         <div className="card empty-state">
-          <p>No sites added yet. Add your first site to start scheduling.</p>
+          <p>No sites added yet. Add your first site to start placing officers.</p>
         </div>
       ) : (
         <div className="site-grid">
@@ -240,6 +276,64 @@ export function Sites() {
                     </div>
                     {inviteStatus && <p className="subtle-meta">{inviteStatus}</p>}
                     {invitedPassword && <TemporaryPasswordReveal password={invitedPassword} />}
+
+                    <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid var(--vetro-border)" }} />
+                    <p style={{ fontSize: 13, marginBottom: 12, color: "var(--vetro-text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                      <UsersIcon width={14} height={14} />
+                      {(site.assignedOfficers ?? []).length === 0
+                        ? "No officers placed here yet."
+                        : `${(site.assignedOfficers ?? []).length} officer${(site.assignedOfficers ?? []).length === 1 ? "" : "s"} placed here.`}
+                    </p>
+                    {(site.assignedOfficers ?? []).length > 0 && (
+                      <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px" }}>
+                        {(site.assignedOfficers ?? []).map((o) => (
+                          <li
+                            key={o.id}
+                            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0" }}
+                          >
+                            <Link to={`/${tenant}/officers/${o.id}`}>
+                              {o.firstName} {o.lastName}
+                            </Link>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              disabled={isAssigning}
+                              onClick={() => handleUnassignOfficer(o.id)}
+                            >
+                              <TrashIcon width={14} height={14} />
+                              Unassign
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+                      <div className="form-field" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}>
+                        <label htmlFor={`assign-${site.id}`}>Place an officer here</label>
+                        <select
+                          id={`assign-${site.id}`}
+                          value={assignOfficerId}
+                          onChange={(e) => setAssignOfficerId(e.target.value)}
+                        >
+                          <option value="">Select an officer…</option>
+                          {officers
+                            .filter((o) => o.siteId !== site.id)
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.firstName} {o.lastName}
+                                {o.site ? ` (currently at ${o.site.name})` : ""}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                      <button
+                        className="btn btn-secondary"
+                        disabled={!assignOfficerId || isAssigning}
+                        onClick={() => handleAssignOfficer(site.id)}
+                      >
+                        Assign
+                      </button>
+                    </div>
 
                     <hr style={{ margin: "16px 0", border: "none", borderTop: "1px solid var(--vetro-border)" }} />
                     <p style={{ fontSize: 13, marginBottom: 12, color: "var(--vetro-text-muted)" }}>

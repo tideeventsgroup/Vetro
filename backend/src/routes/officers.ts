@@ -12,7 +12,13 @@ officers.get("/", async (c) => {
   const db = await getDb();
   const rows = await db.officer.findMany({
     where: { contractorId: c.get("contractorId") },
-    include: { licences: true, vettingRecords: true, dbsChecks: true, referenceChecks: true },
+    include: {
+      licences: true,
+      vettingRecords: true,
+      dbsChecks: true,
+      referenceChecks: true,
+      site: { select: { id: true, name: true } },
+    },
     orderBy: { lastName: "asc" },
   });
   return c.json(rows);
@@ -29,6 +35,7 @@ officers.get("/:id", async (c) => {
       referenceChecks: true,
       qualifications: true,
       documents: true,
+      site: { select: { id: true, name: true } },
     },
   });
   if (!row || row.contractorId !== c.get("contractorId")) return c.json({ error: "Officer not found" }, 404);
@@ -43,6 +50,7 @@ officers.get("/:id", async (c) => {
 interface OfficerHrFields {
   email?: string;
   phone?: string;
+  siteId?: string | null;
   dateOfBirth?: string | null;
   nationalInsuranceNumber?: string | null;
   addressLine1?: string | null;
@@ -133,12 +141,20 @@ officers.post("/", async (c) => {
     return c.json({ error: err instanceof Error ? err.message : "Invalid officer fields" }, 400);
   }
 
+  if (body.siteId) {
+    const site = await db.site.findUnique({ where: { id: body.siteId } });
+    if (!site || site.contractorId !== c.get("contractorId")) {
+      return c.json({ error: "Site not found" }, 400);
+    }
+  }
+
   const created = await db.officer.create({
     data: {
       contractorId: c.get("contractorId")!,
       firstName: body.firstName.trim(),
       lastName: body.lastName.trim(),
       ...hrData,
+      ...(body.siteId !== undefined && { siteId: body.siteId }),
     },
   });
   await recordAudit({
@@ -167,12 +183,20 @@ officers.patch("/:id", async (c) => {
     return c.json({ error: err instanceof Error ? err.message : "Invalid officer fields" }, 400);
   }
 
+  if (body.siteId) {
+    const site = await db.site.findUnique({ where: { id: body.siteId } });
+    if (!site || site.contractorId !== c.get("contractorId")) {
+      return c.json({ error: "Site not found" }, 400);
+    }
+  }
+
   const updated = await db.officer.update({
     where: { id },
     data: {
       ...(body.firstName !== undefined && { firstName: body.firstName }),
       ...(body.lastName !== undefined && { lastName: body.lastName }),
       ...hrData,
+      ...(body.siteId !== undefined && { siteId: body.siteId }),
     },
   });
   await recordAudit({

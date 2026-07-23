@@ -93,6 +93,12 @@ export interface VettingSubmissionForReview extends VettingSubmission {
 
 export type VettingInviteStatus = "PENDING" | "SUBMITTED" | "CONVERTED";
 
+export interface VettingInviteDocument {
+  id: string;
+  kind: string;
+  fileName: string;
+}
+
 export interface VettingInvite {
   id: string;
   contractorId: string;
@@ -117,6 +123,7 @@ export interface VettingInvite {
   submittedAt: string | null;
   convertedOfficerId: string | null;
   invitedByEmail: string;
+  documents: VettingInviteDocument[];
   createdAt: string;
 }
 
@@ -127,6 +134,7 @@ export interface PublicVettingInvite {
   status: VettingInviteStatus;
   requiresDbs: boolean;
   requiresRightToWork: boolean;
+  documents: VettingInviteDocument[];
 }
 
 export interface TeamMember {
@@ -182,6 +190,9 @@ export interface Officer {
   // Kiosk book-on/off identity — see lib/identityCodes.ts on the backend.
   // Null until an admin generates one from OfficerDetail.tsx.
   pin: string | null;
+  // Direct, persistent placement — "who works where" — set from Sites.tsx.
+  siteId: string | null;
+  site?: { id: string; name: string } | null;
   licences: SiaLicence[];
   vettingRecords: VettingRecord[];
   dbsChecks: DbsCheck[];
@@ -194,6 +205,7 @@ export interface Officer {
 export interface OfficerHrInput {
   email?: string;
   phone?: string;
+  siteId?: string | null;
   dateOfBirth?: string | null;
   nationalInsuranceNumber?: string | null;
   addressLine1?: string | null;
@@ -244,6 +256,7 @@ export interface Site {
   // Expected headcount for Live Site Occupancy to compare the currently
   // clocked-in count against. Null until an admin sets a target.
   requiredHeadcount: number | null;
+  assignedOfficers?: { id: string; firstName: string; lastName: string }[];
   createdAt: string;
 }
 
@@ -641,6 +654,13 @@ class VetroApiClient {
     return this.request(`/vetting-invites/${id}/convert`, { method: "POST" });
   }
 
+  async getVettingInviteDocumentDownloadUrl(inviteId: string, documentId: string): Promise<string> {
+    const { downloadUrl } = await this.request<{ downloadUrl: string }>(
+      `/vetting-invites/${inviteId}/documents/${documentId}/download-url`
+    );
+    return downloadUrl;
+  }
+
   // The candidate-facing side — no session, no tenant header (see
   // backend/src/routes/vettingInvitePublic.ts). Goes through the same
   // request() as everything else purely for the shared error handling, same
@@ -667,6 +687,29 @@ class VetroApiClient {
     return this.request(`/candidate-vetting/${encodeURIComponent(token)}/submit`, {
       method: "POST",
       body: JSON.stringify(input),
+    });
+  }
+
+  async uploadCandidateDocument(token: string, file: File, kind: string): Promise<VettingInviteDocument> {
+    const { uploadUrl, s3Key } = await this.request<{ uploadUrl: string; s3Key: string }>(
+      `/candidate-vetting/${encodeURIComponent(token)}/documents/upload-url`,
+      { method: "POST", body: JSON.stringify({ fileName: file.name, contentType: file.type || "application/octet-stream" }) }
+    );
+    const putResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!putResponse.ok) throw new ApiError(putResponse.status, "Upload to storage failed");
+    return this.request<VettingInviteDocument>(`/candidate-vetting/${encodeURIComponent(token)}/documents`, {
+      method: "POST",
+      body: JSON.stringify({ kind, fileName: file.name, s3Key }),
+    });
+  }
+
+  deleteCandidateDocument(token: string, documentId: string): Promise<void> {
+    return this.request(`/candidate-vetting/${encodeURIComponent(token)}/documents/${documentId}`, {
+      method: "DELETE",
     });
   }
 

@@ -2,6 +2,7 @@ import type { DbsLevel, Prisma } from "@prisma/client";
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
+import { createUploadUrl } from "../lib/documents.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
 // The candidate-facing half of "send a link before they're added to the
@@ -18,7 +19,10 @@ vettingInvitePublic.get("/candidate-vetting/:token", async (c) => {
   const db = await getDb();
   const invite = await db.vettingInvite.findUnique({
     where: { token: c.req.param("token") },
-    include: { contractor: { select: { name: true } } },
+    include: {
+      contractor: { select: { name: true } },
+      documents: { select: { id: true, kind: true, fileName: true } },
+    },
   });
   if (!invite) return c.json({ error: "This link is invalid or has expired" }, 404);
   if (invite.status === "CONVERTED") {
@@ -32,7 +36,60 @@ vettingInvitePublic.get("/candidate-vetting/:token", async (c) => {
     status: invite.status,
     requiresDbs: invite.requiresDbs,
     requiresRightToWork: invite.requiresRightToWork,
+    documents: invite.documents,
   });
+});
+
+// Two-step upload, same shape as officer documents (lib/documents.ts) — get
+// a presigned URL, PUT the file to S3, then confirm here so a row only
+// exists for files that actually made it to the bucket. Kept against the
+// invite rather than an Officer since none exists yet at this point.
+vettingInvitePublic.post("/candidate-vetting/:token/documents/upload-url", async (c) => {
+  const db = await getDb();
+  const invite = await db.vettingInvite.findUnique({ where: { token: c.req.param("token") } });
+  if (!invite) return c.json({ error: "This link is invalid or has expired" }, 404);
+  if (invite.status === "CONVERTED") return c.json({ error: "This link has already been used" }, 410);
+
+  const body = await c.req.json<{ fileName: string; contentType: string }>();
+  const { uploadUrl, s3Key } = await createUploadUrl({
+    prefix: `vetting-invites/${invite.id}`,
+    fileName: body.fileName,
+    contentType: body.contentType,
+  });
+  return c.json({ uploadUrl, s3Key });
+});
+
+vettingInvitePublic.post("/candidate-vetting/:token/documents", async (c) => {
+  const db = await getDb();
+  const invite = await db.vettingInvite.findUnique({ where: { token: c.req.param("token") } });
+  if (!invite) return c.json({ error: "This link is invalid or has expired" }, 404);
+  if (invite.status === "CONVERTED") return c.json({ error: "This link has already been used" }, 410);
+
+  const body = await c.req.json<{ kind: string; fileName: string; s3Key: string }>();
+
+  // One document per kind — re-uploading (e.g. picked the wrong file)
+  // replaces rather than piling up duplicates that would otherwise all get
+  // copied onto the officer's record together at conversion.
+  await db.vettingInviteDocument.deleteMany({ where: { vettingInviteId: invite.id, kind: body.kind } });
+
+  const created = await db.vettingInviteDocument.create({
+    data: { vettingInviteId: invite.id, kind: body.kind, fileName: body.fileName, s3Key: body.s3Key },
+  });
+
+  return c.json({ id: created.id, kind: created.kind, fileName: created.fileName }, 201);
+});
+
+vettingInvitePublic.delete("/candidate-vetting/:token/documents/:id", async (c) => {
+  const db = await getDb();
+  const invite = await db.vettingInvite.findUnique({ where: { token: c.req.param("token") } });
+  if (!invite) return c.json({ error: "This link is invalid or has expired" }, 404);
+  if (invite.status === "CONVERTED") return c.json({ error: "This link has already been used" }, 410);
+
+  const doc = await db.vettingInviteDocument.findUnique({ where: { id: c.req.param("id") } });
+  if (!doc || doc.vettingInviteId !== invite.id) return c.json({ error: "Document not found" }, 404);
+
+  await db.vettingInviteDocument.delete({ where: { id: doc.id } });
+  return c.body(null, 204);
 });
 
 vettingInvitePublic.post("/candidate-vetting/:token/submit", async (c) => {

@@ -3,7 +3,6 @@ import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { SidebarIdentity } from "../components/SidebarIdentity.js";
 import {
   BarChartIcon,
-  CalendarIcon,
   CheckIcon,
   ClockIcon,
   MapPinIcon,
@@ -88,10 +87,6 @@ export function ProtectedLayout() {
             <RadarIcon />
             Live site occupancy
           </NavLink>
-          <NavLink to={`/${tenant}/schedule`}>
-            <CalendarIcon />
-            Roster &amp; scheduling
-          </NavLink>
           <NavLink to={`/${tenant}/arbitration`}>
             <CheckIcon />
             Arbitration queue
@@ -149,9 +144,9 @@ export function ProtectedLayout() {
           <RadarIcon />
           <span>Live ops</span>
         </NavLink>
-        <NavLink to={`/${tenant}/schedule`} className="mobile-tab">
-          <CalendarIcon />
-          <span>Roster</span>
+        <NavLink to={`/${tenant}/sites`} className="mobile-tab">
+          <MapPinIcon />
+          <span>Sites</span>
         </NavLink>
         <NavLink to={`/${tenant}/incidents`} className="mobile-tab">
           <WarningIcon />

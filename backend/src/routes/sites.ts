@@ -11,6 +11,7 @@ sites.get("/sites", async (c) => {
   const db = await getDb();
   const rows = await db.site.findMany({
     where: { contractorId: c.get("contractorId") },
+    include: { assignedOfficers: { select: { id: true, firstName: true, lastName: true } } },
     orderBy: { name: "asc" },
   });
   return c.json(rows);
@@ -20,7 +21,7 @@ sites.get("/sites/:id", async (c) => {
   const db = await getDb();
   const site = await db.site.findUnique({
     where: { id: c.req.param("id") },
-    include: { shifts: { include: { officer: true }, orderBy: { startTime: "desc" }, take: 50 } },
+    include: { assignedOfficers: { select: { id: true, firstName: true, lastName: true } } },
   });
   if (!site || site.contractorId !== c.get("contractorId")) return c.json({ error: "Site not found" }, 404);
   return c.json(site);

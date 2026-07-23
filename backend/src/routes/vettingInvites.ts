@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
+import { createDownloadUrl } from "../lib/documents.js";
 import { deriveStatus } from "../lib/status.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
@@ -24,9 +25,23 @@ vettingInvites.get("/vetting-invites", async (c) => {
   const db = await getDb();
   const rows = await db.vettingInvite.findMany({
     where: { contractorId: c.get("contractorId") },
+    include: { documents: { select: { id: true, kind: true, fileName: true } } },
     orderBy: { createdAt: "desc" },
   });
   return c.json(rows);
+});
+
+vettingInvites.get("/vetting-invites/:id/documents/:docId/download-url", async (c) => {
+  const db = await getDb();
+  const invite = await db.vettingInvite.findUnique({ where: { id: c.req.param("id") } });
+  if (!invite || invite.contractorId !== c.get("contractorId")) {
+    return c.json({ error: "Invite not found" }, 404);
+  }
+  const doc = await db.vettingInviteDocument.findUnique({ where: { id: c.req.param("docId") } });
+  if (!doc || doc.vettingInviteId !== invite.id) return c.json({ error: "Document not found" }, 404);
+
+  const downloadUrl = await createDownloadUrl(doc.s3Key);
+  return c.json({ downloadUrl });
 });
 
 vettingInvites.post("/vetting-invites", async (c) => {
@@ -101,7 +116,7 @@ vettingInvites.delete("/vetting-invites/:id", async (c) => {
 vettingInvites.post("/vetting-invites/:id/convert", async (c) => {
   const db = await getDb();
   const id = c.req.param("id");
-  const existing = await db.vettingInvite.findUnique({ where: { id } });
+  const existing = await db.vettingInvite.findUnique({ where: { id }, include: { documents: true } });
   if (!existing || existing.contractorId !== c.get("contractorId")) {
     return c.json({ error: "Invite not found" }, 404);
   }
@@ -155,6 +170,16 @@ vettingInvites.post("/vetting-invites/:id/convert", async (c) => {
         status: deriveStatus(null),
         lastCheckedAt: new Date(),
       },
+    });
+  }
+
+  // The files themselves stay where they were uploaded (same bucket, same
+  // s3Key) — only the row moves, from VettingInviteDocument onto the new
+  // Officer's own Document list, so they show up on OfficerDetail exactly
+  // like a document uploaded there directly would.
+  if (existing.documents.length > 0) {
+    await db.document.createMany({
+      data: existing.documents.map((doc) => ({ officerId: officer.id, kind: doc.kind, s3Key: doc.s3Key })),
     });
   }
 
