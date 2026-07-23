@@ -1,4 +1,4 @@
-import type { ComplianceStatus, EmploymentStatus, ShiftStatus, SubmissionStatus, VettingInviteStatus } from "../lib/api.js";
+import type { ComplianceStatus, EmploymentStatus, SubmissionStatus, VettingInviteStatus } from "../lib/api.js";
 
 const LABELS: Record<ComplianceStatus, string> = {
   ACTIVE: "Active",
@@ -30,26 +30,6 @@ const SUBMISSION_CLASSES: Record<SubmissionStatus, string> = {
 
 export function SubmissionStatusBadge({ status }: { status: SubmissionStatus }) {
   return <span className={`status-badge ${SUBMISSION_CLASSES[status]}`}>{SUBMISSION_LABELS[status]}</span>;
-}
-
-const SHIFT_LABELS: Record<ShiftStatus, string> = {
-  SCHEDULED: "Scheduled",
-  CONFIRMED: "Confirmed",
-  COMPLETED: "Completed",
-  MISSED: "Missed",
-  LATE: "Late",
-};
-
-const SHIFT_CLASSES: Record<ShiftStatus, string> = {
-  SCHEDULED: "status-neutral",
-  CONFIRMED: "status-confirmed",
-  COMPLETED: "status-active",
-  MISSED: "status-expired",
-  LATE: "status-expiring",
-};
-
-export function ShiftStatusBadge({ status }: { status: ShiftStatus }) {
-  return <span className={`status-badge ${SHIFT_CLASSES[status]}`}>{SHIFT_LABELS[status]}</span>;
 }
 
 const EMPLOYMENT_LABELS: Record<EmploymentStatus, string> = {

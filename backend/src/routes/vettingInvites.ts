@@ -4,6 +4,7 @@ import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
 import { createDownloadUrl } from "../lib/documents.js";
 import { GroqNotConfiguredError, getAiComplianceReview } from "../lib/groq.js";
+import { generateOfficerPin } from "../lib/identityCodes.js";
 import { deriveStatus } from "../lib/status.js";
 import { asHistoryRows, checkVettingCompliance } from "../lib/vettingCompliance.js";
 import type { AppEnv } from "../lib/hono-env.js";
@@ -189,13 +190,19 @@ vettingInvites.post("/vetting-invites/:id/convert", async (c) => {
     return c.json({ error: "This candidate hasn't submitted their vetting details yet" }, 409);
   }
 
+  const contractorId = c.get("contractorId")!;
+  // Same auto-issued PIN every officer gets on creation (routes/officers.ts)
+  // — this is what lets them reach the pin-access vetting page from here on.
+  const pin = await generateOfficerPin(db, contractorId);
+
   const officer = await db.officer.create({
     data: {
-      contractorId: c.get("contractorId")!,
+      contractorId,
       firstName: existing.firstName,
       lastName: existing.lastName,
       email: existing.email,
       phone: existing.phone,
+      pin,
       // Right to work, if this invite's vetting workflow asked for it — same
       // "answers land in the file the moment the check completes" idea EBC
       // Global describes, just carried over from the candidate's own answer

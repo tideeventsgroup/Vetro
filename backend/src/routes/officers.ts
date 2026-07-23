@@ -2,7 +2,6 @@ import type { EmploymentStatus, EmploymentType, PayRateType } from "@prisma/clie
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
-import { buildInviteClientMetadata, CognitoUserExistsError, createCognitoUser } from "../lib/cognito.js";
 import type { AppEnv } from "../lib/hono-env.js";
 import { generateOfficerPin } from "../lib/identityCodes.js";
 import { GroqNotConfiguredError, getAiComplianceReview } from "../lib/groq.js";
@@ -19,7 +18,6 @@ officers.get("/", async (c) => {
       vettingRecords: true,
       dbsChecks: true,
       referenceChecks: true,
-      site: { select: { id: true, name: true } },
     },
     orderBy: { lastName: "asc" },
   });
@@ -37,7 +35,6 @@ officers.get("/:id", async (c) => {
       referenceChecks: true,
       qualifications: true,
       documents: true,
-      site: { select: { id: true, name: true } },
     },
   });
   if (!row || row.contractorId !== c.get("contractorId")) return c.json({ error: "Officer not found" }, 404);
@@ -45,7 +42,7 @@ officers.get("/:id", async (c) => {
 });
 
 // BS7858/BPSS gap-checking against the officer's most recent self-service
-// submission (routes/me.ts's vetting-submissions) — see
+// submission (routes/pinAccess.ts's vetting-submission endpoint) — see
 // lib/vettingCompliance.ts for the actual standard requirements this
 // encodes. Read-only and computed on request; nothing here is persisted.
 officers.get("/:id/compliance-gaps", async (c) => {
@@ -124,7 +121,6 @@ officers.post("/:id/compliance-gaps/ai-review", async (c) => {
 interface OfficerHrFields {
   email?: string;
   phone?: string;
-  siteId?: string | null;
   dateOfBirth?: string | null;
   nationalInsuranceNumber?: string | null;
   addressLine1?: string | null;
@@ -203,6 +199,7 @@ function buildOfficerHrData(body: OfficerHrFields) {
 
 officers.post("/", async (c) => {
   const db = await getDb();
+  const contractorId = c.get("contractorId")!;
   const body = await c.req.json<{ firstName: string; lastName: string } & OfficerHrFields>();
   if (!body.firstName?.trim() || !body.lastName?.trim()) {
     return c.json({ error: "firstName and lastName are required" }, 400);
@@ -215,24 +212,22 @@ officers.post("/", async (c) => {
     return c.json({ error: err instanceof Error ? err.message : "Invalid officer fields" }, 400);
   }
 
-  if (body.siteId) {
-    const site = await db.site.findUnique({ where: { id: body.siteId } });
-    if (!site || site.contractorId !== c.get("contractorId")) {
-      return c.json({ error: "Site not found" }, 400);
-    }
-  }
+  // Every officer gets a PIN the moment they're added — their own way into
+  // the pin-access vetting page (routes/pinAccess.ts), no Cognito account
+  // needed.
+  const pin = await generateOfficerPin(db, contractorId);
 
   const created = await db.officer.create({
     data: {
-      contractorId: c.get("contractorId")!,
+      contractorId,
       firstName: body.firstName.trim(),
       lastName: body.lastName.trim(),
+      pin,
       ...hrData,
-      ...(body.siteId !== undefined && { siteId: body.siteId }),
     },
   });
   await recordAudit({
-    contractorId: c.get("contractorId"),
+    contractorId,
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "officer.created",
     entityType: "Officer",
@@ -257,20 +252,12 @@ officers.patch("/:id", async (c) => {
     return c.json({ error: err instanceof Error ? err.message : "Invalid officer fields" }, 400);
   }
 
-  if (body.siteId) {
-    const site = await db.site.findUnique({ where: { id: body.siteId } });
-    if (!site || site.contractorId !== c.get("contractorId")) {
-      return c.json({ error: "Site not found" }, 400);
-    }
-  }
-
   const updated = await db.officer.update({
     where: { id },
     data: {
       ...(body.firstName !== undefined && { firstName: body.firstName }),
       ...(body.lastName !== undefined && { lastName: body.lastName }),
       ...hrData,
-      ...(body.siteId !== undefined && { siteId: body.siteId }),
     },
   });
   await recordAudit({
@@ -283,61 +270,8 @@ officers.patch("/:id", async (c) => {
   return c.json(updated);
 });
 
-// Gives an officer their own login to the self-service vetting portal.
-// Vetro still never performs the BS7858 check itself — this just lets the
-// officer submit their own details/documents for an admin to review (see
-// VettingSubmission in prisma/schema.prisma and the /me/* routes it feeds).
-officers.post("/:id/invite", async (c) => {
-  const db = await getDb();
-  const id = c.req.param("id");
-  const officer = await db.officer.findUnique({ where: { id } });
-  if (!officer || officer.contractorId !== c.get("contractorId")) {
-    return c.json({ error: "Officer not found" }, 404);
-  }
-
-  const body = await c.req.json<{ email?: string }>().catch(() => ({}) as { email?: string });
-  const email = body.email ?? officer.email;
-  if (!email) {
-    return c.json({ error: "Officer has no email on file — provide one to invite" }, 400);
-  }
-  if (email !== officer.email) {
-    await db.officer.update({ where: { id }, data: { email } });
-  }
-
-  const contractor = await db.contractor.findUniqueOrThrow({ where: { id: officer.contractorId } });
-
-  let temporaryPassword: string;
-  try {
-    ({ temporaryPassword } = await createCognitoUser({
-      email,
-      attributes: {
-        "custom:contractor_id": officer.contractorId,
-        "custom:role": "OFFICER",
-        "custom:officer_id": officer.id,
-      },
-      clientMetadata: buildInviteClientMetadata(contractor),
-    }));
-  } catch (err) {
-    if (err instanceof CognitoUserExistsError) return c.json({ error: err.message }, 409);
-    throw err;
-  }
-
-  await recordAudit({
-    contractorId: c.get("contractorId"),
-    actorEmail: c.get("actorEmail") ?? "unknown",
-    action: "officer.invited",
-    entityType: "Officer",
-    entityId: id,
-  });
-
-  return c.json({ status: "invited", email, temporaryPassword }, 201);
-});
-
-// (Re)issues this officer's kiosk PIN — the plan's "highest-value
-// integration point": this PIN's own validity is never baked into the code
-// itself, it's checked live against vetting status at the moment of use
-// (see routes/kiosk.ts's getBookOnBlocker call), so a suspended/expired vet
-// blocks booking on without this record ever needing to change.
+// Re-issues this officer's pin-access PIN — e.g. if they've forgotten it or
+// it's been compromised. See Officer.pin in prisma/schema.prisma.
 officers.post("/:id/pin", async (c) => {
   const db = await getDb();
   const id = c.req.param("id");

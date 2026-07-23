@@ -46,14 +46,6 @@ enum ReferenceCheckStatus {
   FLAGGED
 }
 
-enum ShiftStatus {
-  SCHEDULED
-  CONFIRMED
-  COMPLETED
-  MISSED
-  LATE
-}
-
 enum EmploymentType {
   FULL_TIME
   PART_TIME
@@ -77,122 +69,19 @@ enum PayRateType {
   SALARY
 }
 
-enum IncidentCategory {
-  THEFT
-  VANDALISM
-  TRESPASSING
-  MEDICAL
-  FIRE_SAFETY
-  EQUIPMENT_FAULT
-  SUSPICIOUS_ACTIVITY
-  OTHER
-}
-
 // The tenant boundary. `slug` is the subdomain — clyde-coast.vetro.co.uk —
 // and is how a request is scoped, either via the Cognito user's
 // custom:contractor_id claim or, in local dev, the X-Vetro-Tenant header
-// (see backend/src/lib/auth.ts).
+// (see backend/src/lib/auth.ts). Also what routes/pinAccess.ts resolves a
+// PIN's tenant against, since a PIN alone (unlike a VettingInvite token)
+// isn't globally unique.
 model Contractor {
-  id                String            @id @default(cuid())
-  name              String
-  slug              String            @unique
-  officers          Officer[]
-  sites             Site[]
-  shifts            Shift[]
-  incidents         Incident[]
-  checkpoints       Checkpoint[]
-  checkpointScans   CheckpointScan[]
-  visitorLogEntries VisitorLogEntry[]
-  messages          Message[]
-  alerts            Alert[]
-  vettingInvites    VettingInvite[]
-  createdAt         DateTime          @default(now())
-}
-
-// A client's site/contract — what officers are actually scheduled against.
-// clientContactName/Email are who gets invited as the CLIENT self-service
-// login for this one site (custom:site_id scopes that login to just this
-// row — see backend/src/lib/auth.ts's requireClientSelf).
-model Site {
-  id                 String            @id @default(cuid())
-  contractorId       String
-  contractor         Contractor        @relation(fields: [contractorId], references: [id])
-  name               String
-  address            String?
-  clientContactName  String?
-  clientContactEmail String?
-  // Site Identity Number — what a shared site device/kiosk uses to resolve
-  // which tenant + site a PIN book-on/off is happening at (routes/kiosk.ts),
-  // without the officer ever signing into their own Cognito login. Globally
-  // unique (not scoped to contractorId) since the kiosk looks it up before
-  // any tenant is known. Null until an admin generates one.
-  sin                String?           @unique
-  // Geofence centre + radius for GPS-verified clock-in/out. All three are
-  // optional together — a site with no coordinates set skips geofence
-  // enforcement entirely rather than blocking clock-in on missing data.
-  latitude           Float?
-  longitude          Float?
-  geofenceRadiusM    Int?
-  // Expected headcount for this site at any given time — what Live Site
-  // Occupancy compares the currently-clocked-in count against. Null means
-  // the site hasn't set a target yet (occupancy just isn't shown for it).
-  requiredHeadcount  Int?
-  shifts             Shift[]
-  incidents          Incident[]
-  checkpoints        Checkpoint[]
-  visitorLogEntries  VisitorLogEntry[]
-  // A direct, persistent placement — "who works here" — rather than a
-  // scheduled slot with a start/end time.
-  assignedOfficers   Officer[]         @relation("SiteAssignment")
-  createdAt          DateTime          @default(now())
-
-  @@index([contractorId])
-}
-
-// A scheduled slot at a site, optionally assigned to an officer. Status is
-// set by hand here (unlike SiaLicence/VettingRecord, there's no external
-// register to check against) — SCHEDULED/CONFIRMED come from the admin who
-// built the roster, COMPLETED/MISSED/LATE come from the client's own
-// confirmation (routes/client.ts) once the shift has actually happened.
-model Shift {
-  id                String      @id @default(cuid())
-  contractorId      String
-  contractor        Contractor  @relation(fields: [contractorId], references: [id])
-  siteId            String
-  site              Site        @relation(fields: [siteId], references: [id])
-  officerId         String?
-  officer           Officer?    @relation(fields: [officerId], references: [id])
-  startTime         DateTime
-  endTime           DateTime
-  status            ShiftStatus @default(SCHEDULED)
-  clientConfirmedAt DateTime?
-  incidentNotes     String?
-  clockInAt         DateTime?
-  clockInLat        Float?
-  clockInLng        Float?
-  clockInAccuracyM  Float?
-  clockInDistanceM  Float?
-  clockOutAt        DateTime?
-  clockOutLat       Float?
-  clockOutLng       Float?
-  clockOutAccuracyM Float?
-  clockOutDistanceM Float?
-  // Live-tracking position, refreshed by a periodic ping from the officer's
-  // own device while clocked in (routes/me.ts's PATCH .../ping) — distinct
-  // from the one-time clockIn*/clockOut* snapshots above, which never move
-  // again once recorded. Powers the admin Live Ops map's "where is everyone
-  // right now" view.
-  lastLat           Float?
-  lastLng           Float?
-  lastLocationAt    DateTime?
-  alerts            Alert[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-
-  @@index([contractorId])
-  @@index([siteId])
-  @@index([officerId])
-  @@index([startTime])
+  id             String          @id @default(cuid())
+  name           String
+  slug           String          @unique
+  officers       Officer[]
+  vettingInvites VettingInvite[]
+  createdAt      DateTime        @default(now())
 }
 
 model Officer {
@@ -203,10 +92,6 @@ model Officer {
   lastName                     String
   email                        String?
   phone                        String?
-  // Direct, persistent placement at a site — replaces shift scheduling as
-  // "who works where". Null means unassigned/bench.
-  siteId                       String?
-  site                         Site?               @relation("SiteAssignment", fields: [siteId], references: [id])
   // Personal details
   dateOfBirth                  DateTime?
   nationalInsuranceNumber      String?
@@ -235,13 +120,13 @@ model Officer {
   // same "no expiry = never lapses" convention SiaLicence/VettingRecord use.
   rightToWorkExpiryDate        DateTime?
   rightToWorkDocumentType      String?
-  // Personnel Identity Number — the officer-side counterpart to Site.sin,
-  // typed into a shared kiosk device instead of signing into the officer's
-  // own Cognito login (routes/kiosk.ts). Its validity is gated live against
-  // vetting status at book-on time, not baked into the code itself, so a
-  // lapsed vet blocks booking on without needing to touch this field.
-  // Unique per contractor (not globally) since the kiosk already knows the
-  // tenant by the time it looks a PIN up, via the SIN it was entered against.
+  // Auto-generated the moment this officer is added (routes/officers.ts,
+  // routes/vettingInvites.ts's convert) — what they use, on the tenant's own
+  // pin-access page (routes/pinAccess.ts), to view their vetting status and
+  // submit their own address/employment history, references, and documents
+  // without needing a Cognito account of their own. Unique per contractor
+  // (not globally) since the pin-access page already knows the tenant from
+  // its own URL.
   pin                          String?
   licences                     SiaLicence[]
   vettingRecords               VettingRecord[]
@@ -250,13 +135,6 @@ model Officer {
   qualifications               Qualification[]
   documents                    Document[]
   vettingSubmissions           VettingSubmission[]
-  shifts                       Shift[]
-  incidents                    Incident[]
-  checkpointScans              CheckpointScan[]
-  visitorLogEntries            VisitorLogEntry[]
-  messagesReceived             Message[]
-  messageReads                 MessageRead[]
-  alerts                       Alert[]
   // Set only if this officer was created by converting a VettingInvite
   // (routes/vettingInvites.ts) rather than added directly.
   vettingInvite                VettingInvite?
@@ -346,9 +224,10 @@ model ReferenceCheck {
   @@index([officerId])
 }
 
-// What an officer submits themselves through the self-service portal —
-// Vetro still doesn't perform the BS7858 check; this is the record an
-// admin reviews before turning it into (or updating) a VettingRecord.
+// What an officer submits themselves, either through the pin-access page
+// (routes/pinAccess.ts) or as part of converting a VettingInvite — Vetro
+// still doesn't perform the BS7858 check; this is the record an admin
+// reviews before turning it into (or updating) a VettingRecord.
 model VettingSubmission {
   id                String           @id @default(cuid())
   officerId         String
@@ -452,192 +331,6 @@ model Document {
   uploadedAt DateTime @default(now())
 
   @@index([officerId])
-}
-
-// Filed by whichever officer was on-site — the one feature every guard
-// management product (Silvertrac, Trackforce, TimeGate+) treats as core,
-// and doubles as extra evidence for an ACS inspection alongside the
-// compliance record. photoKeys are S3 keys from the same presigned-upload
-// flow as Document (lib/documents.ts), just under an "incidents/" prefix.
-model Incident {
-  id           String           @id @default(cuid())
-  contractorId String
-  contractor   Contractor       @relation(fields: [contractorId], references: [id])
-  siteId       String
-  site         Site             @relation(fields: [siteId], references: [id])
-  officerId    String
-  officer      Officer          @relation(fields: [officerId], references: [id])
-  category     IncidentCategory
-  description  String
-  occurredAt   DateTime
-  photoKeys    String[]
-  latitude     Float?
-  longitude    Float?
-  accuracyM    Float?
-  createdAt    DateTime         @default(now())
-
-  @@index([contractorId])
-  @@index([siteId])
-  @@index([officerId])
-  @@index([occurredAt])
-}
-
-// A patrol route is just a named set of checkpoints at a site. Each
-// checkpoint carries a printable QR code (a random opaque token, not the
-// row id, so a photographed/shared QR doesn't leak a guessable-looking
-// primary key) that an officer scans with their phone camera to log a
-// visit; coordinates are optional and only enforced if an admin sets them,
-// same opt-in pattern as Site's clock-in geofence.
-model Checkpoint {
-  id              String           @id @default(cuid())
-  contractorId    String
-  contractor      Contractor       @relation(fields: [contractorId], references: [id])
-  siteId          String
-  site            Site             @relation(fields: [siteId], references: [id])
-  name            String
-  description     String?
-  qrCode          String           @unique @default(cuid())
-  latitude        Float?
-  longitude       Float?
-  geofenceRadiusM Int?
-  scans           CheckpointScan[]
-  createdAt       DateTime         @default(now())
-
-  @@index([contractorId])
-  @@index([siteId])
-}
-
-model CheckpointScan {
-  id           String     @id @default(cuid())
-  contractorId String
-  contractor   Contractor @relation(fields: [contractorId], references: [id])
-  checkpointId String
-  checkpoint   Checkpoint @relation(fields: [checkpointId], references: [id])
-  officerId    String
-  officer      Officer    @relation(fields: [officerId], references: [id])
-  latitude     Float?
-  longitude    Float?
-  accuracyM    Float?
-  scannedAt    DateTime   @default(now())
-
-  @@index([contractorId])
-  @@index([checkpointId])
-  @@index([officerId])
-  @@index([scannedAt])
-}
-
-// A site-level sign-in/out register — common wherever a site itself
-// controls who's allowed past reception, recorded by whichever officer is
-// on duty rather than the visitor self-serving it.
-model VisitorLogEntry {
-  id           String     @id @default(cuid())
-  contractorId String
-  contractor   Contractor @relation(fields: [contractorId], references: [id])
-  siteId       String
-  site         Site       @relation(fields: [siteId], references: [id])
-  officerId    String
-  officer      Officer    @relation(fields: [officerId], references: [id])
-  visitorName  String
-  company      String?
-  purpose      String?
-  hostName     String?
-  signedInAt   DateTime   @default(now())
-  signedOutAt  DateTime?
-
-  @@index([contractorId])
-  @@index([siteId])
-  @@index([officerId])
-  @@index([signedInAt])
-}
-
-// Dispatch messaging — an admin broadcasts to every officer (recipientId
-// null) or messages one officer directly. Officers only ever read here
-// (see requireOfficerSelf-scoped /me/messages), never send: this is a
-// control-room-to-field channel, not officer-to-officer chat. Polling-based
-// for now (no websocket infra), so readAt is what drives the unread badge
-// rather than a push event.
-model Message {
-  id           String        @id @default(cuid())
-  contractorId String
-  contractor   Contractor    @relation(fields: [contractorId], references: [id])
-  senderEmail  String
-  recipientId  String?
-  recipient    Officer?      @relation(fields: [recipientId], references: [id])
-  body         String
-  createdAt    DateTime      @default(now())
-  reads        MessageRead[]
-
-  @@index([contractorId])
-  @@index([recipientId])
-  @@index([createdAt])
-}
-
-// Cascades on both sides: a deleted message has no reads worth keeping, and
-// a deleted officer's read receipts are meaningless without the officer —
-// unlike CheckpointScan/VisitorLogEntry (real records of what happened),
-// this table only ever answers "has X seen Y", so nothing is lost by letting
-// it disappear with either side.
-model MessageRead {
-  id        String   @id @default(cuid())
-  messageId String
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  officerId String
-  officer   Officer  @relation(fields: [officerId], references: [id], onDelete: Cascade)
-  readAt    DateTime @default(now())
-
-  @@unique([messageId, officerId])
-  @@index([officerId])
-}
-
-enum AlertStatus {
-  OPEN
-  ACKNOWLEDGED
-  RESOLVED
-}
-
-// SOS and CHECK_CALL are officer-raised (routes/me.ts's POST /sos and
-// POST /check-call); NO_SHOW and MISSED_CHECK_CALL are system-raised by
-// scheduled jobs (jobs/checkNoShows.ts, jobs/checkOverdueCheckCalls.ts).
-// Unlike SOS, a CHECK_CALL is created already RESOLVED — it's a routine
-// "I'm OK" welfare ping, not something needing a response. MISSED_CHECK_CALL
-// is the opposite: raised OPEN, same emergency footing as SOS, once an
-// hourly check-in on a nightshift/weekend day shift runs more than 30
-// minutes overdue (see lib/checkCalls.ts) — auto-resolved the moment the
-// officer's next check-in lands.
-enum AlertType {
-  SOS
-  NO_SHOW
-  CHECK_CALL
-  MISSED_CHECK_CALL
-}
-
-// A lone-worker panic/SOS alert or a system-raised no-show. OPEN means
-// nobody at the office has seen it yet; ACKNOWLEDGED means someone has and
-// is responding; RESOLVED closes it out. SOS alerts are deliberately not
-// gated by requireVettingCompleted (a safety escape hatch has no business
-// waiting on admin approval) — that gate is irrelevant to NO_SHOW anyway,
-// since it's never raised by the officer themself.
-model Alert {
-  id                  String      @id @default(cuid())
-  contractorId        String
-  contractor          Contractor  @relation(fields: [contractorId], references: [id])
-  officerId           String
-  officer             Officer     @relation(fields: [officerId], references: [id])
-  type                AlertType   @default(SOS)
-  shiftId             String?
-  shift               Shift?      @relation(fields: [shiftId], references: [id])
-  latitude            Float?
-  longitude           Float?
-  accuracyM           Float?
-  status              AlertStatus @default(OPEN)
-  acknowledgedAt      DateTime?
-  acknowledgedByEmail String?
-  resolvedAt          DateTime?
-  createdAt           DateTime    @default(now())
-
-  @@index([contractorId])
-  @@index([officerId])
-  @@index([status])
 }
 
 // Every write an ACS inspector or client export might need to prove happened.

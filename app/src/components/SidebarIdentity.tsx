@@ -7,14 +7,11 @@ function initial(email: string | undefined): string {
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Admin",
-  OFFICER: "Officer",
-  CLIENT: "Client contact",
 };
 
-// Org + signed-in-account block, anchored to the bottom of every sidebar
-// variant (admin dashboard, officer portal, client portal) — the nav
-// above it uses flex to push this down, so it always sits directly above
-// the sign-out footer regardless of how much nav content there is.
+// Org + signed-in-account block, anchored to the bottom of the sidebar —
+// the nav above it uses flex to push this down, so it always sits directly
+// above the sign-out footer regardless of how much nav content there is.
 export function SidebarIdentity() {
   const { email, role } = useAuth();
   const orgName = useOrgName();

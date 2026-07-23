@@ -1,5 +1,5 @@
 import { useAuth } from "./auth.js";
-import { getDevOfficerId, getDevRole, getDevSiteId } from "./dev.js";
+import { getDevRole } from "./dev.js";
 import { getTenantSlug } from "./tenant.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -195,12 +195,9 @@ export interface Officer {
   rightToWorkCheckedAt: string | null;
   rightToWorkExpiryDate: string | null;
   rightToWorkDocumentType: string | null;
-  // Kiosk book-on/off identity — see lib/identityCodes.ts on the backend.
-  // Null until an admin generates one from OfficerDetail.tsx.
+  // Pin-access identity — see lib/identityCodes.ts on the backend. Auto-set
+  // the moment the officer is added; regenerable from OfficerDetail.tsx.
   pin: string | null;
-  // Direct, persistent placement — "who works where" — set from Sites.tsx.
-  siteId: string | null;
-  site?: { id: string; name: string } | null;
   licences: SiaLicence[];
   vettingRecords: VettingRecord[];
   dbsChecks: DbsCheck[];
@@ -213,7 +210,6 @@ export interface Officer {
 export interface OfficerHrInput {
   email?: string;
   phone?: string;
-  siteId?: string | null;
   dateOfBirth?: string | null;
   nationalInsuranceNumber?: string | null;
   addressLine1?: string | null;
@@ -243,184 +239,18 @@ export interface Contractor {
   slug: string;
 }
 
-export interface DashboardSummary {
-  licences: Partial<Record<ComplianceStatus, number>>;
-  vetting: Partial<Record<ComplianceStatus, number>>;
-}
-
-export interface Site {
-  id: string;
-  contractorId: string;
-  name: string;
-  address: string | null;
-  clientContactName: string | null;
-  clientContactEmail: string | null;
-  // Kiosk book-on/off identity — see lib/identityCodes.ts on the backend.
-  // Null until an admin generates one from Sites.tsx.
-  sin: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  geofenceRadiusM: number | null;
-  // Expected headcount for Live Site Occupancy to compare the currently
-  // clocked-in count against. Null until an admin sets a target.
-  requiredHeadcount: number | null;
-  assignedOfficers?: { id: string; firstName: string; lastName: string }[];
-  createdAt: string;
-}
-
-export type ShiftStatus = "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "MISSED" | "LATE";
-
-export interface Shift {
-  id: string;
-  contractorId: string;
-  siteId: string;
-  officerId: string | null;
-  startTime: string;
-  endTime: string;
-  status: ShiftStatus;
-  clientConfirmedAt: string | null;
-  incidentNotes: string | null;
-  clockInAt: string | null;
-  clockInLat: number | null;
-  clockInLng: number | null;
-  clockInAccuracyM: number | null;
-  clockInDistanceM: number | null;
-  clockOutAt: string | null;
-  clockOutLat: number | null;
-  clockOutLng: number | null;
-  clockOutAccuracyM: number | null;
-  clockOutDistanceM: number | null;
-  lastLat: number | null;
-  lastLng: number | null;
-  lastLocationAt: string | null;
-  // Only present on /shifts/active rows — whether this shift (a nightshift
-  // or weekend day shift, see backend/src/lib/checkCalls.ts) needs hourly
-  // welfare check-ins, and if so when the next one is due / whether it's
-  // already run more than 30 minutes overdue.
-  requiresCheckCalls?: boolean;
-  lastCheckCallAt?: string | null;
-  nextCheckCallDueAt?: string | null;
-  checkCallOverdue?: boolean;
-  site?: Site;
-  officer?: Officer | null;
-}
-
-export interface ClockGps {
-  lat?: number;
-  lng?: number;
-  accuracyM?: number;
-}
-
-export type IncidentCategory =
-  | "THEFT"
-  | "VANDALISM"
-  | "TRESPASSING"
-  | "MEDICAL"
-  | "FIRE_SAFETY"
-  | "EQUIPMENT_FAULT"
-  | "SUSPICIOUS_ACTIVITY"
-  | "OTHER";
-
-export interface Incident {
-  id: string;
-  contractorId: string;
-  siteId: string;
-  officerId: string;
-  category: IncidentCategory;
-  description: string;
-  occurredAt: string;
-  photoKeys: string[];
-  latitude: number | null;
-  longitude: number | null;
-  accuracyM: number | null;
-  createdAt: string;
-  site?: Site;
-  officer?: Officer;
-}
-
-export interface Checkpoint {
-  id: string;
-  contractorId: string;
-  siteId: string;
-  name: string;
-  description: string | null;
-  qrCode: string;
-  latitude: number | null;
-  longitude: number | null;
-  geofenceRadiusM: number | null;
-  createdAt: string;
-  site?: Site;
-}
-
-export interface CheckpointScan {
-  id: string;
-  contractorId: string;
-  checkpointId: string;
-  officerId: string;
-  latitude: number | null;
-  longitude: number | null;
-  accuracyM: number | null;
-  scannedAt: string;
-  checkpoint?: Checkpoint;
-  officer?: Officer;
-}
-
-export interface VisitorLogEntry {
-  id: string;
-  contractorId: string;
-  siteId: string;
-  officerId: string;
-  visitorName: string;
-  company: string | null;
-  purpose: string | null;
-  hostName: string | null;
-  signedInAt: string;
-  signedOutAt: string | null;
-  site?: Site;
-  officer?: Officer;
-}
-
-export interface Message {
-  id: string;
-  contractorId: string;
-  senderEmail: string;
-  recipientId: string | null;
-  body: string;
-  createdAt: string;
-  recipient?: Officer | null;
-}
-
-export interface MyMessage extends Message {
-  read: boolean;
-}
-
-export type AlertStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
-
-export type AlertKind = "SOS" | "NO_SHOW" | "CHECK_CALL" | "MISSED_CHECK_CALL";
-
-export interface Alert {
-  id: string;
-  contractorId: string;
-  officerId: string;
-  type: AlertKind;
-  shiftId: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  accuracyM: number | null;
-  status: AlertStatus;
-  acknowledgedAt: string | null;
-  acknowledgedByEmail: string | null;
-  resolvedAt: string | null;
-  createdAt: string;
-  officer?: Officer;
-}
-
-export interface SiteReport {
-  id: string;
-  name: string;
-  shiftCounts: Record<ShiftStatus, number>;
-  officerCount: number;
-  officersAtRisk: number;
+// What the pin-access page (routes/pinAccess.ts) returns once a PIN
+// verifies — an officer's own vetting status, no Cognito account involved.
+export interface PinAccessStatus {
+  organisationName: string;
+  firstName: string;
+  lastName: string;
+  vettingRecords: VettingRecord[];
+  dbsChecks: DbsCheck[];
+  rightToWorkConfirmed: boolean;
+  rightToWorkExpiryDate: string | null;
+  vettingSubmissions: VettingSubmission[];
+  documents: { id: string; kind: string; uploadedAt: string }[];
 }
 
 class ApiError extends Error {
@@ -436,8 +266,6 @@ class VetroApiClient {
     const token = this.getToken();
     const tenantSlug = getTenantSlug();
     const devRole = getDevRole();
-    const devOfficerId = getDevOfficerId();
-    const devSiteId = getDevSiteId();
     const response = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
@@ -445,8 +273,6 @@ class VetroApiClient {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(tenantSlug ? { "X-Vetro-Tenant": tenantSlug } : {}),
         ...(devRole ? { "X-Vetro-Role": devRole } : {}),
-        ...(devOfficerId ? { "X-Vetro-Officer-Id": devOfficerId } : {}),
-        ...(devSiteId ? { "X-Vetro-Site-Id": devSiteId } : {}),
         ...init?.headers,
       },
     });
@@ -604,10 +430,6 @@ class VetroApiClient {
     return this.request(`/documents/${id}`, { method: "DELETE" });
   }
 
-  getDashboardSummary(): Promise<DashboardSummary> {
-    return this.request("/dashboard/summary");
-  }
-
   inviteTeammate(email: string): Promise<{ status: string; email: string; temporaryPassword: string }> {
     return this.request("/invitations", { method: "POST", body: JSON.stringify({ email }) });
   }
@@ -695,8 +517,7 @@ class VetroApiClient {
 
   // The candidate-facing side — no session, no tenant header (see
   // backend/src/routes/vettingInvitePublic.ts). Goes through the same
-  // request() as everything else purely for the shared error handling, same
-  // as the kiosk methods below.
+  // request() as everything else purely for the shared error handling.
   getPublicVettingInvite(token: string): Promise<PublicVettingInvite> {
     return this.request(`/candidate-vetting/${encodeURIComponent(token)}`);
   }
@@ -745,36 +566,31 @@ class VetroApiClient {
     });
   }
 
-  inviteOfficer(
-    officerId: string,
-    email?: string
-  ): Promise<{ status: string; email: string; temporaryPassword: string }> {
-    return this.request(`/officers/${officerId}/invite`, { method: "POST", body: JSON.stringify({ email }) });
+  // Pin-access — an officer's own way into their vetting record, no Cognito
+  // account needed (see backend/src/routes/pinAccess.ts). The tenant slug
+  // comes from the page's own URL (it's always rendered at /:tenant/pin-access).
+  verifyPinAccess(pin: string): Promise<PinAccessStatus> {
+    return this.request(`/pin-access/${encodeURIComponent(getTenantSlug() ?? "")}/verify`, {
+      method: "POST",
+      body: JSON.stringify({ pin }),
+    });
   }
 
-  // Officer self-service portal — scoped server-side to the caller's own
-  // officerId claim, never to an :id in the URL (see backend/src/routes/me.ts).
-  getMyOfficer(): Promise<Officer> {
-    return this.request("/me/officer");
+  submitPinVetting(
+    pin: string,
+    input: { addressHistory: unknown; employmentHistory: unknown; references: unknown; consentGiven: boolean }
+  ): Promise<VettingSubmission> {
+    return this.request(`/pin-access/${encodeURIComponent(getTenantSlug() ?? "")}/vetting-submission`, {
+      method: "POST",
+      body: JSON.stringify({ pin, ...input }),
+    });
   }
 
-  listMyVettingSubmissions(): Promise<VettingSubmission[]> {
-    return this.request("/me/vetting-submissions");
-  }
-
-  submitVetting(input: {
-    addressHistory: unknown;
-    employmentHistory: unknown;
-    references: unknown;
-    consentGiven: boolean;
-  }): Promise<VettingSubmission> {
-    return this.request("/me/vetting-submissions", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  async uploadMyDocument(file: File, kind: string): Promise<OfficerDocument> {
+  async uploadPinDocument(pin: string, file: File, kind: string): Promise<OfficerDocument> {
+    const tenantSlug = encodeURIComponent(getTenantSlug() ?? "");
     const { uploadUrl, s3Key } = await this.request<{ uploadUrl: string; s3Key: string }>(
-      "/me/documents/upload-url",
-      { method: "POST", body: JSON.stringify({ fileName: file.name, contentType: file.type || "application/octet-stream" }) }
+      `/pin-access/${tenantSlug}/documents/upload-url`,
+      { method: "POST", body: JSON.stringify({ pin, fileName: file.name, contentType: file.type || "application/octet-stream" }) }
     );
     const putResponse = await fetch(uploadUrl, {
       method: "PUT",
@@ -782,364 +598,10 @@ class VetroApiClient {
       body: file,
     });
     if (!putResponse.ok) throw new ApiError(putResponse.status, "Upload to storage failed");
-    return this.request<OfficerDocument>("/me/documents", { method: "POST", body: JSON.stringify({ kind, s3Key }) });
-  }
-
-  async getMyDocumentDownloadUrl(id: string): Promise<string> {
-    const { downloadUrl } = await this.request<{ downloadUrl: string }>(`/me/documents/${id}/download-url`);
-    return downloadUrl;
-  }
-
-  listMyShifts(): Promise<Shift[]> {
-    return this.request("/me/shifts");
-  }
-
-  confirmMyShift(id: string): Promise<Shift> {
-    return this.request(`/me/shifts/${id}/confirm`, { method: "PATCH" });
-  }
-
-  clockInMyShift(id: string, gps?: ClockGps): Promise<Shift> {
-    return this.request(`/me/shifts/${id}/clock-in`, {
-      method: "PATCH",
-      body: JSON.stringify(gps ?? {}),
-    });
-  }
-
-  clockOutMyShift(id: string, gps?: ClockGps): Promise<Shift> {
-    return this.request(`/me/shifts/${id}/clock-out`, {
-      method: "PATCH",
-      body: JSON.stringify(gps ?? {}),
-    });
-  }
-
-  pingMyShiftLocation(id: string, gps: Required<Pick<ClockGps, "lat" | "lng">> & ClockGps) {
-    return this.request<{ lastLat: number; lastLng: number; lastLocationAt: string }>(
-      `/me/shifts/${id}/ping`,
-      { method: "PATCH", body: JSON.stringify(gps) }
-    );
-  }
-
-  triggerSos(gps?: ClockGps): Promise<Alert> {
-    return this.request("/me/sos", { method: "POST", body: JSON.stringify(gps ?? {}) });
-  }
-
-  // Routine "I'm OK" welfare check-in — see routes/me.ts's POST /check-call.
-  triggerCheckCall(gps?: ClockGps): Promise<Alert> {
-    return this.request("/me/check-call", { method: "POST", body: JSON.stringify(gps ?? {}) });
-  }
-
-  // The sites this officer has ever had a shift at — used to populate
-  // site-pickers below without exposing the contractor's full site list to
-  // an OFFICER login (see backend/src/routes/me.ts).
-  listMySites(): Promise<Site[]> {
-    return this.request("/me/sites");
-  }
-
-  listMyIncidents(): Promise<Incident[]> {
-    return this.request("/me/incidents");
-  }
-
-  async uploadMyIncidentPhoto(file: File): Promise<string> {
-    const { uploadUrl, s3Key } = await this.request<{ uploadUrl: string; s3Key: string }>(
-      "/me/incidents/upload-url",
-      { method: "POST", body: JSON.stringify({ fileName: file.name, contentType: file.type || "application/octet-stream" }) }
-    );
-    const putResponse = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": file.type || "application/octet-stream" },
-      body: file,
-    });
-    if (!putResponse.ok) throw new ApiError(putResponse.status, "Upload to storage failed");
-    return s3Key;
-  }
-
-  reportIncident(input: {
-    siteId: string;
-    category: IncidentCategory;
-    description: string;
-    occurredAt: string;
-    photoKeys?: string[];
-  } & ClockGps): Promise<Incident> {
-    return this.request("/me/incidents", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  async getMyIncidentPhotoUrl(incidentId: string, key: string): Promise<string> {
-    const { downloadUrl } = await this.request<{ downloadUrl: string }>(
-      `/me/incidents/${incidentId}/photo-url?key=${encodeURIComponent(key)}`
-    );
-    return downloadUrl;
-  }
-
-  listMyCheckpoints(siteId: string): Promise<{ checkpoints: Checkpoint[]; scans: CheckpointScan[] }> {
-    return this.request(`/me/checkpoints?siteId=${encodeURIComponent(siteId)}`);
-  }
-
-  scanMyCheckpoint(checkpointId: string, gps?: ClockGps): Promise<CheckpointScan> {
-    return this.request(`/me/checkpoints/${checkpointId}/scan`, {
+    return this.request<OfficerDocument>(`/pin-access/${tenantSlug}/documents`, {
       method: "POST",
-      body: JSON.stringify(gps ?? {}),
+      body: JSON.stringify({ pin, kind, s3Key }),
     });
-  }
-
-  scanCheckpointByQrCode(qrCode: string, gps?: ClockGps): Promise<CheckpointScan> {
-    return this.request("/me/checkpoints/scan-qr", {
-      method: "POST",
-      body: JSON.stringify({ qrCode, ...gps }),
-    });
-  }
-
-  listMyMessages(): Promise<MyMessage[]> {
-    return this.request("/me/messages");
-  }
-
-  getMyUnreadMessageCount(): Promise<{ unreadCount: number }> {
-    return this.request("/me/messages/unread-count");
-  }
-
-  markAllMessagesRead(): Promise<{ markedCount: number }> {
-    return this.request("/me/messages/mark-read", { method: "POST" });
-  }
-
-  listMyVisitorLog(siteId: string): Promise<VisitorLogEntry[]> {
-    return this.request(`/me/visitor-log?siteId=${encodeURIComponent(siteId)}`);
-  }
-
-  signInVisitor(input: {
-    siteId: string;
-    visitorName: string;
-    company?: string;
-    purpose?: string;
-    hostName?: string;
-  }): Promise<VisitorLogEntry> {
-    return this.request("/me/visitor-log", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  signOutVisitor(id: string): Promise<VisitorLogEntry> {
-    return this.request(`/me/visitor-log/${id}/sign-out`, { method: "PATCH" });
-  }
-
-  listSites(): Promise<Site[]> {
-    return this.request("/sites");
-  }
-
-  getSite(id: string): Promise<Site & { shifts: Shift[] }> {
-    return this.request(`/sites/${id}`);
-  }
-
-  createSite(input: {
-    name: string;
-    address?: string;
-    clientContactName?: string;
-    clientContactEmail?: string;
-    latitude?: number;
-    longitude?: number;
-    geofenceRadiusM?: number;
-    requiredHeadcount?: number;
-  }) {
-    return this.request<Site>("/sites", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  updateSite(
-    id: string,
-    input: Partial<{
-      name: string;
-      address: string;
-      clientContactName: string;
-      clientContactEmail: string;
-      latitude: number | null;
-      longitude: number | null;
-      geofenceRadiusM: number | null;
-      requiredHeadcount: number | null;
-    }>
-  ) {
-    return this.request<Site>(`/sites/${id}`, { method: "PATCH", body: JSON.stringify(input) });
-  }
-
-  deleteSite(id: string): Promise<void> {
-    return this.request(`/sites/${id}`, { method: "DELETE" });
-  }
-
-  regenerateSiteSin(id: string): Promise<{ sin: string }> {
-    return this.request(`/sites/${id}/sin`, { method: "POST" });
-  }
-
-  inviteClient(
-    siteId: string,
-    email?: string
-  ): Promise<{ status: string; email: string; temporaryPassword: string }> {
-    return this.request(`/sites/${siteId}/invite-client`, { method: "POST", body: JSON.stringify({ email }) });
-  }
-
-  listShifts(filter?: { siteId?: string; from?: string; to?: string }): Promise<Shift[]> {
-    const params = new URLSearchParams();
-    if (filter?.siteId) params.set("siteId", filter.siteId);
-    if (filter?.from) params.set("from", filter.from);
-    if (filter?.to) params.set("to", filter.to);
-    const qs = params.toString();
-    return this.request(`/shifts${qs ? `?${qs}` : ""}`);
-  }
-
-  createShift(input: { siteId: string; officerId?: string; startTime: string; endTime: string }) {
-    return this.request<Shift>("/shifts", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  updateShift(id: string, input: Partial<{ officerId: string | null; startTime: string; endTime: string; status: ShiftStatus }>) {
-    return this.request<Shift>(`/shifts/${id}`, { method: "PATCH", body: JSON.stringify(input) });
-  }
-
-  deleteShift(id: string): Promise<void> {
-    return this.request(`/shifts/${id}`, { method: "DELETE" });
-  }
-
-  // Everyone currently clocked in — the Live Ops map's officer roster.
-  listActiveShifts(): Promise<Shift[]> {
-    return this.request("/shifts/active");
-  }
-
-  listAlerts(status?: AlertStatus): Promise<Alert[]> {
-    return this.request(`/alerts${status ? `?status=${status}` : ""}`);
-  }
-
-  updateAlertStatus(id: string, status: "ACKNOWLEDGED" | "RESOLVED"): Promise<Alert> {
-    return this.request(`/alerts/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
-  }
-
-  // Kiosk (routes/kiosk.ts on the backend) is public — no Cognito session,
-  // no tenant header. These go through the same request() as everything
-  // else purely for the shared error handling; it just won't have a token
-  // or X-Vetro-Tenant to attach since nobody's signed in on this page.
-  getKioskSite(sin: string): Promise<{ siteName: string; organisationName: string }> {
-    return this.request(`/kiosk/site?sin=${encodeURIComponent(sin)}`);
-  }
-
-  kioskBookOn(input: { sin: string; pin: string } & ClockGps): Promise<{
-    officerName: string;
-    siteName: string;
-    clockInAt: string;
-  }> {
-    return this.request("/kiosk/book-on", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  kioskBookOff(input: { sin: string; pin: string } & ClockGps): Promise<{
-    officerName: string;
-    siteName: string;
-    clockOutAt: string;
-  }> {
-    return this.request("/kiosk/book-off", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  listSiteReports(range?: { from?: string; to?: string }): Promise<SiteReport[]> {
-    const params = new URLSearchParams();
-    if (range?.from) params.set("from", range.from);
-    if (range?.to) params.set("to", range.to);
-    const qs = params.toString();
-    return this.request(`/reports/sites${qs ? `?${qs}` : ""}`);
-  }
-
-  listIncidents(filter?: { siteId?: string; category?: IncidentCategory; from?: string; to?: string }): Promise<Incident[]> {
-    const params = new URLSearchParams();
-    if (filter?.siteId) params.set("siteId", filter.siteId);
-    if (filter?.category) params.set("category", filter.category);
-    if (filter?.from) params.set("from", filter.from);
-    if (filter?.to) params.set("to", filter.to);
-    const qs = params.toString();
-    return this.request(`/incidents${qs ? `?${qs}` : ""}`);
-  }
-
-  getIncident(id: string): Promise<Incident> {
-    return this.request(`/incidents/${id}`);
-  }
-
-  async getIncidentPhotoUrl(incidentId: string, key: string): Promise<string> {
-    const { downloadUrl } = await this.request<{ downloadUrl: string }>(
-      `/incidents/${incidentId}/photo-url?key=${encodeURIComponent(key)}`
-    );
-    return downloadUrl;
-  }
-
-  listCheckpoints(siteId?: string): Promise<Checkpoint[]> {
-    return this.request(`/checkpoints${siteId ? `?siteId=${encodeURIComponent(siteId)}` : ""}`);
-  }
-
-  createCheckpoint(input: {
-    siteId: string;
-    name: string;
-    description?: string;
-    latitude?: number;
-    longitude?: number;
-    geofenceRadiusM?: number;
-  }): Promise<Checkpoint> {
-    return this.request("/checkpoints", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  updateCheckpoint(
-    id: string,
-    input: Partial<{
-      name: string;
-      description: string;
-      latitude: number | null;
-      longitude: number | null;
-      geofenceRadiusM: number | null;
-    }>
-  ): Promise<Checkpoint> {
-    return this.request(`/checkpoints/${id}`, { method: "PATCH", body: JSON.stringify(input) });
-  }
-
-  deleteCheckpoint(id: string): Promise<void> {
-    return this.request(`/checkpoints/${id}`, { method: "DELETE" });
-  }
-
-  listPatrolLog(filter?: { siteId?: string; from?: string; to?: string }): Promise<CheckpointScan[]> {
-    const params = new URLSearchParams();
-    if (filter?.siteId) params.set("siteId", filter.siteId);
-    if (filter?.from) params.set("from", filter.from);
-    if (filter?.to) params.set("to", filter.to);
-    const qs = params.toString();
-    return this.request(`/patrol-log${qs ? `?${qs}` : ""}`);
-  }
-
-  listVisitorLog(filter?: { siteId?: string; from?: string; to?: string }): Promise<VisitorLogEntry[]> {
-    const params = new URLSearchParams();
-    if (filter?.siteId) params.set("siteId", filter.siteId);
-    if (filter?.from) params.set("from", filter.from);
-    if (filter?.to) params.set("to", filter.to);
-    const qs = params.toString();
-    return this.request(`/visitor-log${qs ? `?${qs}` : ""}`);
-  }
-
-  listMessages(): Promise<Message[]> {
-    return this.request("/messages");
-  }
-
-  sendMessage(input: { recipientId?: string; body: string }): Promise<Message> {
-    return this.request("/messages", { method: "POST", body: JSON.stringify(input) });
-  }
-
-  // Client self-service portal — scoped server-side to the caller's own
-  // siteId claim, never to an :id in the URL (see backend/src/routes/client.ts).
-  getClientSite(): Promise<Site> {
-    return this.request("/client/site");
-  }
-
-  listClientShifts(): Promise<Shift[]> {
-    return this.request("/client/shifts");
-  }
-
-  confirmClientShift(id: string, input: { status: "COMPLETED" | "MISSED" | "LATE"; incidentNotes?: string }) {
-    return this.request<Shift>(`/client/shifts/${id}/confirm`, { method: "PATCH", body: JSON.stringify(input) });
-  }
-
-  async downloadExport(): Promise<Blob> {
-    const token = this.getToken();
-    const tenantSlug = getTenantSlug();
-    const response = await fetch(`${API_URL}/exports/officers.csv`, {
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(tenantSlug ? { "X-Vetro-Tenant": tenantSlug } : {}),
-      },
-    });
-    if (!response.ok) throw new ApiError(response.status, await response.text());
-    return response.blob();
   }
 }
 

@@ -3,13 +3,13 @@ import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NewPasswordRequiredError, useAuth } from "../lib/auth.js";
 import { useApi } from "../lib/api.js";
-import { MapPinIcon, QrCodeIcon, ShieldCheckIcon } from "../components/icons.js";
+import { CheckIcon, FileIcon, ShieldCheckIcon } from "../components/icons.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 
 const FEATURES = [
-  { icon: MapPinIcon, text: "GPS-verified clock-in/out — proof of presence for every shift you bill" },
-  { icon: QrCodeIcon, text: "QR patrol checkpoints, logged automatically — no paper tour sheets" },
-  { icon: ShieldCheckIcon, text: "SIA licence and BS7858 vetting tracked for you — nothing to chase" },
+  { icon: ShieldCheckIcon, text: "BS7858 and BPSS vetting tracked automatically — nothing to chase" },
+  { icon: FileIcon, text: "One record per candidate — SIA licence, DBS, right to work, documents" },
+  { icon: CheckIcon, text: "Staff submit their own vetting details with a PIN — no separate login needed" },
 ];
 
 // Login itself is tenant-agnostic — there's no /:tenant prefix here (see
@@ -18,9 +18,7 @@ const FEATURES = [
 // custom:contractor_id claim already scopes GET /contractors/me server-side
 // (see backend/src/lib/auth.ts), so all this needs is the slug that comes
 // back to know which tenant-prefixed route to land on.
-function destinationFor(role: string | undefined, slug: string): string {
-  if (role === "OFFICER") return `/${slug}/portal`;
-  if (role === "CLIENT") return `/${slug}/client`;
+function destinationFor(slug: string): string {
   return `/${slug}`;
 }
 
@@ -38,10 +36,10 @@ export function Login() {
   const [pendingUser, setPendingUser] = useState<CognitoUser | undefined>(undefined);
   const [newPassword, setNewPassword] = useState("");
 
-  async function redirectToOwnTenant(role: string | undefined) {
+  async function redirectToOwnTenant() {
     const contractor = await api.getCurrentContractor();
     if (!contractor) throw new Error("This account isn't attached to an organisation yet");
-    navigate(destinationFor(role, contractor.slug), { replace: true });
+    navigate(destinationFor(contractor.slug), { replace: true });
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -49,8 +47,8 @@ export function Login() {
     setError(undefined);
     setIsSubmitting(true);
     try {
-      const claims = await login(email, password);
-      await redirectToOwnTenant(claims.role);
+      await login(email, password);
+      await redirectToOwnTenant();
     } catch (err) {
       if (err instanceof NewPasswordRequiredError) {
         setPendingUser(err.user);
@@ -68,8 +66,8 @@ export function Login() {
     setError(undefined);
     setIsSubmitting(true);
     try {
-      const claims = await completeNewPassword(pendingUser, newPassword);
-      await redirectToOwnTenant(claims.role);
+      await completeNewPassword(pendingUser, newPassword);
+      await redirectToOwnTenant();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not set new password");
     } finally {

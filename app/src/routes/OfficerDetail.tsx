@@ -3,8 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ComplianceGapPanel } from "../components/ComplianceGapPanel.js";
 import { DocumentsSection } from "../components/DocumentsSection.js";
 import { EmploymentStatusBadge, StatusBadge } from "../components/StatusBadge.js";
-import { TemporaryPasswordReveal } from "../components/TemporaryPasswordReveal.js";
-import { ArrowLeftIcon, FileIcon, MailIcon, PlusIcon } from "../components/icons.js";
+import { ArrowLeftIcon, PlusIcon } from "../components/icons.js";
 import {
   DbsLevel,
   EmploymentStatus,
@@ -74,11 +73,6 @@ export function OfficerDetail() {
   const [showAddDbs, setShowAddDbs] = useState(false);
   const [showAddReference, setShowAddReference] = useState(false);
   const [showAddQualification, setShowAddQualification] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteStatus, setInviteStatus] = useState<string | undefined>(undefined);
-  const [invitedPassword, setInvitedPassword] = useState<string | undefined>(undefined);
-  const [inviteError, setInviteError] = useState<string | undefined>(undefined);
-  const [isInviting, setIsInviting] = useState(false);
   const [hrStatus, setHrStatus] = useState<string | undefined>(undefined);
   const [isSavingHr, setIsSavingHr] = useState(false);
   const [isGeneratingPin, setIsGeneratingPin] = useState(false);
@@ -90,7 +84,6 @@ export function OfficerDetail() {
   async function load(officerId: string) {
     const loaded = await api.getOfficer(officerId);
     setOfficer(loaded);
-    setInviteEmail((current) => current || loaded.email || "");
   }
 
   async function handleAddLicence(e: FormEvent<HTMLFormElement>) {
@@ -220,27 +213,6 @@ export function OfficerDetail() {
     }
   }
 
-  async function handleInvite(e: FormEvent) {
-    e.preventDefault();
-    if (!id) return;
-    setInviteStatus(undefined);
-    setInvitedPassword(undefined);
-    setInviteError(undefined);
-    setIsInviting(true);
-    try {
-      const result = await api.inviteOfficer(id, inviteEmail.trim() || undefined);
-      setInviteStatus(
-        `Account created for ${result.email}. Email may not arrive (Cognito's sender is capped at 50/day) — share this temporary password directly if needed:`
-      );
-      setInvitedPassword(result.temporaryPassword);
-      await load(id);
-    } catch (err) {
-      setInviteError(err instanceof Error ? err.message : "Could not send invitation");
-    } finally {
-      setIsInviting(false);
-    }
-  }
-
   if (!officer) return <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>;
 
   return (
@@ -252,10 +224,6 @@ export function OfficerDetail() {
           </span>
           {officer.firstName} {officer.lastName}
         </h1>
-        <Link to={`/${tenant}/officers/${id}/compliance-report`} className="btn btn-secondary">
-          <FileIcon width={14} height={14} />
-          Compliance report
-        </Link>
       </div>
       <Link
         to={`/${tenant}`}
@@ -267,15 +235,15 @@ export function OfficerDetail() {
 
       <div className="card">
         <div className="card-header">
-          <h2>Kiosk access</h2>
+          <h2>Vetting PIN</h2>
         </div>
         <p style={{ color: "var(--vetro-text-muted)", fontSize: 14, marginBottom: 12 }}>
-          A shared site device books this officer on/off with this PIN and the site's own SIN — no
-          Cognito sign-in needed. It only works while vetting and licences are current.
+          This officer uses this PIN on the tenant's pin-access page to view their vetting status and submit
+          their own address/employment history, references, and documents — no Cognito sign-in needed.
         </p>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontFamily: "var(--vetro-font-mono, monospace)", fontSize: 24, fontWeight: 700, letterSpacing: 4 }}>
-            {officer.pin ?? "— — — —"}
+            {officer.pin ?? "— — — — — —"}
           </span>
           <button type="button" className="btn btn-secondary" onClick={handleGeneratePin} disabled={isGeneratingPin}>
             {isGeneratingPin ? "Generating…" : officer.pin ? "Regenerate PIN" : "Generate PIN"}
@@ -465,33 +433,6 @@ export function OfficerDetail() {
         </form>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <h2>Self-service portal</h2>
-        </div>
-        <p style={{ color: "var(--vetro-text-muted)", fontSize: 14, marginBottom: 12 }}>
-          Give this officer their own login to submit vetting details and documents for review.
-        </p>
-        {inviteError && <p className="error-text">{inviteError}</p>}
-        <form onSubmit={handleInvite} style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-          <div className="form-field" style={{ marginBottom: 0, minWidth: 240 }}>
-            <label htmlFor="inviteEmail">Email</label>
-            <input
-              id="inviteEmail"
-              type="email"
-              required
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-            />
-          </div>
-          <button className="btn btn-secondary" type="submit" disabled={isInviting}>
-            <MailIcon width={14} height={14} />
-            {isInviting ? "Sending…" : "Send invite"}
-          </button>
-        </form>
-        {inviteStatus && <p className="subtle-meta" style={{ marginTop: 12 }}>{inviteStatus}</p>}
-        {invitedPassword && <TemporaryPasswordReveal password={invitedPassword} />}
-      </div>
 
       <div className="card">
         <div className="card-header">
