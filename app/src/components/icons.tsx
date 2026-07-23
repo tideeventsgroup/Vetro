@@ -115,6 +115,26 @@ export function ShieldCheckIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function EyeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M2 12C4.5 7 8 4.5 12 4.5C16 4.5 19.5 7 22 12C19.5 17 16 19.5 12 19.5C8 19.5 4.5 17 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </Icon>
+  );
+}
+
+export function EyeOffIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M3 3L21 21" />
+      <path d="M10.6 5.1C11 5 11.5 5 12 5C16 5 19.5 7.5 22 12C21.3 13.3 20.5 14.4 19.6 15.3" />
+      <path d="M6.5 6.9C4.6 8.2 3.1 10 2 12C4.5 16.5 8 19 12 19C13.5 19 14.9 18.7 16.2 18" />
+      <path d="M9.9 10C9.3 10.5 9 11.2 9 12C9 13.7 10.3 15 12 15C12.8 15 13.5 14.7 14 14.2" />
+    </Icon>
+  );
+}
+
 export function MailIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

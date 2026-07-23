@@ -2,7 +2,7 @@ import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApi } from "../lib/api.js";
 import { useAuth } from "../lib/auth.js";
-import { ShieldCheckIcon } from "../components/icons.js";
+import { EyeIcon, EyeOffIcon, LockIcon, MailIcon } from "../components/icons.js";
 import { DashboardColourBadge } from "../components/StatusBadge.js";
 
 function slugify(value: string): string {
@@ -34,6 +34,7 @@ export function Signup() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   function handleOrgNameChange(value: string) {
     setOrgName(value);
@@ -94,14 +95,14 @@ export function Signup() {
             <DashboardColourBadge colour="red" />
           </div>
         </div>
+        <p className="login-brand-foot">
+          Lunara Screening is not a DBS Registered Body or Umbrella Body. DBS, PVG, and Disclosure
+          Scotland checks require an accredited partner.
+        </p>
       </div>
 
       <div className="login-form-panel">
         <div className="login-card">
-          <span className="empty-icon" style={{ background: "var(--lunara-gold-light)", color: "var(--lunara-gold-dark)" }}>
-            <ShieldCheckIcon />
-          </span>
-
           {step === "details" ? (
             <>
               <h2>Create your organisation</h2>
@@ -119,41 +120,57 @@ export function Signup() {
                 </div>
                 <div className="form-field">
                   <label htmlFor="slug">Your Lunara Screening URL</label>
-                  <input
-                    id="slug"
-                    required
-                    value={slug}
-                    onChange={(e) => {
-                      setSlugEdited(true);
-                      setSlug(slugify(e.target.value));
-                    }}
-                  />
-                  <p className="subtle-meta">
-                    {window.location.origin}/{slug || "your-org"}
-                  </p>
+                  <div className="input-addon-field">
+                    <span className="input-addon-prefix">{window.location.host}/</span>
+                    <input
+                      id="slug"
+                      required
+                      value={slug}
+                      onChange={(e) => {
+                        setSlugEdited(true);
+                        setSlug(slugify(e.target.value));
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="form-field">
                   <label htmlFor="signupEmail">Email</label>
-                  <input
-                    id="signupEmail"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="username"
-                  />
+                  <div className="input-icon-field">
+                    <MailIcon width={16} height={16} />
+                    <input
+                      id="signupEmail"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="username"
+                    />
+                  </div>
                 </div>
                 <div className="form-field">
                   <label htmlFor="signupPassword">Password</label>
-                  <input
-                    id="signupPassword"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
-                  <p className="subtle-meta">At least 12 characters, with upper and lower case, a number, and a symbol.</p>
+                  <div className="input-icon-field has-toggle">
+                    <LockIcon width={16} height={16} />
+                    <input
+                      id="signupPassword"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOffIcon width={16} height={16} /> : <EyeIcon width={16} height={16} />}
+                    </button>
+                  </div>
+                  <p style={{ fontSize: 12, color: "var(--lunara-text-muted)", marginTop: 6 }}>
+                    At least 12 characters, with upper and lower case, a number, and a symbol.
+                  </p>
                 </div>
                 <button className="btn btn-primary btn-pill" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
                   {isSubmitting ? "Creating…" : "Create organisation"}

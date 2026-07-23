@@ -1592,11 +1592,10 @@ button {
 .login-brand-panel::after {
   content: '';
   position: absolute;
-  top: -180px;
-  left: -120px;
-  width: 480px;
-  height: 480px;
-  background: radial-gradient(circle, rgba(14, 124, 123, 0.35) 0%, transparent 70%);
+  inset: -20%;
+  background:
+    radial-gradient(420px circle at 8% 8%, rgba(201, 161, 92, 0.32) 0%, transparent 70%),
+    radial-gradient(360px circle at 96% 94%, rgba(244, 239, 230, 0.10) 0%, transparent 70%);
 }
 
 .login-brand-copy {
@@ -1620,10 +1619,11 @@ button {
   position: relative;
   list-style: none;
   margin: var(--lunara-space-6) 0 0;
-  padding: 0;
+  padding: var(--lunara-space-5) 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   flex-direction: column;
-  gap: var(--lunara-space-3);
+  gap: var(--lunara-space-4);
 }
 
 .login-feature-list li {
@@ -1640,17 +1640,24 @@ button {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--lunara-radius-md);
   background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--lunara-gold-light);
 }
 
 .login-brand-foot {
   position: relative;
-  color: #7B8794;
+  color: #D3DAE0;
   font-size: var(--lunara-fs-label);
+  line-height: 1.5;
+  max-width: 360px;
+  padding: var(--lunara-space-3) var(--lunara-space-4);
+  border-radius: var(--lunara-radius-md);
+  background: rgba(18, 24, 43, 0.45);
+  backdrop-filter: blur(2px);
 }
 
 /* Mobile/PWA-only welcome header — see Login.tsx for why this exists
@@ -1664,15 +1671,17 @@ button {
   align-items: center;
   justify-content: center;
   padding: var(--lunara-space-6);
-  background: var(--lunara-surface);
+  background: var(--lunara-bg);
 }
 
 .login-card {
   width: 100%;
-  max-width: 360px;
-  box-shadow: none;
-  border: none;
-  padding: 0;
+  max-width: 400px;
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-lg);
+  box-shadow: var(--lunara-shadow-lifted);
+  padding: var(--lunara-space-6);
 }
 
 .login-card h2 {
@@ -1683,6 +1692,92 @@ button {
 .login-card .lede {
   color: var(--lunara-text-muted);
   margin-bottom: var(--lunara-space-6);
+}
+
+/* Icon-adorned inputs (email/password on Login + Signup) — the icon anchors
+   what kind of value goes in the field before the user reads the label,
+   and the password fields get a show/hide toggle on the same row. */
+.input-icon-field {
+  position: relative;
+}
+
+.input-icon-field > svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--lunara-silver);
+  pointer-events: none;
+}
+
+.input-icon-field input {
+  width: 100%;
+  padding-left: 38px;
+}
+
+.input-icon-field.has-toggle input {
+  padding-right: 38px;
+}
+
+.input-icon-field .password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  border-radius: var(--lunara-radius-sm);
+  color: var(--lunara-silver);
+  cursor: pointer;
+}
+
+.input-icon-field .password-toggle:hover {
+  color: var(--lunara-text);
+  background: var(--lunara-mist);
+}
+
+/* Prefixed URL field (Signup's workspace slug) — the host is shown as a
+   fixed addon rather than repeated as a caption underneath the input. */
+.input-addon-field {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-md);
+  background: var(--lunara-surface);
+  transition: border-color var(--lunara-duration) var(--lunara-ease), box-shadow var(--lunara-duration) var(--lunara-ease);
+}
+
+.input-addon-field:focus-within {
+  border-color: var(--lunara-gold);
+  box-shadow: var(--lunara-shadow-focus);
+}
+
+.input-addon-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: var(--lunara-mist);
+  color: var(--lunara-text-muted);
+  font-size: var(--lunara-fs-body-sm);
+  border-right: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-md) 0 0 var(--lunara-radius-md);
+  white-space: nowrap;
+}
+
+.input-addon-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0 var(--lunara-radius-md) var(--lunara-radius-md) 0;
+}
+
+.input-addon-field input:focus {
+  box-shadow: none;
 }
 
 /* Kiosk.tsx — a shared site device, not anyone's own login, so this is

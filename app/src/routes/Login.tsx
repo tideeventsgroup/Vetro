@@ -3,11 +3,11 @@ import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NewPasswordRequiredError, useAuth } from "../lib/auth.js";
 import { useApi } from "../lib/api.js";
-import { CheckIcon, FileIcon, ShieldCheckIcon } from "../components/icons.js";
+import { CheckIcon, EyeIcon, EyeOffIcon, FileIcon, LockIcon, MailIcon, RosterIcon } from "../components/icons.js";
 import { DashboardColourBadge } from "../components/StatusBadge.js";
 
 const FEATURES = [
-  { icon: ShieldCheckIcon, text: "SIA licence, first aid, right to work and training tracked in one place" },
+  { icon: RosterIcon, text: "SIA licence, first aid, right to work and training tracked in one place" },
   { icon: FileIcon, text: "Candidates upload their own documents through a branded, mobile-friendly link" },
   { icon: CheckIcon, text: "A clear compliance report per candidate, ready to export whenever you need it" },
 ];
@@ -35,6 +35,8 @@ export function Login() {
   // the form below to asking for a permanent password instead of signing in.
   const [pendingUser, setPendingUser] = useState<CognitoUser | undefined>(undefined);
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   async function redirectToOwnTenant() {
     const organisation = await api.getCurrentOrganisation();
@@ -101,6 +103,10 @@ export function Login() {
             ))}
           </ul>
         </div>
+        <p className="login-brand-foot">
+          Lunara Screening is not a DBS Registered Body or Umbrella Body. DBS, PVG, and Disclosure
+          Scotland checks require an accredited partner.
+        </p>
       </div>
 
       {/* Mobile/PWA-only — .login-brand-panel above is hidden below 860px,
@@ -114,9 +120,6 @@ export function Login() {
 
       <div className="login-form-panel">
         <div className="login-card">
-          <span className="empty-icon" style={{ background: "var(--lunara-gold-light)", color: "var(--lunara-gold-dark)" }}>
-            <ShieldCheckIcon />
-          </span>
           {pendingUser ? (
             <>
               <h2>Set a new password</h2>
@@ -125,15 +128,26 @@ export function Login() {
                 {error && <p className="error-text">{error}</p>}
                 <div className="form-field">
                   <label htmlFor="newPassword">New password</label>
-                  <input
-                    id="newPassword"
-                    type="password"
-                    required
-                    minLength={12}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
+                  <div className="input-icon-field has-toggle">
+                    <LockIcon width={16} height={16} />
+                    <input
+                      id="newPassword"
+                      type={showNewPassword ? "text" : "password"}
+                      required
+                      minLength={12}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowNewPassword((v) => !v)}
+                      aria-label={showNewPassword ? "Hide password" : "Show password"}
+                    >
+                      {showNewPassword ? <EyeOffIcon width={16} height={16} /> : <EyeIcon width={16} height={16} />}
+                    </button>
+                  </div>
                 </div>
                 <button className="btn btn-primary btn-pill" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
                   {isSubmitting ? "Setting password…" : "Set password and sign in"}
@@ -148,25 +162,39 @@ export function Login() {
                 {error && <p className="error-text">{error}</p>}
                 <div className="form-field">
                   <label htmlFor="email">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="username"
-                  />
+                  <div className="input-icon-field">
+                    <MailIcon width={16} height={16} />
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="username"
+                    />
+                  </div>
                 </div>
                 <div className="form-field">
                   <label htmlFor="password">Password</label>
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                  />
+                  <div className="input-icon-field has-toggle">
+                    <LockIcon width={16} height={16} />
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOffIcon width={16} height={16} /> : <EyeIcon width={16} height={16} />}
+                    </button>
+                  </div>
                 </div>
                 <button className="btn btn-primary btn-pill" type="submit" disabled={isSubmitting} style={{ width: "100%", marginTop: 8 }}>
                   {isSubmitting ? "Signing in…" : "Sign in"}
