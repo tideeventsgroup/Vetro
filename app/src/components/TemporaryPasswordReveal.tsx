@@ -22,8 +22,8 @@ export function TemporaryPasswordReveal({ password }: { password: string }) {
         gap: 8,
         marginTop: 8,
         padding: "8px 12px",
-        background: "var(--vetro-bg)",
-        border: "1px solid var(--vetro-border)",
+        background: "var(--lunara-bg)",
+        border: "1px solid var(--lunara-border)",
         borderRadius: 6,
       }}
     >

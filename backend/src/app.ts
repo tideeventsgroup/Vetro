@@ -2,22 +2,15 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { admin } from "./routes/admin.js";
 import { auditLog } from "./routes/auditLog.js";
-import { contractors } from "./routes/contractors.js";
+import { candidatePublic } from "./routes/candidatePublic.js";
+import { candidates } from "./routes/candidates.js";
+import { dataRequests } from "./routes/dataRequests.js";
 import { invitations } from "./routes/invitations.js";
-import { officers } from "./routes/officers.js";
+import { organisations } from "./routes/organisations.js";
+import { roleTypes } from "./routes/roleTypes.js";
 import { signup } from "./routes/signup.js";
 import { team } from "./routes/team.js";
-import { licences } from "./routes/licences.js";
-import { dbs } from "./routes/dbs.js";
-import { referenceChecks } from "./routes/referenceChecks.js";
-import { vetting } from "./routes/vetting.js";
-import { vettingSubmissions } from "./routes/vettingSubmissions.js";
-import { vettingInvites } from "./routes/vettingInvites.js";
-import { vettingInvitePublic } from "./routes/vettingInvitePublic.js";
-import { pinAccess } from "./routes/pinAccess.js";
-import { qualifications } from "./routes/qualifications.js";
-import { documents } from "./routes/documents.js";
-import { requireAdmin, requireAuth, requireContractor, requirePlatformAdmin } from "./lib/auth.js";
+import { requireAdmin, requireAuth, requireOrganisation, requirePlatformAdmin, requireReviewer } from "./lib/auth.js";
 import type { AppEnv } from "./lib/hono-env.js";
 
 export const app = new Hono<AppEnv>();
@@ -29,69 +22,52 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    allowHeaders: ["Authorization", "Content-Type", "X-Vetro-Tenant", "X-Vetro-Role", "X-Vetro-Platform-Admin"],
+    allowHeaders: ["Authorization", "Content-Type", "X-Lunara-Tenant", "X-Lunara-Role", "X-Lunara-Platform-Admin"],
   }),
 );
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Public, no Cognito session at all — a candidate invited via
-// routes/vettingInvites.ts has no Cognito account yet — the token in the
-// URL is what authorises this, not a session. Mounted under its own path
-// (not /vetting-invites) so it can't collide with that admin-only prefix's
-// requireContractor/requireAdmin guard below.
-app.route("/", vettingInvitePublic);
-
-// Public in the same sense: an officer reaching the pin-access page has no
-// Cognito account either — their PIN (scoped to the tenant slug already in
-// the page's own URL) is what authorises this instead.
-app.route("/", pinAccess);
+// routes/candidates.ts has no Cognito account; the magic-link token in the
+// URL is what authorises this instead (see routes/candidatePublic.ts).
+// Mounted under its own /public/candidates path so it can't collide with
+// the admin-only /candidates prefix's requireOrganisation/requireReviewer
+// guard below.
+app.route("/", candidatePublic);
 
 // Verifies identity for everything below, but doesn't require a resolved
-// tenant yet — /contractors/me and /contractors (dev-only creation) need to
-// work for an account that doesn't have one assigned.
+// tenant yet — /organisations/me and /organisations (dev-only creation) need
+// to work for an account that doesn't have one assigned.
 const api = new Hono<AppEnv>();
 api.use("/*", requireAuth);
-api.route("/contractors", contractors);
+api.route("/organisations", organisations);
 api.route("/", signup);
 
-// Platform-level: creating organizations. No tenant involved — gated purely
+// Platform-level: creating organisations. No tenant involved — gated purely
 // on Cognito PlatformAdmins group membership.
 api.use("/admin/*", requirePlatformAdmin);
 api.route("/admin", admin);
 
-// Everything else is tenant data, admin-only, and 403s without a resolved
-// contractorId. Every top-level path these route modules actually define —
-// bare and nested — needs to be listed here.
-const tenantAdminPrefixes = [
-  "/officers",
-  "/licences",
-  "/dbs",
-  "/reference-checks",
-  "/vetting",
-  "/vetting-submissions",
-  "/vetting-invites",
-  "/qualifications",
-  "/documents",
-  "/invitations",
-  "/team",
-  "/audit-log",
-];
-for (const prefix of tenantAdminPrefixes) {
-  api.use(prefix, requireContractor, requireAdmin);
-  api.use(`${prefix}/*`, requireContractor, requireAdmin);
+// Candidates/checks/review-queue are usable by ADMIN or REVIEWER accounts;
+// everything else tenant-scoped (role types, team, settings, audit log,
+// data requests) stays ADMIN-only. Every top-level path these route modules
+// actually define — bare and nested — needs to be listed here.
+const reviewerPrefixes = ["/candidates"];
+const tenantAdminPrefixes = ["/role-types", "/invitations", "/team", "/audit-log", "/data-requests"];
+for (const prefix of reviewerPrefixes) {
+  api.use(prefix, requireOrganisation, requireReviewer);
+  api.use(`${prefix}/*`, requireOrganisation, requireReviewer);
 }
-api.route("/officers", officers);
-api.route("/", licences);
-api.route("/", dbs);
-api.route("/", referenceChecks);
-api.route("/", vetting);
-api.route("/", vettingSubmissions);
-api.route("/", vettingInvites);
-api.route("/", qualifications);
-api.route("/", documents);
+for (const prefix of tenantAdminPrefixes) {
+  api.use(prefix, requireOrganisation, requireAdmin);
+  api.use(`${prefix}/*`, requireOrganisation, requireAdmin);
+}
+api.route("/candidates", candidates);
+api.route("/", roleTypes);
 api.route("/", invitations);
 api.route("/", team);
 api.route("/", auditLog);
+api.route("/", dataRequests);
 
 app.route("/", api);

@@ -4,5 +4,5 @@ import { app } from "./app.js";
 const port = Number(process.env.PORT ?? 3001);
 
 serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`Vetro API listening on http://localhost:${info.port}`);
+  console.log(`Lunara Screening API listening on http://localhost:${info.port}`);
 });

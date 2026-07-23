@@ -7,13 +7,13 @@ import type { AppEnv } from "../lib/hono-env.js";
 export const signup = new Hono<AppEnv>();
 
 // Self-serve: a freshly-signed-up Cognito account (no org yet) creates its
-// own organization and becomes its ADMIN — the alternative to a platform
+// own organisation and becomes its ADMIN — the alternative to a platform
 // admin creating the org by hand (routes/admin.ts). Gated only on already
-// having a contractorId: an account only ever gets to do this once, so it
+// having an organisationId: an account only ever gets to do this once, so it
 // can't be replayed to hijack or duplicate an existing membership.
-signup.post("/signup/organization", async (c) => {
-  if (c.get("contractorId")) {
-    return c.json({ error: "This account already belongs to an organization" }, 409);
+signup.post("/signup/organisation", async (c) => {
+  if (c.get("organisationId")) {
+    return c.json({ error: "This account already belongs to an organisation" }, 409);
   }
   const actorEmail = c.get("actorEmail");
   const cognitoUsername = c.get("cognitoUsername");
@@ -25,31 +25,31 @@ signup.post("/signup/organization", async (c) => {
   }
 
   const db = await getDb();
-  const existing = await db.contractor.findUnique({ where: { slug: body.slug } });
+  const existing = await db.organisation.findUnique({ where: { slug: body.slug } });
   if (existing) return c.json({ error: "That organisation URL is already taken" }, 409);
 
-  const contractor = await db.contractor.create({ data: { name: body.name, slug: body.slug } });
+  const organisation = await db.organisation.create({ data: { name: body.name, slug: body.slug } });
 
   try {
     // cognitoUsername, not actorEmail — a self-serve account's real Cognito
     // username is an auto-generated id, not its email (see hono-env.ts).
     await updateUserAttributes(cognitoUsername, {
-      "custom:contractor_id": contractor.id,
+      "custom:contractor_id": organisation.id,
       "custom:role": "ADMIN",
     });
   } catch (err) {
     // Don't leave an org behind that its own creator can never administer.
-    await db.contractor.delete({ where: { id: contractor.id } });
+    await db.organisation.delete({ where: { id: organisation.id } });
     throw err;
   }
 
   await recordAudit({
-    contractorId: contractor.id,
+    organisationId: organisation.id,
     actorEmail,
-    action: "organization.self_signup",
-    entityType: "Contractor",
-    entityId: contractor.id,
+    action: "organisation.self_signup",
+    entityType: "Organisation",
+    entityId: organisation.id,
   });
 
-  return c.json(contractor, 201);
+  return c.json(organisation, 201);
 });

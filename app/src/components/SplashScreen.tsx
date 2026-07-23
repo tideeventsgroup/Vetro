@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 const HOLD_MS = 5500;
 const FADE_MS = 500;
 
-const SESSION_KEY = "vetro-splash-shown";
+const SESSION_KEY = "lunara-splash-shown";
 
 function isStandaloneDisplay(): boolean {
   const iosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
@@ -32,14 +32,13 @@ function initialPhase(): Phase {
   return "visible";
 }
 
-// The installed PWA's cold-launch splash: the V mark draws in alongside a
-// verification ring that closes around it (the "circle completes, then the
-// mark is confirmed" pattern common to checkmark/success animations), then
-// a slow radar sweep circles continuously for the rest of the six seconds —
-// a nod to Live Ops' own radar iconography and "verified, not assumed" —
-// before the whole thing crossfades away to reveal the app, which has been
-// mounting underneath the whole time so there's no extra wait stacked on
-// top of this.
+// The installed PWA's cold-launch splash: the Lunara "L" mark draws in
+// alongside a verification ring that closes around it (the "circle
+// completes, then the mark is confirmed" pattern common to checkmark/success
+// animations), then a slow radar sweep circles continuously for the rest of
+// the six seconds — before the whole thing crossfades away to reveal the
+// app, which has been mounting underneath the whole time so there's no extra
+// wait stacked on top of this.
 export function SplashScreen() {
   const [phase, setPhase] = useState<Phase>(initialPhase);
 
@@ -71,9 +70,26 @@ export function SplashScreen() {
         <svg className="pwa-splash-ring-svg" width="160" height="160" viewBox="0 0 160 160">
           <circle className="pwa-splash-ring-circle" cx="80" cy="80" r="68" />
         </svg>
-        <svg className="pwa-splash-mark" width="140" height="134" viewBox="30 2 110 106">
-          <line className="pwa-splash-stroke pwa-splash-stroke-1" x1="46" y1="18" x2="85" y2="95" strokeWidth="20" strokeLinecap="round" />
-          <line className="pwa-splash-stroke pwa-splash-stroke-2" x1="124" y1="18" x2="85" y2="95" strokeWidth="20" strokeLinecap="round" />
+        <svg className="pwa-splash-mark" width="120" height="120" viewBox="50 30 100 120">
+          <line
+            className="pwa-splash-stroke pwa-splash-stroke-1"
+            x1="78"
+            y1="60"
+            x2="78"
+            y2="138"
+            strokeWidth="22"
+            strokeLinecap="round"
+          />
+          <line
+            className="pwa-splash-stroke pwa-splash-stroke-2"
+            x1="78"
+            y1="138"
+            x2="134"
+            y2="138"
+            strokeWidth="22"
+            strokeLinecap="round"
+          />
+          <circle className="pwa-splash-dot" cx="100" cy="50" r="10" />
         </svg>
       </div>
     </div>

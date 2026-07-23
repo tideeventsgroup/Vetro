@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useApi } from "../lib/api.js";
 import { useAuth } from "../lib/auth.js";
 import { ShieldCheckIcon } from "../components/icons.js";
-import { StatusBadge } from "../components/StatusBadge.js";
+import { DashboardColourBadge } from "../components/StatusBadge.js";
 
 function slugify(value: string): string {
   return value
@@ -18,7 +18,7 @@ type Step = "details" | "verify";
 // Self-serve org creation: Cognito account first (email + password only —
 // see infra/lib/auth-stack.ts's writeAttributes note on why nothing else
 // can be set here), then a confirmation code, then the organisation itself
-// via POST /signup/organization (backend/src/routes/signup.ts), which is
+// via POST /signup/organisation (backend/src/routes/signup.ts), which is
 // the only thing that ever grants this account ADMIN of anything.
 export function Signup() {
   const { signUp, confirmSignUp, login, refreshClaims } = useAuth();
@@ -61,7 +61,7 @@ export function Signup() {
     try {
       await confirmSignUp(email, code);
       await login(email, password);
-      await api.createOrganizationSelfSignup({ name: orgName.trim(), slug });
+      await api.createOrganisationSelfSignup({ name: orgName.trim(), slug });
       // The token from `login` was minted before the org grant above — pull
       // a fresh one so custom:contractor_id/custom:role are actually on it.
       await refreshClaims();
@@ -77,36 +77,35 @@ export function Signup() {
     <div className="login-shell">
       <div className="login-brand-panel">
         <img
-          src="/brand/vetro-logo-primary-dark.svg"
-          alt="Vetro — Verified, not assumed."
+          src="/brand/lunara-logo-primary-dark.svg"
+          alt="Lunara Screening"
           height="70"
           style={{ position: "relative" }}
         />
         <div className="login-brand-copy">
-          <h1>Scotland's security workforce, verified.</h1>
+          <h1>Workforce compliance, tracked clearly.</h1>
           <p>
-            One record per officer — licence, vetting, qualifications, documents. Checked
-            automatically, not chased manually.
+            Invite a candidate, they upload their own documents, you review and export — one clear
+            record per person, not a folder of emails.
           </p>
           <div style={{ display: "flex", gap: 8, marginTop: 24, flexWrap: "wrap" }}>
-            <StatusBadge status="ACTIVE" />
-            <StatusBadge status="EXPIRING" />
-            <StatusBadge status="EXPIRED" />
+            <DashboardColourBadge colour="green" />
+            <DashboardColourBadge colour="amber" />
+            <DashboardColourBadge colour="red" />
           </div>
         </div>
-        <div className="login-brand-foot">Built by Tide Events Group Scotland</div>
       </div>
 
       <div className="login-form-panel">
         <div className="login-card">
-          <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)" }}>
+          <span className="empty-icon" style={{ background: "var(--lunara-gold-light)", color: "var(--lunara-gold-dark)" }}>
             <ShieldCheckIcon />
           </span>
 
           {step === "details" ? (
             <>
               <h2>Create your organisation</h2>
-              <p className="lede">Set up Vetro for your team in a couple of minutes.</p>
+              <p className="lede">Set up Lunara Screening for your team in a couple of minutes.</p>
               <form onSubmit={handleDetailsSubmit}>
                 {error && <p className="error-text">{error}</p>}
                 <div className="form-field">
@@ -119,7 +118,7 @@ export function Signup() {
                   />
                 </div>
                 <div className="form-field">
-                  <label htmlFor="slug">Your Vetro URL</label>
+                  <label htmlFor="slug">Your Lunara Screening URL</label>
                   <input
                     id="slug"
                     required

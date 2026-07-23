@@ -56,7 +56,8 @@ function generateTemporaryPassword(): string {
  * the invitee: the caller gets it back in the response too, to hand over
  * directly if email doesn't arrive. The caller sets whichever custom:*
  * attributes decide what the account can do once it logs in
- * (contractor_id, role, officer_id) — this module has no opinion on that.
+ * (contractor_id — the org/tenant assignment, role) — this module has no
+ * opinion on that.
  *
  * clientMetadata (see buildInviteClientMetadata) is how the org name and a
  * sign-in link reach the CustomMessage Lambda trigger
@@ -100,10 +101,10 @@ export async function createCognitoUser(params: {
  * `{slug}` placeholder for the tenant; omitted entirely if that env var
  * isn't set; customMessage.ts already handles orgName/loginUrl being absent.
  */
-export function buildInviteClientMetadata(contractor: { name: string; slug: string }): Record<string, string> {
-  const metadata: Record<string, string> = { orgName: contractor.name };
+export function buildInviteClientMetadata(organisation: { name: string; slug: string }): Record<string, string> {
+  const metadata: Record<string, string> = { orgName: organisation.name };
   const template = process.env.APP_LOGIN_URL_TEMPLATE;
-  if (template) metadata.loginUrl = template.replace("{slug}", contractor.slug);
+  if (template) metadata.loginUrl = template.replace("{slug}", organisation.slug);
   return metadata;
 }
 
@@ -116,7 +117,7 @@ export async function addUserToGroup(email: string, groupName: string): Promise<
 /**
  * Grants an already-existing Cognito account its tenant/role — the step
  * that turns a self-signed-up account (see routes/signup.ts) into an
- * ADMIN of the organization it just created. Uses the IAM-gated Admin API,
+ * ADMIN of the organisation it just created. Uses the IAM-gated Admin API,
  * not the client-facing UpdateUserAttributes the app client is deliberately
  * denied write access to (see infra/lib/auth-stack.ts).
  *
@@ -143,16 +144,16 @@ export interface CognitoUserSummary {
 }
 
 /**
- * ADMIN teammates *and* OFFICER self-service accounts for a tenant —
- * callers filter by role as needed. Cognito's ListUsers `Filter` only
- * supports a fixed set of standard attributes (email, username, etc.) —
- * custom attributes like custom:contractor_id aren't filterable server-side
- * at all (an InvalidParameterException, not an empty result), so this
- * fetches every user in the pool (paginated) and filters client-side
- * instead. Fine at the account volumes a per-org team list implies;
- * revisit if the pool ever grows large enough for that to matter.
+ * Every ADMIN and REVIEWER account for a tenant — callers filter by role as
+ * needed. Cognito's ListUsers `Filter` only supports a fixed set of
+ * standard attributes (email, username, etc.) — custom attributes like
+ * custom:contractor_id aren't filterable server-side at all (an
+ * InvalidParameterException, not an empty result), so this fetches every
+ * user in the pool (paginated) and filters client-side instead. Fine at the
+ * account volumes a per-org team list implies; revisit if the pool ever
+ * grows large enough for that to matter.
  */
-export async function listUsersByContractor(contractorId: string): Promise<CognitoUserSummary[]> {
+export async function listUsersByOrganisation(organisationId: string): Promise<CognitoUserSummary[]> {
   const client = getClient();
   const userPoolId = requireUserPoolId();
   const matches: CognitoUserSummary[] = [];
@@ -164,7 +165,7 @@ export async function listUsersByContractor(contractorId: string): Promise<Cogni
     );
     for (const user of result.Users ?? []) {
       const attrs = Object.fromEntries((user.Attributes ?? []).map((a) => [a.Name, a.Value]));
-      if (attrs["custom:contractor_id"] === contractorId) {
+      if (attrs["custom:contractor_id"] === organisationId) {
         matches.push({
           username: user.Username ?? "",
           email: attrs.email ?? "",

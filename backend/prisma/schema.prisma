@@ -11,343 +11,186 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ComplianceStatus {
-  ACTIVE
-  EXPIRING
-  EXPIRED
+// The checks Lunara Screening actually performs itself (Phase 1-2, no
+// accreditation required) — see docs/BRAND_GUIDELINES.md and the product
+// brief for what's deliberately NOT here: no DBS/PVG/Disclosure Scotland
+// check type exists anywhere in this schema. Adding one is a Phase 3
+// decision that needs an accredited partner integration first, not a
+// migration.
+enum CheckType {
+  SIA_LICENCE
+  FIRST_AID
+  RIGHT_TO_WORK
+  ID_DOCUMENT
+  TRAINING
 }
 
-enum SubmissionStatus {
-  PENDING_REVIEW
-  APPROVED
+enum CheckStatus {
+  NOT_STARTED
+  PENDING
+  VERIFIED
+  EXPIRED
   REJECTED
 }
 
-enum VettingInviteStatus {
-  PENDING
+// A candidate's own progress through onboarding — distinct from CheckStatus
+// (which check-by-check role toward the dashboard's colour coding).
+enum CandidateStatus {
+  INVITED
+  IN_PROGRESS
   SUBMITTED
-  CONVERTED
+  ARCHIVED
 }
 
-enum DbsLevel {
-  BASIC
-  STANDARD
-  ENHANCED
+enum DataRequestType {
+  ACCESS
+  DELETE
 }
 
-// PENDING until the referee actually responds; RECEIVED is the normal close;
-// UNABLE_TO_CONTACT and FLAGGED both need an admin's eyes but for different
-// reasons (the former is a dead end worth chasing a second referee for, the
-// latter is a response that came back with something concerning in it).
-enum ReferenceCheckStatus {
+enum DataRequestStatus {
   PENDING
-  RECEIVED
-  UNABLE_TO_CONTACT
-  FLAGGED
+  COMPLETED
 }
 
-enum EmploymentType {
-  FULL_TIME
-  PART_TIME
-  CASUAL
-  ZERO_HOURS
+// The tenant boundary. `slug` is the subdomain — an org's own
+// {slug}.lunarascreening.co.uk — resolved either via the Cognito user's
+// custom:contractor_id claim or, in local dev, the X-Lunara-Tenant header
+// (see backend/src/lib/auth.ts). retentionDays is the org's own configured
+// document/check retention period — the expiry job (jobs/checkExpiries.ts)
+// flags anything older than this for deletion rather than the product
+// hardcoding a period across every org.
+model Organisation {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  retentionDays Int           @default(365)
+  roleTypes     RoleType[]
+  candidates    Candidate[]
+  createdAt     DateTime      @default(now())
 }
 
-// Distinct from ComplianceStatus (licence/vetting state) — this is whether
-// the person is currently a working employee at all, the baseline fact an
-// HR record exists to answer before compliance status is even relevant.
-enum EmploymentStatus {
-  ACTIVE
-  ON_LEAVE
-  SUSPENDED
-  LEFT
+// An org's own configurable "what does this job need" mapping — chosen at
+// invite time (routes/candidates.ts), so a candidate's self-service form
+// only ever asks for the checks their actual role requires.
+model RoleType {
+  id                 String      @id @default(cuid())
+  organisationId     String
+  organisation       Organisation @relation(fields: [organisationId], references: [id])
+  name               String
+  requiredCheckTypes CheckType[]
+  candidates         Candidate[]
+  createdAt          DateTime    @default(now())
+
+  @@unique([organisationId, name])
+  @@index([organisationId])
 }
 
-enum PayRateType {
-  HOURLY
-  DAILY
-  SALARY
-}
-
-// The tenant boundary. `slug` is the subdomain — clyde-coast.vetro.co.uk —
-// and is how a request is scoped, either via the Cognito user's
-// custom:contractor_id claim or, in local dev, the X-Vetro-Tenant header
-// (see backend/src/lib/auth.ts). Also what routes/pinAccess.ts resolves a
-// PIN's tenant against, since a PIN alone (unlike a VettingInvite token)
-// isn't globally unique.
-model Contractor {
+// A person invited to submit their compliance documents. inviteToken is
+// the magic-link credential (routes/candidatePublic.ts) — a candidate has
+// no Cognito account; the token itself, not a session, is what authorises
+// their own access to their record, the same way it always has for Lunara.
+model Candidate {
   id             String          @id @default(cuid())
-  name           String
-  slug           String          @unique
-  officers       Officer[]
-  vettingInvites VettingInvite[]
+  organisationId String
+  organisation   Organisation    @relation(fields: [organisationId], references: [id])
+  firstName      String
+  lastName       String
+  email          String
+  roleTypeId     String?
+  roleType       RoleType?       @relation(fields: [roleTypeId], references: [id])
+  status         CandidateStatus @default(INVITED)
+  inviteToken    String          @unique
+  invitedByEmail String
+  checks         Check[]
+  dataRequests   DataRequest[]
   createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([organisationId])
 }
 
-model Officer {
-  id                           String              @id @default(cuid())
-  contractorId                 String
-  contractor                   Contractor          @relation(fields: [contractorId], references: [id])
-  firstName                    String
-  lastName                     String
-  email                        String?
-  phone                        String?
-  // Personal details
-  dateOfBirth                  DateTime?
-  nationalInsuranceNumber      String?
-  addressLine1                 String?
-  addressLine2                 String?
-  city                         String?
-  postcode                     String?
-  emergencyContactName         String?
-  emergencyContactPhone        String?
-  emergencyContactRelationship String?
-  // Employment details — separate from ComplianceStatus (licence/vetting),
-  // which answers "cleared to work"; these answer "employed at all, doing
-  // what, since when, paid how".
-  employeeNumber               String?
-  jobTitle                     String?
-  employmentType               EmploymentType?
-  employmentStatus             EmploymentStatus    @default(ACTIVE)
-  startDate                    DateTime?
-  leaveDate                    DateTime?
-  payRate                      Float?
-  payRateType                  PayRateType?
-  rightToWorkConfirmed         Boolean             @default(false)
-  rightToWorkCheckedAt         DateTime?
-  // Null expiryDate means an ongoing right (British/Irish citizen, settled
-  // status) rather than a time-limited one (visa, pre-settled status) — the
-  // same "no expiry = never lapses" convention SiaLicence/VettingRecord use.
-  rightToWorkExpiryDate        DateTime?
-  rightToWorkDocumentType      String?
-  // Auto-generated the moment this officer is added (routes/officers.ts,
-  // routes/vettingInvites.ts's convert) — what they use, on the tenant's own
-  // pin-access page (routes/pinAccess.ts), to view their vetting status and
-  // submit their own address/employment history, references, and documents
-  // without needing a Cognito account of their own. Unique per contractor
-  // (not globally) since the pin-access page already knows the tenant from
-  // its own URL.
-  pin                          String?
-  licences                     SiaLicence[]
-  vettingRecords               VettingRecord[]
-  dbsChecks                    DbsCheck[]
-  referenceChecks              ReferenceCheck[]
-  qualifications               Qualification[]
-  documents                    Document[]
-  vettingSubmissions           VettingSubmission[]
-  // Set only if this officer was created by converting a VettingInvite
-  // (routes/vettingInvites.ts) rather than added directly.
-  vettingInvite                VettingInvite?
-  createdAt                    DateTime            @default(now())
-  updatedAt                    DateTime            @updatedAt
-
-  @@unique([contractorId, pin])
-  @@index([contractorId])
-}
-
-// SIA licence held by an officer. `status` is derived by the scheduled
-// expiry-check job (backend/src/jobs/checkExpiries.ts), not set by hand,
-// since Vetro's whole pitch is that this is checked, not entered.
-model SiaLicence {
-  id            String           @id @default(cuid())
-  officerId     String
-  officer       Officer          @relation(fields: [officerId], references: [id])
-  licenceNumber String
-  sector        String
-  issueDate     DateTime
-  expiryDate    DateTime
-  status        ComplianceStatus @default(ACTIVE)
-  lastCheckedAt DateTime?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-
-  @@index([officerId])
-  @@index([expiryDate])
-}
-
-model VettingRecord {
-  id            String           @id @default(cuid())
-  officerId     String
-  officer       Officer          @relation(fields: [officerId], references: [id])
-  standard      String           @default("BS7858")
-  completedDate DateTime
+// One row per required check for a candidate — created the moment a
+// candidate is invited (one per requiredCheckTypes entry on their
+// RoleType), starting NOT_STARTED until they submit something.
+//
+// licenceNumber/expiryDate are used differently per checkType: SIA_LICENCE
+// verification is a deep-link-assisted manual confirm against the official
+// public Register of Licence Holders (no public API exists to automate
+// this — see lib/siaRegister.ts); FIRST_AID/RIGHT_TO_WORK/TRAINING track a
+// self-reported expiry date an admin can review; ID_DOCUMENT has no expiry
+// concept and is purely human-reviewed.
+model Check {
+  id            String      @id @default(cuid())
+  candidateId   String
+  candidate     Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  checkType     CheckType
+  status        CheckStatus @default(NOT_STARTED)
+  licenceNumber String?
   expiryDate    DateTime?
-  status        ComplianceStatus @default(ACTIVE)
+  verifiedAt    DateTime?
+  verifiedBy    String?
   notes         String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  documents     Document[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  @@index([officerId])
+  @@index([candidateId])
+  @@index([checkType])
   @@index([expiryDate])
 }
 
-// A DBS certificate — Vetro doesn't apply for or perform the check itself
-// (that's a DBS Registered Body function, a separate accreditation), just
-// tracks the certificate an org already holds the same way SiaLicence
-// tracks a licence: status kept in sync by the same nightly expiry job,
-// expiryDate optional since a DBS certificate itself never expires — it's
-// only the org's own re-check policy that gives it one, when it sets one.
-model DbsCheck {
-  id                String           @id @default(cuid())
-  officerId         String
-  officer           Officer          @relation(fields: [officerId], references: [id])
-  level             DbsLevel
-  certificateNumber String
-  issueDate         DateTime
-  expiryDate        DateTime?
-  status            ComplianceStatus @default(ACTIVE)
-  lastCheckedAt     DateTime?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-
-  @@index([officerId])
-  @@index([expiryDate])
-}
-
-// One row per referee an admin has reached out to as part of an officer's
-// vetting — a first-class, trackable counterpart to the free-text
-// `references` blob an officer submits themselves in VettingSubmission.
-model ReferenceCheck {
-  id           String               @id @default(cuid())
-  officerId    String
-  officer      Officer              @relation(fields: [officerId], references: [id])
-  refereeName  String
-  contact      String
-  relationship String?
-  requestedAt  DateTime             @default(now())
-  respondedAt  DateTime?
-  status       ReferenceCheckStatus @default(PENDING)
-  notes        String?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-
-  @@index([officerId])
-}
-
-// What an officer submits themselves, either through the pin-access page
-// (routes/pinAccess.ts) or as part of converting a VettingInvite — Vetro
-// still doesn't perform the BS7858 check; this is the record an admin
-// reviews before turning it into (or updating) a VettingRecord.
-model VettingSubmission {
-  id                String           @id @default(cuid())
-  officerId         String
-  officer           Officer          @relation(fields: [officerId], references: [id])
-  addressHistory    Json
-  employmentHistory Json
-  references        Json
-  consentGiven      Boolean
-  status            SubmissionStatus @default(PENDING_REVIEW)
-  reviewedAt        DateTime?
-  reviewedBy        String?
-  reviewNotes       String?
-  submittedAt       DateTime         @default(now())
-
-  @@index([officerId])
-}
-
-// A candidate who hasn't been added to the roster yet — sent a link (see
-// routes/vettingInvitePublic.ts) to complete BS7858-style vetting before an
-// admin decides whether to bring them into the system as an Officer at all.
-// requiresDbs/requiresRightToWork are chosen by the admin at invite time —
-// "screening under the appropriate vetting workflow", in EBC Global's
-// language — so the candidate-facing form only asks for what this role
-// actually needs, and answers land pre-filled into the matching record
-// (DbsCheck / Officer.rightToWork*) the moment the invite is converted,
-// rather than every candidate answering every possible question. Submitting
-// doesn't create an Officer by itself; converting does (see
-// POST /vetting-invites/:id/convert), at which point the address/employment/
-// reference answers become a normal VettingSubmission on the new Officer,
-// going through the same review queue as self-service submissions.
-model VettingInvite {
-  id                      String                  @id @default(cuid())
-  contractorId            String
-  contractor              Contractor              @relation(fields: [contractorId], references: [id])
-  firstName               String
-  lastName                String
-  email                   String
-  phone                   String?
-  token                   String                  @unique
-  status                  VettingInviteStatus     @default(PENDING)
-  requiresDbs             Boolean                 @default(false)
-  requiresRightToWork     Boolean                 @default(false)
-  addressHistory          Json?
-  employmentHistory       Json?
-  references              Json?
-  dbsLevel                DbsLevel?
-  dbsCertificateNumber    String?
-  dbsIssueDate            DateTime?
-  rightToWorkConfirmed    Boolean                 @default(false)
-  rightToWorkDocumentType String?
-  rightToWorkExpiryDate   DateTime?
-  consentGiven            Boolean                 @default(false)
-  submittedAt             DateTime?
-  convertedOfficerId      String?                 @unique
-  convertedOfficer        Officer?                @relation(fields: [convertedOfficerId], references: [id])
-  invitedByEmail          String
-  documents               VettingInviteDocument[]
-  createdAt               DateTime                @default(now())
-  updatedAt               DateTime                @updatedAt
-
-  @@index([contractorId])
-}
-
-// A file a candidate uploaded as part of their vetting invite — the same
-// presigned-upload flow as Document (lib/documents.ts), just against an
-// invite instead of an Officer, since the Officer doesn't exist yet.
-// Copied into a real Document row on the officer once the invite converts
-// (see POST /vetting-invites/:id/convert), so it shows up in the normal
-// OfficerDetail documents section from that point on.
-model VettingInviteDocument {
-  id              String        @id @default(cuid())
-  vettingInviteId String
-  vettingInvite   VettingInvite @relation(fields: [vettingInviteId], references: [id])
-  kind            String
-  fileName        String
-  s3Key           String
-  uploadedAt      DateTime      @default(now())
-
-  @@index([vettingInviteId])
-}
-
-model Qualification {
-  id         String    @id @default(cuid())
-  officerId  String
-  officer    Officer   @relation(fields: [officerId], references: [id])
-  name       String
-  issuedBy   String?
-  issueDate  DateTime?
-  expiryDate DateTime?
-  createdAt  DateTime  @default(now())
-
-  @@index([officerId])
-}
-
+// A document a candidate uploaded against one of their checks — the same
+// two-step presigned-S3-upload flow as every document upload in this app
+// (lib/documents.ts), stored in a private bucket, never public. A check
+// can carry more than one document (e.g. an ID document's front and back).
 model Document {
-  id         String   @id @default(cuid())
-  officerId  String
-  officer    Officer  @relation(fields: [officerId], references: [id])
-  kind       String
-  s3Key      String
-  uploadedAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  checkId     String
+  check       Check    @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  storagePath String
+  fileName    String
+  fileType    String?
+  uploadedAt  DateTime @default(now())
 
-  @@index([officerId])
+  @@index([checkId])
 }
 
-// Every write an ACS inspector or client export might need to prove happened.
-// contractorId is nullable only because it postdates this table — every
-// call site that exists has one available and always passes it now (see
-// backend/src/lib/audit.ts); older rows from before this column existed
-// just show with no tenant attributed.
+// A candidate's own GDPR request — self-serve via their magic link
+// (routes/candidatePublic.ts), resolved by an admin (routes/dataRequests.ts).
+// ACCESS just needs an admin to confirm they've supplied the data (the
+// candidate can already see everything themselves via their own link);
+// DELETE actually removes the candidate's checks/documents/record once
+// resolved. candidateId is nullable + SET NULL (not the usual RESTRICT/
+// CASCADE) specifically so this row — proof a delete request really was
+// fulfilled — survives the candidate row it's about being deleted.
+model DataRequest {
+  id             String            @id @default(cuid())
+  candidateId    String?
+  candidate      Candidate?        @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  organisationId String
+  type           DataRequestType
+  status         DataRequestStatus @default(PENDING)
+  requestedAt    DateTime          @default(now())
+  resolvedAt     DateTime?
+  resolvedBy     String?
+
+  @@index([candidateId])
+  @@index([organisationId])
+}
+
+// Every write an auditor or client due-diligence request might need to
+// prove happened — status changes, document views, everything. Core to a
+// compliance product, not an afterthought.
 model AuditLogEntry {
-  id           String   @id @default(cuid())
-  contractorId String?
-  actorEmail   String
-  action       String
-  entityType   String
-  entityId     String
-  metadata     Json?
-  createdAt    DateTime @default(now())
+  id             String   @id @default(cuid())
+  organisationId String?
+  actorEmail     String
+  action         String
+  entityType     String
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
 
   @@index([entityType, entityId])
-  @@index([contractorId, createdAt])
+  @@index([organisationId, createdAt])
 }

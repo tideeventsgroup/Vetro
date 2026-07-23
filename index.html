@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Vetro — Scotland's security workforce, verified.</title>
-  <meta name="description" content="Vetro checks your officers' SIA licences and BS7858 vetting automatically, so you always know who's actually cleared to work. Built by Tide Events Group Scotland." />
-  <link rel="icon" href="assets/brand/vetro-icon.svg" type="image/svg+xml" />
+  <title>Lunara Screening — Compliance, tracked clearly.</title>
+  <meta name="description" content="Lunara Screening lets you invite candidates and workers to submit their compliance documents, tracks every check's status, and gives you a clean, exportable report — built for UK employers who need proof, not a spreadsheet." />
+  <link rel="icon" href="assets/brand/lunara-icon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="src/styles/main.css" />
 </head>
 <body>
 
   <header class="site-header">
     <div class="container">
-      <a href="#" aria-label="Vetro home" style="display:inline-flex;">
-        <img src="assets/brand/vetro-logo-horizontal.svg" alt="Vetro" height="26" />
+      <a href="#" aria-label="Lunara Screening home" style="display:inline-flex;">
+        <img src="assets/brand/lunara-logo-horizontal.svg" alt="Lunara Screening" height="26" />
       </a>
       <nav class="site-nav">
         <a href="#how-it-works">How it works</a>
@@ -34,15 +34,17 @@
             <path d="M12 2L4 5V11C4 16.5 7.4 20.7 12 22C16.6 20.7 20 16.5 20 11V5L12 2Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
             <path d="M9 12L11 14L15.5 9.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          A Tide Events Group Scotland product
+          Workforce compliance, without the spreadsheet
         </span>
-        <h1>Scotland's security workforce, verified.</h1>
+        <h1>Compliance, tracked clearly.</h1>
         <p class="hero-lede">
-          One record per officer — licence, vetting, qualifications, documents, in one place.
-          Checked automatically, not chased manually.
+          Invite a candidate, they upload their documents, you see exactly what's verified,
+          pending, or missing — one record per person, one clean report at the end.
         </p>
         <p class="hero-credibility">
-          Checks run against the SIA public register — Vetro is not an official SIA integration or endorsement.
+          SIA licence numbers are checked against the official public register. Lunara Screening
+          is not a DBS Registered Body or Umbrella Body — DBS, PVG, and Disclosure Scotland checks
+          require an accredited partner and are not performed by this product today.
         </p>
         <div class="hero-actions">
           <a href="#pilot" class="btn btn-primary">Book a pilot</a>
@@ -54,31 +56,31 @@
     <section id="how-it-works">
       <div class="container">
         <span class="section-label">What the dashboard actually shows</span>
-        <h2>Real expiry windows. Real data. No fake green.</h2>
-        <p style="max-width:620px;color:var(--vetro-text-secondary);">
-          Every officer, one row, one answer: are they legally allowed to work today.
+        <h2>Real documents. Real expiry dates. No guesswork.</h2>
+        <p style="max-width:620px;color:var(--lunara-text-secondary);">
+          Every candidate, one row, one answer: what's been checked, and what still needs it.
         </p>
 
         <div class="steps-grid">
           <div class="step">
             <span class="step-number">1</span>
             <div>
-              <h4>Add your roster</h4>
-              <p>Officer names, SIA licence numbers, and vetting records — entered once.</p>
+              <h4>Invite a candidate</h4>
+              <p>Pick their role, and Lunara works out which checks it requires — SIA licence, First Aid, right to work, ID, or a training certificate.</p>
             </div>
           </div>
           <div class="step">
             <span class="step-number">2</span>
             <div>
-              <h4>Vetro checks automatically</h4>
-              <p>Runs against the SIA public register on a schedule. Nobody has to remember to.</p>
+              <h4>They self-serve the upload</h4>
+              <p>A branded, mobile-friendly form — no account needed, just the link you sent them.</p>
             </div>
           </div>
           <div class="step">
             <span class="step-number">3</span>
             <div>
-              <h4>See what needs attention</h4>
-              <p>Nothing to review unless a licence or vetting record actually needs it.</p>
+              <h4>You review what needs a human eye</h4>
+              <p>SIA licences link straight to the official register; everything else queues for a quick approve, reject, or request-more-info.</p>
             </div>
           </div>
         </div>
@@ -89,8 +91,8 @@
               <span></span><span></span><span></span>
             </div>
             <div class="dashboard-preview-header">
-              <h4>Officer roster</h4>
-              <span class="footer-disclaimer">12 officers · updated automatically</span>
+              <h4>Candidates</h4>
+              <span class="footer-disclaimer">12 candidates · updated as documents come in</span>
             </div>
             <div class="dashboard-preview-body">
               <div class="officer-row">
@@ -98,11 +100,11 @@
                   <span class="officer-avatar" aria-hidden="true">AM</span>
                   <div>
                     <div class="officer-name">A. Mackenzie</div>
-                    <div class="officer-meta">SIA Door Supervisor · BS7858 vetted</div>
+                    <div class="officer-meta">SIA Door Supervisor · First Aid on file</div>
                   </div>
                 </div>
-                <span class="status-badge status-active">Active</span>
-                <div class="officer-expiry">Renews 4 Mar 2027</div>
+                <span class="status-badge status-active">Verified</span>
+                <div class="officer-expiry">SIA renews 4 Mar 2027</div>
               </div>
 
               <div class="officer-row">
@@ -110,11 +112,11 @@
                   <span class="officer-avatar" aria-hidden="true">JS</span>
                   <div>
                     <div class="officer-name">J. Smith</div>
-                    <div class="officer-meta">SIA Door Supervisor · BS7858 vetted</div>
+                    <div class="officer-meta">SIA Door Supervisor · Right to work on file</div>
                   </div>
                 </div>
                 <span class="status-badge status-expiring">Expiring soon</span>
-                <div class="officer-expiry">Expires in 14 days</div>
+                <div class="officer-expiry">SIA licence expires in 14 days</div>
               </div>
 
               <div class="officer-row">
@@ -122,11 +124,11 @@
                   <span class="officer-avatar" aria-hidden="true">RC</span>
                   <div>
                     <div class="officer-name">R. Campbell</div>
-                    <div class="officer-meta">SIA Security Guard · Vetting on file</div>
+                    <div class="officer-meta">Security Guard · Training certificate missing</div>
                   </div>
                 </div>
-                <span class="status-badge status-expired">Expired</span>
-                <div class="officer-expiry">Expired 2 Jul 2026</div>
+                <span class="status-badge status-expired">Missing</span>
+                <div class="officer-expiry">Invited 6 days ago</div>
               </div>
 
               <div class="officer-row">
@@ -134,11 +136,11 @@
                   <span class="officer-avatar" aria-hidden="true">FA</span>
                   <div>
                     <div class="officer-name">F. Adeyemi</div>
-                    <div class="officer-meta">SIA CCTV Operator · BS7858 vetted</div>
+                    <div class="officer-meta">CCTV Operator · ID document on file</div>
                   </div>
                 </div>
-                <span class="status-badge status-active">Active</span>
-                <div class="officer-expiry">Renews 19 Nov 2026</div>
+                <span class="status-badge status-active">Verified</span>
+                <div class="officer-expiry">SIA renews 19 Nov 2026</div>
               </div>
             </div>
           </div>
@@ -148,8 +150,8 @@
 
     <section>
       <div class="container">
-        <span class="section-label">Why Vetro</span>
-        <h2>Everything else is a spreadsheet problem Vetro makes obsolete.</h2>
+        <span class="section-label">Why Lunara Screening</span>
+        <h2>Everything else is a spreadsheet and an inbox full of attachments.</h2>
         <div class="message-grid">
           <div class="card message-card">
             <span class="message-icon" aria-hidden="true">
@@ -159,8 +161,8 @@
                 <path d="M9 13H15M9 17H15" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
               </svg>
             </span>
-            <h4>One record per officer</h4>
-            <p>Licence, vetting, qualifications, and documents, in one place — not three spreadsheets and an inbox.</p>
+            <h4>One record per candidate</h4>
+            <p>Every document, every status, every date — in one place, not scattered across email threads.</p>
           </div>
           <div class="card message-card">
             <span class="message-icon" aria-hidden="true">
@@ -169,8 +171,8 @@
                 <path d="M19.7 3.5V7.5H15.7M4.3 20.5V16.5H8.3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </span>
-            <h4>Checked automatically</h4>
-            <p>Vetro checks the public SIA register on a schedule, so nobody has to remember to.</p>
+            <h4>Checked where checking is possible</h4>
+            <p>SIA licence numbers are cross-checked against the official public register — everything else is reviewed by a person, on purpose.</p>
           </div>
           <div class="card message-card">
             <span class="message-icon" aria-hidden="true">
@@ -180,7 +182,7 @@
               </svg>
             </span>
             <h4>Audit-ready by default</h4>
-            <p>Export what an ACS inspector or client asks for in seconds, not an afternoon.</p>
+            <p>Every status change and document view is logged. Export a clean report per person or per project in seconds.</p>
           </div>
           <div class="card message-card">
             <span class="message-icon" aria-hidden="true">
@@ -189,8 +191,8 @@
                 <circle cx="12" cy="12" r="2" fill="currentColor"/>
               </svg>
             </span>
-            <h4>Priced for the contractors who need it</h4>
-            <p>Built for small and mid-sized Scottish contractors — not another enterprise guard-tracking platform.</p>
+            <h4>Priced for the employer who needs it</h4>
+            <p>Built for the small and mid-sized UK organisations who are running this on a spreadsheet today — not another enterprise HR suite.</p>
           </div>
         </div>
       </div>
@@ -198,14 +200,15 @@
 
     <section class="position-section">
       <div class="container">
-        <span class="section-label" style="color:#8FB9B8;">Brand position</span>
-        <h2>Verified, not assumed.</h2>
+        <span class="section-label" style="color:#C9A94F;">Brand position</span>
+        <h2>Compliance, tracked clearly.</h2>
         <p>
-          Every other option in this space asks a contractor to trust a spreadsheet, a filing
-          cabinet, or their own memory. Vetro replaces assumption with a checked, dated,
-          exportable fact — built for the small-to-mid Scottish security contractor running
-          compliance manually today, and the independent consultant who needs to check status
-          across contractors they don't employ.
+          Every other option in this space asks an employer to trust a shared drive, a filing
+          cabinet, or their own memory. Lunara Screening replaces that with a checked, dated,
+          exportable record — built for the small-to-mid UK organisation running compliance
+          manually today. We're plain about what we do and don't do: statutory checks like DBS,
+          PVG, and Disclosure Scotland need an accredited partner, and that integration is coming
+          in a later phase — not pretended today.
         </p>
       </div>
     </section>
@@ -213,17 +216,17 @@
     <section id="pricing">
       <div class="container">
         <span class="section-label">Pricing</span>
-        <h2>One plan. Priced for the contractor who needs it, not the enterprise who doesn't.</h2>
+        <h2>One plan. Priced for the employer who needs it, not the enterprise who doesn't.</h2>
         <div class="card pricing-card">
           <div class="pricing-card-header">
-            <h3>Vetro</h3>
-            <p>A single flat monthly fee, covering up to 20 officers.</p>
+            <h3>Lunara Screening</h3>
+            <p>A single flat monthly fee, covering up to 20 candidates.</p>
           </div>
           <ul class="pricing-features">
-            <li>Unlimited licence and vetting checks, run automatically</li>
-            <li>Full audit log, plus CSV and PDF export on demand</li>
-            <li>Officer self-service document and vetting upload</li>
-            <li>Client portal for site contacts to confirm shifts</li>
+            <li>Unlimited document uploads and SIA licence checks</li>
+            <li>Full audit log, plus exportable compliance reports</li>
+            <li>Branded, mobile-friendly candidate self-service</li>
+            <li>Configurable retention periods and GDPR data requests built in</li>
           </ul>
           <a href="#pilot" class="btn btn-primary">Get your quote</a>
         </div>
@@ -234,8 +237,9 @@
       <div class="container">
         <div class="pitch-band">
           <p>
-            Vetro checks your officers' SIA licences and BS7858 vetting automatically, so you
-            always know who's actually cleared to work — no more spreadsheets, no more chasing.
+            Lunara Screening tracks your candidates' compliance documents and SIA licences
+            automatically, so you always know who's actually got what's needed on file — no more
+            spreadsheets, no more chasing attachments.
           </p>
           <form class="pilot-form" id="pilotForm">
             <div class="pilot-form-row">
@@ -250,7 +254,7 @@
             </div>
             <div class="pilot-form-row">
               <div class="pilot-form-field">
-                <label for="pf-officers">Number of officers</label>
+                <label for="pf-officers">Number of candidates</label>
                 <input id="pf-officers" name="officers" type="number" min="1" required />
               </div>
               <div class="pilot-form-field">
@@ -261,7 +265,7 @@
             <button type="submit" class="btn btn-primary">Book a pilot</button>
           </form>
           <p class="pilot-form-fallback">
-            Or email us directly at <a href="mailto:hello@vetro.co.uk">hello@vetro.co.uk</a>
+            Or email us directly at <a href="mailto:hello@lunarascreening.co.uk">hello@lunarascreening.co.uk</a>
           </p>
         </div>
       </div>
@@ -270,9 +274,11 @@
 
   <footer class="site-footer">
     <div class="container">
-      <span class="footer-credit">Built by Tide Events Group Scotland</span>
+      <span class="footer-credit">Lunara Screening</span>
       <span class="footer-disclaimer">
-        Vetro checks the public SIA register — it is not an official SIA integration or endorsement.
+        SIA licence numbers are checked against the official public register. Lunara Screening is
+        not a DBS Registered Body or Umbrella Body, and does not currently perform DBS, PVG, or
+        Disclosure Scotland checks — pending integration with an accredited partner.
       </span>
     </div>
   </footer>
@@ -284,14 +290,14 @@
       var company = document.getElementById('pf-company').value.trim();
       var officers = document.getElementById('pf-officers').value.trim();
       var email = document.getElementById('pf-email').value.trim();
-      var subject = encodeURIComponent('Vetro pilot enquiry — ' + company);
+      var subject = encodeURIComponent('Lunara Screening pilot enquiry — ' + company);
       var body = encodeURIComponent(
         'Name: ' + name + '\n' +
         'Company: ' + company + '\n' +
-        'Number of officers: ' + officers + '\n' +
+        'Number of candidates: ' + officers + '\n' +
         'Email: ' + email
       );
-      window.location.href = 'mailto:hello@vetro.co.uk?subject=' + subject + '&body=' + body;
+      window.location.href = 'mailto:hello@lunarascreening.co.uk?subject=' + subject + '&body=' + body;
     });
   </script>
 

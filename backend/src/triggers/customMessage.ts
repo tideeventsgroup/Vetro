@@ -1,8 +1,8 @@
 import type { CustomMessageTriggerEvent, CustomMessageTriggerHandler } from "aws-lambda";
 
 // Cognito's own invite email (AdminCreateUser) is otherwise a generic
-// "here's your username and temporary password" with no mention of Vetro,
-// which org invited them, or where to go sign in. The backend passes orgName
+// "here's your username and temporary password" with no mention of Lunara
+// Screening, which org invited them, or where to go sign in. The backend passes orgName
 // and loginUrl via ClientMetadata on AdminCreateUserCommand (see
 // backend/src/lib/cognito.ts) specifically so this trigger can fill them in —
 // no VPC/DB access needed here, everything arrives with the event. Every
@@ -15,10 +15,14 @@ export const handler: CustomMessageTriggerHandler = async (event: CustomMessageT
   const loginUrl = event.request.clientMetadata?.loginUrl;
   const username = event.userName;
 
-  event.response.emailSubject = orgName ? `You're invited to ${orgName} on Vetro` : "You're invited to Vetro";
+  event.response.emailSubject = orgName
+    ? `You're invited to ${orgName} on Lunara Screening`
+    : "You're invited to Lunara Screening";
 
   event.response.emailMessage = [
-    orgName ? `You've been invited to join ${orgName} on Vetro.` : "You've been invited to Vetro.",
+    orgName
+      ? `You've been invited to join ${orgName} on Lunara Screening.`
+      : "You've been invited to Lunara Screening.",
     "",
     `Username: ${username}`,
     // {####} is Cognito's own placeholder — it substitutes the real

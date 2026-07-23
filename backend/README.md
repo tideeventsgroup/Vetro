@@ -1,8 +1,8 @@
-# Vetro backend
+# Lunara Screening backend
 
-API for the officer/licence/vetting record. Hono app that runs identically
-locally (Node server) and in AWS (Lambda behind API Gateway) — same
-`src/app.ts`, two thin entry points (`src/server.ts`, `src/lambda.ts`).
+API for the candidate/check/document compliance record. Hono app that runs
+identically locally (Node server) and in AWS (Lambda behind API Gateway) —
+same `src/app.ts`, two thin entry points (`src/server.ts`, `src/lambda.ts`).
 
 ## Stack
 
@@ -12,37 +12,39 @@ locally (Node server) and in AWS (Lambda behind API Gateway) — same
 
 ## Multi-tenancy
 
-`Contractor.slug` is the tenant boundary — the subdomain a contractor's
-dashboard lives at (`clyde-coast.vetro.co.uk`). Every tenant-scoped route is
-mounted behind `requireContractor` (`src/lib/auth.ts`), which 403s unless a
-tenant was resolved:
+`Organisation.slug` is the tenant boundary — the subdomain an org's
+dashboard lives at (`your-org.lunarascreening.co.uk`). Every tenant-scoped
+route is mounted behind `requireOrganisation` (`src/lib/auth.ts`), which
+403s unless a tenant was resolved:
 
 - **Real deployments**: the tenant comes from the Cognito ID token's
-  `custom:contractor_id` claim (why `requireAuth` verifies the ID token, not
-  the access token — custom attributes aren't on the access token unless you
-  add a Pre Token Generation trigger, which felt like unneeded machinery
-  here). A client cannot pick its own tenant; that claim is assigned when
-  the contractor's account is set up.
-- **Local dev (`SKIP_AUTH=true`)**: there's no token to read a claim from, so
-  `requireAuth` trusts the `X-Vetro-Tenant` header instead — sent by the app
-  based on whatever subdomain it's running on (see `app/src/lib/tenant.ts`).
+  `custom:contractor_id` claim — the attribute name predates this rename and
+  can't change without recreating the Cognito User Pool, so it stays as-is
+  at the wire level even though the app calls this `organisationId`
+  everywhere (why `requireAuth` verifies the ID token, not the access
+  token — custom attributes aren't on the access token unless you add a Pre
+  Token Generation trigger). A client cannot pick its own tenant; that claim
+  is assigned when the org's account is set up.
+- **Local dev (`SKIP_AUTH=true`)**: there's no token to read a claim from,
+  so `requireAuth` trusts the `X-Lunara-Tenant` header instead — sent by the
+  app based on whatever subdomain it's running on (see `app/src/lib/tenant.ts`).
   This header is *only* trusted in `SKIP_AUTH` mode; in a real deployment
   it's read once (into `tenantSlug`, for the dev-only tenant-creation route)
   but never used to authorize anything.
 
-Every route handler filters by `contractorId`, and anything reached by ID
-(a licence, a vetting record, a qualification, a document) checks its parent
-officer's `contractorId` before returning or mutating it — a valid token for
-tenant A gets a 404, not tenant B's data, for tenant B's records.
+Every route handler filters by `organisationId`, and anything reached by ID
+(a check, a document, a data request) checks its parent candidate's
+`organisationId` before returning or mutating it — a valid token for tenant
+A gets a 404, not tenant B's data, for tenant B's records.
 
 ## Onboarding & roles
 
-An organization gets created one of two ways; everything after that —
-inviting teammates, inviting officers — is the same either way. Two Cognito
-custom attributes on top of `custom:contractor_id` decide what an account
-can do — `custom:role` (`ADMIN` | `OFFICER`) and `custom:officer_id` (only
-set for `OFFICER` accounts) — plus a `PlatformAdmins` Cognito group for the
-one action that isn't scoped to a tenant at all:
+An organisation gets created one of two ways; everything after that —
+inviting teammates, inviting candidates — is the same either way. Two
+Cognito custom attributes on top of `custom:contractor_id` decide what an
+account can do — `custom:role` (`ADMIN` | `REVIEWER`) — plus a
+`PlatformAdmins` Cognito group for the one action that isn't scoped to a
+tenant at all:
 
 1. **Self-serve signup.** Cognito's own public sign-up (`selfSignUpEnabled`,
    `infra/lib/auth-stack.ts`) creates the bare account — email + password,
@@ -50,74 +52,70 @@ one action that isn't scoped to a tenant at all:
    client's `writeAttributes`, so the client can never set its own
    `custom:role`/`custom:contractor_id` at signup (or ever — see the comment
    in `auth-stack.ts`). Once that account is confirmed (email code) and
-   signed in, `POST /signup/organization` (`src/routes/signup.ts`) creates
-   the `Contractor` row and calls `AdminUpdateUserAttributes` to grant that
+   signed in, `POST /signup/organisation` (`src/routes/signup.ts`) creates
+   the `Organisation` row and calls `AdminUpdateUserAttributes` to grant that
    *specific, already-authenticated* account `ADMIN` of the org it just
-   created — gated only on the caller not already having a `contractorId`,
-   so it can't be replayed against an existing account. This is the backend
-   the redesigned login/signup page (`app/src/routes/Signup.tsx`) drives.
-2. **A platform admin creates the organization on someone's behalf.** `POST
-   /admin/organizations` (gated on `PlatformAdmins` group membership —
-   `requirePlatformAdmin` in `src/lib/auth.ts`) creates the `Contractor` row
-   and the org's first `ADMIN` Cognito account in one step
+   created — gated only on the caller not already having an
+   `organisationId`, so it can't be replayed against an existing account.
+2. **A platform admin creates the organisation on someone's behalf.** `POST
+   /admin/organisations` (gated on `PlatformAdmins` group membership —
+   `requirePlatformAdmin` in `src/lib/auth.ts`) creates the `Organisation`
+   row and the org's first `ADMIN` Cognito account in one step
    (`src/routes/admin.ts`), via `AdminCreateUser` instead — useful for
    setting an org up without the customer going through signup themselves.
 
-Both roll back the `Contractor` row if the Cognito call fails, rather than
+Both roll back the `Organisation` row if the Cognito call fails, rather than
 leaving an org behind with no admin who can ever log into it.
 
 3. **That org's admin invites teammates.** `POST /invitations`
-   (`src/routes/invitations.ts`) creates another `ADMIN` account scoped to
-   the same `contractor_id` — full access to the org's roster, same as the
-   inviter.
-4. **That org's admin invites officers to self-service.** `POST
-   /officers/:id/invite` (`src/routes/officers.ts`) creates an `OFFICER`
-   account with `custom:officer_id` set to that one `Officer` row — an
-   officer's login can only ever reach their own record.
+   (`src/routes/invitations.ts`) creates another account scoped to the same
+   `contractor_id`, as `ADMIN` (full access) or `REVIEWER` (candidates and
+   the review queue only — see `requireReviewer` in `src/lib/auth.ts`).
+4. **That org's admin invites a candidate.** `POST /candidates`
+   (`src/routes/candidates.ts`) creates a `Candidate` row plus one `Check`
+   row per required check on their `RoleType`, and generates an unguessable
+   `inviteToken` — a candidate has no Cognito account; that token, sent as a
+   magic link, is the only thing standing in for one (`src/routes/candidatePublic.ts`).
 
-Both of those create the Cognito user via `AdminCreateUser`
+Invited teammates are created via `AdminCreateUser`
 (`src/lib/cognito.ts`), which also asks Cognito's own built-in email service
 to send the temporary password — no SES setup required, but that service is
 hard-capped at 50 emails/day for the whole pool with no way to raise it
-short of moving to SES (blocked for now: SES is still sandboxed on this AWS
-account and there's no verified `vetro.co.uk` domain identity, so it can
-only email pre-verified addresses today). Email is therefore not the only
-way the invitee gets their password: `createCognitoUser` generates it itself
-(matching the pool's password policy) and every invite route
-(`/invitations`, `/officers/:id/invite`, `/sites/:id/invite-client`) returns
-it in the response, so the inviting admin can hand it over directly if the
-email doesn't arrive.
+short of moving to SES. Email is therefore not the only way the invitee
+gets their password: `createCognitoUser` generates it itself (matching the
+pool's password policy) and `/invitations` returns it in the response, so
+the inviting admin can hand it over directly if the email doesn't arrive.
+A candidate invite has no Cognito email step at all — their magic link is
+returned directly in the `POST /candidates` response for the admin to share.
 
-When the email *does* go out, Cognito's default text is a generic "here's
-your username and temporary password" with no mention of Vetro, which org
-invited them, or where to sign in. Fixing that doesn't need SES: a
-`CustomMessage` Lambda trigger (`infra/lib/auth-stack.ts`'s
-`CustomMessageFunction`, handler in `src/triggers/customMessage.ts`) rewrites
-the email's subject/body for `AdminCreateUser` invites specifically, filling
-in the org's name and a sign-in link. Both arrive via `ClientMetadata` on the
-`AdminCreateUserCommand` call (`buildInviteClientMetadata` in
-`src/lib/cognito.ts`, called from all three invite routes) rather than a DB
-lookup inside the trigger — it needs no VPC/DB access of its own. The link
-itself is `APP_LOGIN_URL_TEMPLATE` (an env var set in `infra/bin/vetro.ts`,
-`{slug}` filled in per-invite): subdomain-based once the custom domain is
-configured, otherwise the CloudFront default domain's path-based tenant
-routing. Every other trigger source (self-serve signup's verification code,
-forgot password) is left alone — Cognito uses its own default text there.
+When a teammate invite email *does* go out, Cognito's default text is a
+generic "here's your username and temporary password" with no mention of
+Lunara Screening, which org invited them, or where to sign in. Fixing that
+doesn't need SES: a `CustomMessage` Lambda trigger
+(`infra/lib/auth-stack.ts`'s `CustomMessageFunction`, handler in
+`src/triggers/customMessage.ts`) rewrites the email's subject/body for
+`AdminCreateUser` invites specifically, filling in the org's name and a
+sign-in link. Both arrive via `ClientMetadata` on the `AdminCreateUserCommand`
+call (`buildInviteClientMetadata` in `src/lib/cognito.ts`) rather than a DB
+lookup inside the trigger — it needs no VPC/DB access of its own.
 
-The officer self-service portal (`/me/*`, gated by `requireOfficerSelf`) is
-deliberately narrow: an officer can view their own record and submit their
-own vetting details (address history, employment history, references,
-consent) and documents. Vetro still never performs the BS7858 check itself —
-what they submit lands as a `VettingSubmission` (`PENDING_REVIEW`), a
-distinct model from the authoritative `VettingRecord` an admin still owns
-and updates by hand after reviewing it. "Verified, not assumed" applies to
-this flow the same as everywhere else: the officer's own claim about their
-address history isn't the record until an admin has looked at it.
+The candidate self-service form (`routes/candidatePublic.ts`, fronted by
+`app/src/routes/CandidateSelfService.tsx`) is deliberately narrow: a
+candidate can view their own record, upload documents against each required
+check, enter check-specific details (an SIA licence number, an expiry
+date), and raise a GDPR access or deletion request. Lunara Screening still
+never performs a DBS/PVG/Disclosure Scotland check itself, and doesn't
+verify SIA licences automatically either — what a candidate submits moves a
+`Check` to `PENDING`, a distinct state from `VERIFIED`, which only an
+admin/reviewer sets by hand after reviewing it (and, for `SIA_LICENCE`,
+cross-checking the licence number against the public Register of Licence
+Holders themselves — there's no public API to automate that lookup).
+"Verified, not assumed" applies to this flow the same as everywhere else.
 
 ## Local development
 
 ```bash
-docker run -d --name vetro-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=vetro postgres:16
+docker run -d --name lunara-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=vetro postgres:16
 cp .env.example .env
 npm install
 npm run prisma:migrate
@@ -133,104 +131,55 @@ in `.env.example`), so requests don't need a bearer token locally.
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/health` | Unauthenticated |
-| GET | `/contractors/me` | The resolved tenant, or `null` (404) if none |
-| POST | `/contractors` | Dev-only: creates a tenant for the current subdomain |
-| POST | `/admin/organizations` | Platform-admin only — creates a `Contractor` + its first `ADMIN` account |
-| POST | `/signup/organization` | Self-serve — creates a `Contractor` and grants the calling (already-signed-up) account `ADMIN` of it; 409s if the caller already belongs to one |
-| POST | `/invitations` | Admin-only — invites a teammate as another `ADMIN` in the same tenant |
-| GET | `/officers` | List officers with licences + vetting, scoped to tenant (admin-only) |
-| POST | `/officers` | Create officer in the resolved tenant (admin-only) |
-| GET | `/officers/:id` | Full officer record (admin-only) |
-| PATCH / DELETE | `/officers/:id` | Admin-only |
-| POST | `/officers/:id/invite` | Admin-only — invites that officer to the self-service portal |
-| POST | `/officers/:officerId/licences` | Add SIA licence (admin-only) |
-| PATCH | `/licences/:id` | Admin-only |
-| POST | `/officers/:officerId/vetting` | Add BS7858 vetting record (admin-only) |
-| PATCH | `/vetting/:id` | Admin-only |
-| POST | `/officers/:officerId/qualifications` | Admin-only |
-| PATCH / DELETE | `/qualifications/:id` | Admin-only |
-| POST | `/officers/:officerId/documents/upload-url` | Returns a presigned S3 PUT URL (admin-only) |
-| POST | `/officers/:officerId/documents` | Confirms an upload, creates the `Document` row (admin-only) |
-| GET | `/documents/:id/download-url` | Returns a presigned S3 GET URL (admin-only) |
-| DELETE | `/documents/:id` | Admin-only |
-| GET | `/dashboard/summary` | Status counts, powers the dashboard preview (admin-only) |
-| GET | `/exports/officers.csv` | Audit-ready export (admin-only) |
-| GET | `/me/officer` | Officer self-service — own record, scoped by `custom:officer_id` |
-| GET / POST | `/me/vetting-submissions` | Officer self-service — own submissions / submit new one |
-| POST | `/me/documents/upload-url` | Officer self-service — same presigned flow, scoped to the caller |
-| POST | `/me/documents` | Officer self-service |
-| GET | `/me/documents/:id/download-url` | Officer self-service |
-| GET | `/vetting-submissions` | Admin-only — the review queue behind `/me/vetting-submissions`; optional `?status=` filter |
-| PATCH | `/vetting-submissions/:id` | Admin-only — approve (creates a `VettingRecord`) or reject; 409s if already reviewed |
-| PATCH | `/contractors/me` | Admin-only — renames the org; slug stays immutable |
-| GET | `/team` | Admin-only — this org's `ADMIN` accounts |
+| GET | `/organisations/me` | The resolved tenant, or `null` (404) if none |
+| POST | `/organisations` | Dev-only: creates a tenant for the current subdomain |
+| PATCH | `/organisations/me` | Admin-only — renames the org and/or sets `retentionDays`; slug stays immutable |
+| POST | `/admin/organisations` | Platform-admin only — creates an `Organisation` + its first `ADMIN` account |
+| POST | `/signup/organisation` | Self-serve — creates an `Organisation` and grants the calling (already-signed-up) account `ADMIN` of it; 409s if the caller already belongs to one |
+| POST | `/invitations` | Admin-only — invites a teammate as `ADMIN` or `REVIEWER` in the same tenant |
+| GET | `/team` | Admin-only — this org's `ADMIN`/`REVIEWER` accounts |
 | DELETE | `/team/:username` | Admin-only — removes a teammate; 404s if they're not in this org, 400s on self-removal |
-| GET | `/audit-log` | Admin-only — most recent 200 `AuditLogEntry` rows for this tenant |
-| GET | `/sites` | Admin-only — this tenant's sites |
-| GET | `/sites/:id` | Admin-only — site detail incl. its last 50 shifts |
-| POST | `/sites` | Admin-only — create a site |
-| PATCH / DELETE | `/sites/:id` | Admin-only |
-| POST | `/sites/:id/invite-client` | Admin-only — creates a `CLIENT` Cognito account scoped to that one site (`custom:site_id`) |
-| GET | `/shifts` | Admin-only — optional `?siteId=`/`?from=`/`?to=` filters |
-| POST | `/shifts` | Admin-only — validates `siteId`/`officerId` belong to the tenant |
-| PATCH / DELETE | `/shifts/:id` | Admin-only — reassign, reschedule, or change status |
-| GET | `/client/site` | Client self-service — the caller's own site, scoped by `custom:site_id` |
-| GET | `/client/shifts` | Client self-service — shifts scheduled at their own site |
-| PATCH | `/client/shifts/:id/confirm` | Client self-service — confirms a shift as `COMPLETED`/`MISSED`/`LATE` with optional `incidentNotes`, stamps `clientConfirmedAt` |
-| GET | `/reports/sites` | Admin-only — per-site rollup: shift counts by status, officer count, officers with a non-`ACTIVE` licence/vetting record |
+| GET / POST | `/role-types` | Admin-only — an org's configurable "which checks does this job need" templates |
+| PATCH / DELETE | `/role-types/:id` | Admin-only |
+| GET | `/candidates` | Admin/reviewer — list candidates with their role type and checks |
+| GET | `/candidates/:id` | Admin/reviewer — full candidate record incl. documents |
+| POST | `/candidates` | Admin/reviewer — invite a candidate; creates one `Check` per their role type's required checks |
+| DELETE | `/candidates/:id` | Admin/reviewer — cascades onto their checks and documents |
+| PATCH | `/candidates/:id/checks/:checkId` | Admin/reviewer — the review queue: set `status`/`notes`/`expiryDate`/`licenceNumber` |
+| GET | `/candidates/:id/checks/:checkId/documents/:docId/download-url` | Admin/reviewer — presigned S3 GET URL; logs a `document.viewed` audit entry |
+| GET | `/public/candidates/:token` | Public — a candidate's own record via their magic link, no Cognito account |
+| POST | `/public/candidates/:token/checks/:checkId/upload-url` | Public — presigned S3 PUT URL for that check |
+| POST | `/public/candidates/:token/checks/:checkId/documents` | Public — confirms an upload, moves the check to `PENDING` |
+| POST | `/public/candidates/:token/submit` | Public — marks the candidate `SUBMITTED` |
+| POST | `/public/candidates/:token/data-requests` | Public — candidate raises a GDPR `ACCESS` or `DELETE` request |
+| GET | `/data-requests` | Admin-only — this org's GDPR requests |
+| POST | `/data-requests/:id/resolve` | Admin-only — marks resolved; actually deletes the candidate for a `DELETE` request |
+| GET | `/audit-log` | Admin/reviewer — most recent 200 `AuditLogEntry` rows for this tenant |
 
-All of the above except `/health` and `/contractors/me`+`/contractors`
-require a resolved tenant (403 otherwise) — see "Multi-tenancy" above. Routes
-marked admin-only additionally 403 an `OFFICER` or `CLIENT` login
-(`requireAdmin`); `/me/*` routes require `requireOfficerSelf`, `/client/*`
-routes require `requireClientSelf` — see "Onboarding & roles".
+All of the above except `/health` and `/organisations/me`+`/organisations`
+require a resolved tenant (403 otherwise) — see "Multi-tenancy" above.
+`/candidates/*` accepts `ADMIN` or `REVIEWER` (`requireReviewer`); everything
+else tenant-scoped is `ADMIN`-only (`requireAdmin`); `/public/candidates/*`
+routes need neither — see "Onboarding & roles".
 
 All writes go through `src/lib/audit.ts` into `AuditLogEntry` — that table is
-the answer to "prove this happened" for an ACS inspector, and `/audit-log`
-above is how an org's own admin reads it back. Entries carry a `contractorId`
-so they can be scoped per-tenant; rows from before that column existed show
-with no tenant attributed.
+the answer to "prove this happened" for a client due-diligence request, and
+`/audit-log` above is how an org's own admin reads it back. Status changes,
+document views, and GDPR requests are all recorded, per the brief's
+requirement that the audit trail be a core feature, not an afterthought.
 
-## Scheduling, sites, and the client portal
-
-A third custom attribute, `custom:role: CLIENT` (plus `custom:site_id`),
-covers the other half of TimeGate+-style workforce management this session
-added on top of the compliance tracking Vetro already did — site/contract
-tracking, shift scheduling, and client sign-off, without taking on payroll or
-automated shift-matching (out of scope; see the `Site`/`Shift` models in
-`prisma/schema.prisma`):
-
-- **`Site`** — one of a contractor's client locations/contracts. `POST
-  /sites/:id/invite-client` (`src/routes/sites.ts`) creates a Cognito account
-  with `custom:role=CLIENT` and `custom:site_id` set to that one site — like
-  an `OFFICER` login, a `CLIENT` login can only ever reach its own scope
-  (`requireClientSelf`, `src/lib/auth.ts`).
-- **`Shift`** — an officer assigned to a site for a time window
-  (`src/routes/shifts.ts`, admin-only). `status` starts `SCHEDULED` and moves
-  to `CONFIRMED`/`COMPLETED`/`MISSED`/`LATE`.
-- **The client portal** (`/client/*`, `src/routes/client.ts`) is that
-  contact's confirmation step — TimeGate+'s "client signoff" idea. They see
-  shifts scheduled at their own site and confirm what actually happened
-  (`COMPLETED`/`MISSED`/`LATE`, with `incidentNotes` for anything but a clean
-  completion); confirming stamps `clientConfirmedAt`. They never see the
-  contractor's roster, other sites, or officer compliance data — the client
-  portal answers "did the guard turn up," nothing else.
-- **`/reports/sites`** (`src/routes/reports.ts`) is the exception-based
-  rollup TimeGate+ calls out explicitly: shift counts by status per site,
-  officer count, and how many of those officers currently have a non-`ACTIVE`
-  licence or vetting record — the same "N submissions awaiting review" idea
-  on the dashboard, one level up, per contract.
-
-## Expiry checking
+## Expiry and retention checking
 
 `src/jobs/checkExpiries.ts` is a separate Lambda entry point (deployed by
-`infra/lib/schedule-stack.ts` on a daily EventBridge rule). It recomputes each
-licence/vetting record's status from its stored expiry date using the same
-30-day amber threshold as the brand guidelines.
+`infra/lib/schedule-stack.ts` on a daily EventBridge rule). It does two
+things: flips any `VERIFIED` check whose `expiryDate` has passed to
+`EXPIRED`, and flags candidates older than their organisation's own
+`retentionDays` for retention review — via an `AuditLogEntry`, not an
+automatic delete, so a human is always in the loop for GDPR-driven cleanup.
 
-**Not yet built:** an actual lookup against the public SIA register. Today,
-expiry dates are entered when a licence/vetting record is created and the job
-only tracks time against them. Wiring in the real register check is the next
-piece of work before "checked automatically" is fully true — plug it in
-ahead of the status recompute in `checkExpiries.ts`, updating
-`licenceNumber`/`status` from the lookup result instead of only the clock.
+**Not yet built:** an automated lookup against the public SIA register —
+there isn't one to automate against (only a session-cookie-protected web
+form exists, see `src/routes/candidates.ts`'s comments). SIA licence
+verification is deliberately admin-assisted: an admin opens the official
+register in a new tab, cross-checks the licence number themselves, and
+confirms the result back in the review queue.

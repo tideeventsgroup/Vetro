@@ -1,117 +1,118 @@
 /*
-  Vetro design tokens
-  Canonical colours generated from docs/BRAND_GUIDELINES.md v1.0 — keep
-  those five hex values in sync with that file. Everything else here
-  (scale, shadows, radii, motion) is derived, refined against Stripe/Linear-
-  style conventions for a professional B2B SaaS feel.
+  Lunara Screening design tokens.
+  An original palette and type system for a standalone compliance-workflow
+  product — no colours, type, or naming conventions carried over from any
+  other brand. "Luna" (moon) informs the mark and the deep-night palette,
+  but the system itself is built for a B2B compliance audience: direct,
+  legible, unfussy.
 */
 
 :root {
-  /* Colour palette (canonical — see docs/BRAND_GUIDELINES.md) */
-  --vetro-ink: #1F2933;
-  --vetro-teal: #0E7C7B;
-  --vetro-teal-dark: #0A5E5D;
-  --vetro-teal-light: #E3F2F1;
-  --vetro-white: #FFFFFF;
-  --vetro-slate: #E4E7EB;
+  /* Colour palette */
+  --lunara-ink: #10182B;
+  --lunara-indigo: #16234A;
+  --lunara-indigo-dark: #0B1430;
+  --lunara-indigo-light: #E8ECF6;
+  --lunara-white: #FFFFFF;
+  --lunara-mist: #E6E9F0;
 
-  /* Status colours — reserved strictly for licence/vetting state, never decorative */
-  --vetro-status-amber: #FF6633;
-  --vetro-status-red: #D64545;
-  --vetro-status-green: #2E9E5B;
+  /* Accents — gold is the primary call-to-action/highlight tone; silver is
+     the quieter secondary used for borders, dividers, and muted accents. */
+  --lunara-gold: #B08A2E;
+  --lunara-gold-dark: #8C6D23;
+  --lunara-gold-light: #FBF3DF;
+  --lunara-silver: #8D95A6;
+  --lunara-silver-light: #F1F2F5;
 
-  /* Darker "as text" variants of the three status colours above — the base
-     tones are tuned for badge fills/icons/borders (where WCAG's looser 3:1
-     non-text contrast applies) and fall short of 4.5:1 for actual body text
-     on a light surface. These are what status badges and any status-coloured
-     numeral/label should use instead. Values match the Workforce Platform
-     design (claude.ai/design project 0c499cb6). */
-  --vetro-status-green-text: #1C7C4C;
-  --vetro-status-amber-text: #B5820A;
-  --vetro-status-red-text: #B3261E;
+  /* Status colours — reserved strictly for check/candidate state, never decorative */
+  --lunara-status-amber: #C97C1F;
+  --lunara-status-red: #C23B3B;
+  --lunara-status-green: #24825A;
 
-  /* Pastel badge fills paired with the *-text colours above — literal
-     values from the same design rather than a computed color-mix, so
-     badges read exactly as designed regardless of the base tone's own
-     saturation (which stays bright for dots/bars/fills elsewhere). */
-  --vetro-badge-green-bg: #E3F3EA;
-  --vetro-badge-amber-bg: #FBF0D9;
-  --vetro-badge-red-bg: #FCE8E6;
-  --vetro-badge-blue-bg: #EAF1F8;
-  --vetro-badge-blue-text: #3E6690;
+  /* Darker "as text" variants — badge base tones are tuned for fills/icons/
+     borders (WCAG's looser 3:1 non-text contrast); these are what status
+     text/labels use instead, to clear 4.5:1 on a light surface. */
+  --lunara-status-green-text: #1A6944;
+  --lunara-status-amber-text: #9C6314;
+  --lunara-status-red-text: #A32F2F;
+
+  --lunara-badge-green-bg: #E4F3EC;
+  --lunara-badge-amber-bg: #FBEFDD;
+  --lunara-badge-red-bg: #FAE7E6;
+  --lunara-badge-blue-bg: #E9EEF8;
+  --lunara-badge-blue-text: #3A537D;
 
   /* Neutral text hierarchy, all derived from Ink */
-  --vetro-ink-900: #1F2933;
-  --vetro-ink-700: #3E4C59;
-  --vetro-ink-500: #7B8794;
-  --vetro-ink-300: #CBD2D9;
+  --lunara-ink-900: #10182B;
+  --lunara-ink-700: #3C455C;
+  --lunara-ink-500: #7A8299;
+  --lunara-ink-300: #CCD1DE;
 
   /* Surfaces & text */
-  --vetro-bg: #F6F7F7;
-  --vetro-surface: var(--vetro-white);
-  --vetro-surface-muted: var(--vetro-slate);
-  --vetro-border: #E1E4E9;
-  --vetro-border-strong: var(--vetro-ink-300);
-  --vetro-text: var(--vetro-ink-900);
-  --vetro-text-secondary: var(--vetro-ink-700);
-  /* Deliberately darker than --vetro-ink-500 (#7B8794, ~3.7:1 on white,
-     under WCAG AA's 4.5:1 for body text) — --vetro-text-muted is used as
-     real, readable text throughout (empty states, table meta, "Loading…"),
-     not just as a decorative tint, so it needs to actually meet AA. */
-  --vetro-text-muted: #5B6770;
-  --vetro-accent: var(--vetro-teal);
-  --vetro-accent-hover: var(--vetro-teal-dark);
-  --vetro-focus-ring: #0E7C7B66;
+  --lunara-bg: #F7F8FB;
+  --lunara-surface: var(--lunara-white);
+  --lunara-surface-muted: var(--lunara-mist);
+  --lunara-border: #E3E6EE;
+  --lunara-border-strong: var(--lunara-ink-300);
+  --lunara-text: var(--lunara-ink-900);
+  --lunara-text-secondary: var(--lunara-ink-700);
+  /* Deliberately darker than --lunara-ink-500 — used as real, readable text
+     throughout (empty states, table meta, "Loading…"), not just a decorative
+     tint, so it needs to actually meet AA on a light surface. */
+  --lunara-text-muted: #565E73;
+  --lunara-accent: var(--lunara-gold);
+  --lunara-accent-hover: var(--lunara-gold-dark);
+  --lunara-focus-ring: #B08A2E66;
 
   /* Typography — 12/13/14/16/18/20/24/32/40/56 scale */
-  --vetro-font-sans: 'Sora', Arial, Helvetica, sans-serif;
-  --vetro-fs-label: 12px;
-  --vetro-fs-body-sm: 14px;
-  --vetro-fs-body: 16px;
-  --vetro-fs-h4: 18px;
-  --vetro-fs-h3: 20px;
-  --vetro-fs-h2: 28px;
-  --vetro-fs-h1: 40px;
-  --vetro-fs-display: 56px;
-  --vetro-fw-regular: 400;
-  --vetro-fw-medium: 500;
-  --vetro-fw-semibold: 600;
-  --vetro-fw-bold: 700;
-  --vetro-lh-body: 1.6;
-  --vetro-lh-heading: 1.15;
-  --vetro-ls-label: 0.06em;
-  --vetro-ls-tight: -0.01em;
+  --lunara-font-sans: 'Manrope', Arial, Helvetica, sans-serif;
+  --lunara-fs-label: 12px;
+  --lunara-fs-body-sm: 14px;
+  --lunara-fs-body: 16px;
+  --lunara-fs-h4: 18px;
+  --lunara-fs-h3: 20px;
+  --lunara-fs-h2: 28px;
+  --lunara-fs-h1: 40px;
+  --lunara-fs-display: 56px;
+  --lunara-fw-regular: 400;
+  --lunara-fw-medium: 500;
+  --lunara-fw-semibold: 600;
+  --lunara-fw-bold: 700;
+  --lunara-lh-body: 1.6;
+  --lunara-lh-heading: 1.15;
+  --lunara-ls-label: 0.06em;
+  --lunara-ls-tight: -0.01em;
 
   /* Spacing — 8pt rhythm */
-  --vetro-space-1: 4px;
-  --vetro-space-2: 8px;
-  --vetro-space-3: 12px;
-  --vetro-space-4: 16px;
-  --vetro-space-5: 24px;
-  --vetro-space-6: 32px;
-  --vetro-space-7: 48px;
-  --vetro-space-8: 64px;
-  --vetro-space-9: 96px;
+  --lunara-space-1: 4px;
+  --lunara-space-2: 8px;
+  --lunara-space-3: 12px;
+  --lunara-space-4: 16px;
+  --lunara-space-5: 24px;
+  --lunara-space-6: 32px;
+  --lunara-space-7: 48px;
+  --lunara-space-8: 64px;
+  --lunara-space-9: 96px;
 
-  /* Radius — three-value vocabulary (Linear-style) */
-  --vetro-radius-sm: 6px;
-  --vetro-radius-md: 8px;
-  --vetro-radius-lg: 12px;
-  --vetro-radius-pill: 999px;
+  /* Radius — three-value vocabulary */
+  --lunara-radius-sm: 6px;
+  --lunara-radius-md: 8px;
+  --lunara-radius-lg: 12px;
+  --lunara-radius-pill: 999px;
 
-  /* Shadow — cool-tinted two-layer elevation (Stripe-style), plus a
-     hairline-border alternative for flatter surfaces (Linear-style) */
-  --vetro-shadow-sm: 0 1px 2px rgba(31, 41, 51, 0.06);
-  --vetro-shadow-card: 0 1px 2px rgba(31, 41, 51, 0.04), 0 4px 12px rgba(31, 41, 51, 0.06);
-  --vetro-shadow-lifted: 0 2px 4px rgba(31, 41, 51, 0.06), 0 12px 24px rgba(31, 41, 51, 0.10);
-  --vetro-shadow-focus: 0 0 0 3px var(--vetro-focus-ring);
+  /* Shadow — cool-tinted two-layer elevation, plus a hairline-border
+     alternative for flatter surfaces */
+  --lunara-shadow-sm: 0 1px 2px rgba(16, 24, 43, 0.06);
+  --lunara-shadow-card: 0 1px 2px rgba(16, 24, 43, 0.04), 0 4px 12px rgba(16, 24, 43, 0.06);
+  --lunara-shadow-lifted: 0 2px 4px rgba(16, 24, 43, 0.06), 0 12px 24px rgba(16, 24, 43, 0.10);
+  --lunara-shadow-focus: 0 0 0 3px var(--lunara-focus-ring);
 
   /* Motion */
-  --vetro-duration: 150ms;
-  --vetro-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --lunara-duration: 150ms;
+  --lunara-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Layout */
-  --vetro-max-width: 1120px;
-  --vetro-icon-sm: 16px;
-  --vetro-icon-md: 20px;
+  --lunara-max-width: 1120px;
+  --lunara-icon-sm: 16px;
+  --lunara-icon-md: 20px;
 }

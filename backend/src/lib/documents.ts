@@ -18,11 +18,10 @@ function requireBucket(): string {
   return bucket;
 }
 
-// `prefix` groups uploads by what they belong to — "officers/<id>" for a
-// document, "incidents/<officerId>" for an incident photo — the record
-// referencing the resulting s3Key doesn't exist yet at upload time (same
-// two-step presigned flow either way: get a URL, PUT the file, then create
-// the row with the key it returned).
+// `prefix` groups uploads by what they belong to — "candidates/<id>/checks/<checkId>"
+// for a compliance document — the record referencing the resulting s3Key
+// doesn't exist yet at upload time (same two-step presigned flow either
+// way: get a URL, PUT the file, then create the row with the key it returned).
 export async function createUploadUrl(params: {
   prefix: string;
   fileName: string;

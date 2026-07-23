@@ -1,4 +1,4 @@
-# Vetro infra
+# Lunara Screening infra
 
 AWS CDK (TypeScript) app for the serverless deployment: API Gateway + Lambda
 in front of the Hono app in `../backend`, Aurora Serverless v2 Postgres
@@ -34,7 +34,7 @@ To also create the first tenant (no admin UI for this yet — see
 `backend/README.md`'s "Multi-tenancy"), pass a payload:
 
 ```bash
-echo '{"bootstrapContractor":{"name":"Clyde Coast Security Ltd","slug":"clyde-coast"}}' > payload.json
+echo '{"bootstrapOrganisation":{"name":"Acme Vetting Ltd","slug":"acme-vetting"}}' > payload.json
 aws lambda invoke --function-name <MigrateFunctionName> \
   --cli-binary-format raw-in-base64-out --payload file://payload.json result.json
 ```
@@ -45,7 +45,7 @@ Cognito directly:
 ```bash
 aws cognito-idp admin-create-user --user-pool-id <pool id> --username <email> \
   --user-attributes Name=email,Value=<email> Name=email_verified,Value=true \
-    Name=custom:contractor_id,Value=<contractor id from bootstrap>
+    Name=custom:contractor_id,Value=<organisation id from bootstrap>
 aws cognito-idp admin-set-user-password --user-pool-id <pool id> --username <email> \
   --password <temp password> --permanent
 ```

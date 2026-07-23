@@ -6,23 +6,32 @@ import type { AppEnv } from "../lib/hono-env.js";
 
 export const invitations = new Hono<AppEnv>();
 
+const INVITABLE_ROLES = ["ADMIN", "REVIEWER"] as const;
+
 // An org's own ADMIN inviting a teammate into the same tenant — distinct
 // from the platform-admin org-creation path in routes/admin.ts. Mounted
-// under tenantScoped in app.ts, so contractorId is always resolved here.
+// under tenantAdminPrefixes in app.ts, so organisationId is always resolved
+// here. ADMIN gets full access (team/settings/role types included);
+// REVIEWER can work the candidates/checks review queue but not manage the
+// account itself.
 invitations.post("/invitations", async (c) => {
-  const body = await c.req.json<{ email: string }>();
+  const body = await c.req.json<{ email: string; role?: string }>();
   if (!body.email) return c.json({ error: "email is required" }, 400);
+  const role = body.role ?? "ADMIN";
+  if (!INVITABLE_ROLES.includes(role as (typeof INVITABLE_ROLES)[number])) {
+    return c.json({ error: `role must be one of: ${INVITABLE_ROLES.join(", ")}` }, 400);
+  }
 
-  const contractorId = c.get("contractorId")!;
+  const organisationId = c.get("organisationId")!;
   const db = await getDb();
-  const contractor = await db.contractor.findUniqueOrThrow({ where: { id: contractorId } });
+  const organisation = await db.organisation.findUniqueOrThrow({ where: { id: organisationId } });
 
   let temporaryPassword: string;
   try {
     ({ temporaryPassword } = await createCognitoUser({
       email: body.email,
-      attributes: { "custom:contractor_id": contractorId, "custom:role": "ADMIN" },
-      clientMetadata: buildInviteClientMetadata(contractor),
+      attributes: { "custom:contractor_id": organisationId, "custom:role": role },
+      clientMetadata: buildInviteClientMetadata(organisation),
     }));
   } catch (err) {
     if (err instanceof CognitoUserExistsError) return c.json({ error: err.message }, 409);
@@ -30,13 +39,13 @@ invitations.post("/invitations", async (c) => {
   }
 
   await recordAudit({
-    contractorId,
+    organisationId,
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "teammate.invited",
-    entityType: "Contractor",
-    entityId: contractorId,
-    metadata: { email: body.email },
+    entityType: "Organisation",
+    entityId: organisationId,
+    metadata: { email: body.email, role },
   });
 
-  return c.json({ status: "invited", email: body.email, temporaryPassword }, 201);
+  return c.json({ status: "invited", email: body.email, role, temporaryPassword }, 201);
 });

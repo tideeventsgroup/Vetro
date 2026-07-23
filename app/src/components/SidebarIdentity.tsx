@@ -7,6 +7,7 @@ function initial(email: string | undefined): string {
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Admin",
+  REVIEWER: "Reviewer",
 };
 
 // Org + signed-in-account block, anchored to the bottom of the sidebar —

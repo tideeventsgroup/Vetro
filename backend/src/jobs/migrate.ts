@@ -26,7 +26,7 @@ interface MigrateEvent {
    * bootstrapping a tenant is a manual `aws lambda invoke` with a payload,
    * the same way running the migrations themselves is.
    */
-  bootstrapContractor?: { name: string; slug: string };
+  bootstrapOrganisation?: { name: string; slug: string };
 }
 
 export const handler = async (
@@ -37,7 +37,7 @@ export const handler = async (
   await client.connect();
 
   const results: MigrationResult[] = [];
-  let contractor: { id: string; slug: string } | undefined;
+  let organisation: { id: string; slug: string } | undefined;
 
   try {
     await client.query(`
@@ -89,22 +89,22 @@ export const handler = async (
       }
     }
 
-    if (event.bootstrapContractor) {
-      const { name, slug } = event.bootstrapContractor;
+    if (event.bootstrapOrganisation) {
+      const { name, slug } = event.bootstrapOrganisation;
       const { rows } = await client.query<{ id: string; slug: string }>(
-        `INSERT INTO "Contractor" (id, name, slug, "createdAt")
+        `INSERT INTO "Organisation" (id, name, slug, "createdAt")
          VALUES ($1, $2, $3, now())
          ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
          RETURNING id, slug`,
         [randomUUID(), name, slug]
       );
-      contractor = rows[0];
+      organisation = rows[0];
     }
   } finally {
     await client.end();
   }
 
-  const body = JSON.stringify({ migrations: results, contractor });
+  const body = JSON.stringify({ migrations: results, organisation });
   console.log(body);
   return { statusCode: 200, body };
 };

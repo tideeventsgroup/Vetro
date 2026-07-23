@@ -1,11 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { SettingsIcon } from "../components/icons.js";
-import { Contractor, useApi } from "../lib/api.js";
+import { Organisation, useApi } from "../lib/api.js";
 
 export function Settings() {
   const api = useApi();
-  const [contractor, setContractor] = useState<Contractor | undefined>(undefined);
+  const [organisation, setOrganisation] = useState<Organisation | undefined>(undefined);
   const [name, setName] = useState("");
+  const [retentionDays, setRetentionDays] = useState("365");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<string | undefined>(undefined);
@@ -18,10 +19,11 @@ export function Settings() {
   async function load() {
     setIsLoading(true);
     try {
-      const current = await api.getCurrentContractor();
+      const current = await api.getCurrentOrganisation();
       if (current) {
-        setContractor(current);
+        setOrganisation(current);
         setName(current.name);
+        setRetentionDays(String(current.retentionDays));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load organisation");
@@ -36,8 +38,8 @@ export function Settings() {
     setStatus(undefined);
     setIsSaving(true);
     try {
-      const updated = await api.renameOrganization(name.trim());
-      setContractor(updated);
+      const updated = await api.updateOrganisation({ name: name.trim(), retentionDays: Number(retentionDays) });
+      setOrganisation(updated);
       setStatus("Saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save changes");
@@ -46,20 +48,20 @@ export function Settings() {
     }
   }
 
-  if (isLoading) return <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>;
-  if (!contractor) return null;
+  if (isLoading) return <p style={{ color: "var(--lunara-text-muted)" }}>Loading…</p>;
+  if (!organisation) return null;
 
   return (
     <div>
       <div className="page-header">
         <div>
           <h1>Settings</h1>
-          <p>Your organisation's details.</p>
+          <p>Your organisation's details and data retention policy.</p>
         </div>
       </div>
 
       <div className="card" style={{ maxWidth: 460 }}>
-        <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)" }}>
+        <span className="empty-icon" style={{ background: "var(--lunara-gold-light)", color: "var(--lunara-gold-dark)" }}>
           <SettingsIcon />
         </span>
         <h2 style={{ fontSize: 18, marginBottom: 16 }}>Organisation</h2>
@@ -70,9 +72,24 @@ export function Settings() {
             <input id="orgName" required value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="form-field">
-            <label htmlFor="orgUrl">Vetro URL</label>
-            <input id="orgUrl" value={`${window.location.origin}/${contractor.slug}`} disabled />
+            <label htmlFor="orgUrl">Lunara Screening URL</label>
+            <input id="orgUrl" value={`${window.location.origin}/${organisation.slug}`} disabled />
             <p className="subtle-meta">This is fixed once your organisation is created.</p>
+          </div>
+          <div className="form-field">
+            <label htmlFor="retentionDays">Data retention period (days)</label>
+            <input
+              id="retentionDays"
+              type="number"
+              min={1}
+              required
+              value={retentionDays}
+              onChange={(e) => setRetentionDays(e.target.value)}
+            />
+            <p className="subtle-meta">
+              Candidates older than this are flagged in the audit log for retention review — GDPR requires
+              data isn't kept indefinitely, so this is checked daily rather than left to memory.
+            </p>
           </div>
           <button className="btn btn-primary" type="submit" disabled={isSaving}>
             {isSaving ? "Saving…" : "Save"}

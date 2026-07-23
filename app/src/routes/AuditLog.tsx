@@ -41,7 +41,7 @@ export function AuditLog() {
       {error && <p className="error-text">{error}</p>}
 
       {isLoading ? (
-        <p style={{ color: "var(--vetro-text-muted)" }}>Loading…</p>
+        <p style={{ color: "var(--lunara-text-muted)" }}>Loading…</p>
       ) : entries.length === 0 ? (
         <div className="card empty-state">
           <span className="empty-icon">

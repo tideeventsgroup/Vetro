@@ -4,20 +4,20 @@ import { Link, useNavigate } from "react-router-dom";
 import { NewPasswordRequiredError, useAuth } from "../lib/auth.js";
 import { useApi } from "../lib/api.js";
 import { CheckIcon, FileIcon, ShieldCheckIcon } from "../components/icons.js";
-import { StatusBadge } from "../components/StatusBadge.js";
+import { DashboardColourBadge } from "../components/StatusBadge.js";
 
 const FEATURES = [
-  { icon: ShieldCheckIcon, text: "BS7858 and BPSS vetting tracked automatically — nothing to chase" },
-  { icon: FileIcon, text: "One record per candidate — SIA licence, DBS, right to work, documents" },
-  { icon: CheckIcon, text: "Staff submit their own vetting details with a PIN — no separate login needed" },
+  { icon: ShieldCheckIcon, text: "SIA licence, first aid, right to work and training tracked in one place" },
+  { icon: FileIcon, text: "Candidates upload their own documents through a branded, mobile-friendly link" },
+  { icon: CheckIcon, text: "A clear compliance report per candidate, ready to export whenever you need it" },
 ];
 
 // Login itself is tenant-agnostic — there's no /:tenant prefix here (see
 // App.tsx), so the destination after signing in is resolved from the
 // account itself rather than typed into the URL beforehand: the ID token's
-// custom:contractor_id claim already scopes GET /contractors/me server-side
-// (see backend/src/lib/auth.ts), so all this needs is the slug that comes
-// back to know which tenant-prefixed route to land on.
+// custom:contractor_id claim already scopes GET /organisations/me
+// server-side (see backend/src/lib/auth.ts), so all this needs is the slug
+// that comes back to know which tenant-prefixed route to land on.
 function destinationFor(slug: string): string {
   return `/${slug}`;
 }
@@ -37,9 +37,9 @@ export function Login() {
   const [newPassword, setNewPassword] = useState("");
 
   async function redirectToOwnTenant() {
-    const contractor = await api.getCurrentContractor();
-    if (!contractor) throw new Error("This account isn't attached to an organisation yet");
-    navigate(destinationFor(contractor.slug), { replace: true });
+    const organisation = await api.getCurrentOrganisation();
+    if (!organisation) throw new Error("This account isn't attached to an organisation yet");
+    navigate(destinationFor(organisation.slug), { replace: true });
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -78,17 +78,17 @@ export function Login() {
   return (
     <div className="login-shell">
       <div className="login-brand-panel">
-        <img src="/brand/vetro-logo-primary-dark.svg" alt="Vetro — Verified, not assumed." height="70" style={{ position: "relative" }} />
+        <img src="/brand/lunara-logo-primary-dark.svg" alt="Lunara Screening" height="70" style={{ position: "relative" }} />
         <div className="login-brand-copy">
-          <h1>Scotland's security workforce, verified.</h1>
+          <h1>Workforce compliance, tracked clearly.</h1>
           <p>
-            One record per officer — licence, vetting, qualifications, documents. Checked
-            automatically, not chased manually.
+            Invite a candidate, they upload their own documents, you review and export — one clear
+            record per person, not a folder of emails.
           </p>
           <div style={{ display: "flex", gap: 8, marginTop: 24, flexWrap: "wrap" }}>
-            <StatusBadge status="ACTIVE" />
-            <StatusBadge status="EXPIRING" />
-            <StatusBadge status="EXPIRED" />
+            <DashboardColourBadge colour="green" />
+            <DashboardColourBadge colour="amber" />
+            <DashboardColourBadge colour="red" />
           </div>
           <ul className="login-feature-list">
             {FEATURES.map(({ icon: Icon, text }) => (
@@ -101,21 +101,20 @@ export function Login() {
             ))}
           </ul>
         </div>
-        <div className="login-brand-foot">Built by Tide Events Group Scotland</div>
       </div>
 
       {/* Mobile/PWA-only — .login-brand-panel above is hidden below 860px,
-          so this is what actually greets an officer opening the installed
+          so this is what actually greets someone opening the installed
           app: the desktop version has room for the full pitch, this is
           just the logo + a one-line welcome, anchored above the form. */}
       <div className="login-mobile-brand">
-        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="28" />
-        <p>Welcome back — sign in to your officer record.</p>
+        <img src="/brand/lunara-logo-horizontal-dark.svg" alt="Lunara Screening" height="28" />
+        <p>Welcome back — sign in to your organisation.</p>
       </div>
 
       <div className="login-form-panel">
         <div className="login-card">
-          <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)" }}>
+          <span className="empty-icon" style={{ background: "var(--lunara-gold-light)", color: "var(--lunara-gold-dark)" }}>
             <ShieldCheckIcon />
           </span>
           {pendingUser ? (
@@ -144,7 +143,7 @@ export function Login() {
           ) : (
             <>
               <h2>Sign in</h2>
-              <p className="lede">Sign in to your officer record.</p>
+              <p className="lede">Sign in to your organisation's account.</p>
               <form onSubmit={handleSubmit}>
                 {error && <p className="error-text">{error}</p>}
                 <div className="form-field">
@@ -177,7 +176,7 @@ export function Login() {
           )}
           {!pendingUser && (
             <p className="subtle-meta" style={{ marginTop: 16 }}>
-              New to Vetro? <Link to="/signup">Create an organisation</Link>
+              New to Lunara Screening? <Link to="/signup">Create an organisation</Link>
             </p>
           )}
         </div>

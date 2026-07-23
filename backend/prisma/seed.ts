@@ -1,48 +1,10 @@
+import crypto from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import { deriveStatus } from "../src/lib/status.js";
 
 const db = new PrismaClient();
 
-async function seedContractor(name: string, slug: string, officers: OfficerSeed[]) {
-  const contractor = await db.contractor.create({ data: { name, slug } });
-
-  for (const [index, o] of officers.entries()) {
-    const officer = await db.officer.create({
-      data: { contractorId: contractor.id, firstName: o.firstName, lastName: o.lastName },
-    });
-
-    await db.siaLicence.create({
-      data: {
-        officerId: officer.id,
-        licenceNumber: `${slug.toUpperCase()}-${1000 + index}`,
-        sector: o.sector,
-        issueDate: daysFromNow(-700),
-        expiryDate: o.licenceExpiry,
-        status: deriveStatus(o.licenceExpiry),
-        lastCheckedAt: new Date(),
-      },
-    });
-
-    await db.vettingRecord.create({
-      data: {
-        officerId: officer.id,
-        standard: "BS7858",
-        completedDate: daysFromNow(-365),
-        expiryDate: o.vettingExpiry,
-        status: deriveStatus(o.vettingExpiry),
-      },
-    });
-  }
-
-  console.log(`Seeded ${officers.length} officers for ${name} (${slug}.vetro.co.uk).`);
-}
-
-interface OfficerSeed {
-  firstName: string;
-  lastName: string;
-  sector: string;
-  licenceExpiry: Date;
-  vettingExpiry: Date;
+function generateInviteToken(): string {
+  return crypto.randomBytes(24).toString("hex");
 }
 
 function daysFromNow(days: number): Date {
@@ -51,19 +13,69 @@ function daysFromNow(days: number): Date {
   return date;
 }
 
+interface CandidateSeed {
+  firstName: string;
+  lastName: string;
+  email: string;
+  siaExpiry?: Date;
+  siaStatus?: "NOT_STARTED" | "PENDING" | "VERIFIED" | "EXPIRED" | "REJECTED";
+}
+
+async function seedOrganisation(name: string, slug: string, candidates: CandidateSeed[]) {
+  const organisation = await db.organisation.create({ data: { name, slug } });
+
+  const roleType = await db.roleType.create({
+    data: {
+      organisationId: organisation.id,
+      name: "Door Supervisor",
+      requiredCheckTypes: ["SIA_LICENCE", "FIRST_AID", "RIGHT_TO_WORK"],
+    },
+  });
+
+  for (const [index, c] of candidates.entries()) {
+    const candidate = await db.candidate.create({
+      data: {
+        organisationId: organisation.id,
+        roleTypeId: roleType.id,
+        firstName: c.firstName,
+        lastName: c.lastName,
+        email: c.email,
+        inviteToken: generateInviteToken(),
+        invitedByEmail: "dev@local",
+      },
+    });
+
+    await db.check.create({
+      data: {
+        candidateId: candidate.id,
+        checkType: "SIA_LICENCE",
+        status: c.siaStatus ?? "NOT_STARTED",
+        licenceNumber: c.siaStatus ? `${slug.toUpperCase()}-${1000 + index}` : undefined,
+        expiryDate: c.siaExpiry,
+        verifiedAt: c.siaStatus === "VERIFIED" ? new Date() : undefined,
+        verifiedBy: c.siaStatus === "VERIFIED" ? "dev@local" : undefined,
+      },
+    });
+    await db.check.create({ data: { candidateId: candidate.id, checkType: "FIRST_AID" } });
+    await db.check.create({ data: { candidateId: candidate.id, checkType: "RIGHT_TO_WORK" } });
+  }
+
+  console.log(`Seeded ${candidates.length} candidates for ${name} (${slug}.lunarascreening.co.uk).`);
+}
+
 async function main() {
-  await seedContractor("Clyde Coast Security Ltd", "clyde-coast", [
-    { firstName: "A.", lastName: "Mackenzie", sector: "Door Supervisor", licenceExpiry: daysFromNow(600), vettingExpiry: daysFromNow(500) },
-    { firstName: "J.", lastName: "Smith", sector: "Door Supervisor", licenceExpiry: daysFromNow(14), vettingExpiry: daysFromNow(400) },
-    { firstName: "R.", lastName: "Campbell", sector: "Security Guard", licenceExpiry: daysFromNow(-15), vettingExpiry: daysFromNow(300) },
-    { firstName: "F.", lastName: "Adeyemi", sector: "CCTV Operator", licenceExpiry: daysFromNow(120), vettingExpiry: daysFromNow(90) },
+  await seedOrganisation("Acme Vetting Ltd", "acme-vetting", [
+    { firstName: "A.", lastName: "Mackenzie", email: "a.mackenzie@example.com", siaStatus: "VERIFIED", siaExpiry: daysFromNow(600) },
+    { firstName: "J.", lastName: "Smith", email: "j.smith@example.com", siaStatus: "VERIFIED", siaExpiry: daysFromNow(14) },
+    { firstName: "R.", lastName: "Campbell", email: "r.campbell@example.com", siaStatus: "EXPIRED", siaExpiry: daysFromNow(-15) },
+    { firstName: "F.", lastName: "Adeyemi", email: "f.adeyemi@example.com" },
   ]);
 
   // A second tenant, distinct from the first — proves the roster you see
   // depends on which subdomain you're on, not just who's logged in.
-  await seedContractor("Highland Guard Services", "highland-guard", [
-    { firstName: "M.", lastName: "Fraser", sector: "Door Supervisor", licenceExpiry: daysFromNow(300), vettingExpiry: daysFromNow(250) },
-    { firstName: "S.", lastName: "Grant", sector: "Security Guard", licenceExpiry: daysFromNow(20), vettingExpiry: daysFromNow(200) },
+  await seedOrganisation("Northgate Compliance", "northgate", [
+    { firstName: "M.", lastName: "Fraser", email: "m.fraser@example.com", siaStatus: "VERIFIED", siaExpiry: daysFromNow(300) },
+    { firstName: "S.", lastName: "Grant", email: "s.grant@example.com" },
   ]);
 }
 

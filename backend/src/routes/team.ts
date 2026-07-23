@@ -1,26 +1,26 @@
 import { Hono } from "hono";
 import { recordAudit } from "../lib/audit.js";
-import { deleteUser, getUserAttributes, listUsersByContractor } from "../lib/cognito.js";
+import { deleteUser, getUserAttributes, listUsersByOrganisation } from "../lib/cognito.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
 export const team = new Hono<AppEnv>();
 
-// Who's on this org's admin team — not officers, who have their own
-// self-service accounts (see routes/me.ts) and don't belong on this list.
+// Who's on this org's admin team — ADMIN and REVIEWER accounts both; not
+// candidates, who have no Cognito account at all (see routes/candidatePublic.ts).
 team.get("/team", async (c) => {
-  const contractorId = c.get("contractorId")!;
-  const users = await listUsersByContractor(contractorId);
-  return c.json(users.filter((u) => u.role === "ADMIN"));
+  const organisationId = c.get("organisationId")!;
+  const users = await listUsersByOrganisation(organisationId);
+  return c.json(users.filter((u) => u.role === "ADMIN" || u.role === "REVIEWER"));
 });
 
 // Username here is opaque (Cognito's sub-derived id, not the email) — always
-// re-verified against the caller's own contractorId server-side rather than
-// trusted from the URL, so one org's admin can never reach into another's
-// account list just by guessing/enumerating usernames.
+// re-verified against the caller's own organisationId server-side rather
+// than trusted from the URL, so one org's admin can never reach into
+// another's account list just by guessing/enumerating usernames.
 team.delete("/team/:username", async (c) => {
   const username = c.req.param("username");
   const attrs = await getUserAttributes(username).catch(() => undefined);
-  if (!attrs || attrs["custom:contractor_id"] !== c.get("contractorId")) {
+  if (!attrs || attrs["custom:contractor_id"] !== c.get("organisationId")) {
     return c.json({ error: "Teammate not found" }, 404);
   }
   if (attrs.email === c.get("actorEmail")) {
@@ -30,11 +30,11 @@ team.delete("/team/:username", async (c) => {
   await deleteUser(username);
 
   await recordAudit({
-    contractorId: c.get("contractorId"),
+    organisationId: c.get("organisationId"),
     actorEmail: c.get("actorEmail") ?? "unknown",
     action: "teammate.removed",
-    entityType: "Contractor",
-    entityId: c.get("contractorId")!,
+    entityType: "Organisation",
+    entityId: c.get("organisationId")!,
     metadata: { removedEmail: attrs.email },
   });
 

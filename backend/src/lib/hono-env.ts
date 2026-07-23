@@ -10,13 +10,13 @@ export type AppEnv = {
      * call scoped to "this account" uses this, never actorEmail.
      */
     cognitoUsername: string;
-    /** Resolved tenant. Unset until requireContractor confirms one exists. */
-    contractorId?: string;
-    /** The X-Vetro-Tenant header value — only meaningful in SKIP_AUTH dev mode. */
+    /** Resolved tenant (Organisation.id). Unset until requireOrganisation confirms one exists. */
+    organisationId?: string;
+    /** The X-Lunara-Tenant header value — only meaningful in SKIP_AUTH dev mode. */
     tenantSlug?: string;
-    /** "ADMIN" (contractor admin/office manager) — the only role Cognito logins carry now. */
+    /** "ADMIN" (full access) or "REVIEWER" (can review candidates/checks, not team/settings). */
     role?: string;
-    /** True for accounts in the PlatformAdmins Cognito group — can create organizations. */
+    /** True for accounts in the PlatformAdmins Cognito group — can create organisations. */
     isPlatformAdmin?: boolean;
   };
 };

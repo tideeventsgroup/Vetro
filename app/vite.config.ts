@@ -15,20 +15,20 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
       },
       manifest: {
-        name: "Vetro Vetting App",
-        short_name: "Vetro Vetting",
-        description: "Scotland's security workforce, verified — BS7858 and BPSS pre-employment vetting, checked automatically.",
+        name: "Lunara Screening",
+        short_name: "Lunara",
+        description: "UK workforce compliance, tracked clearly — invite candidates, review their documents, and export a clean report.",
         start_url: "/",
         display: "standalone",
-        // Matches --vetro-ink (src/styles/tokens.css) and the dark gradient
+        // Matches --lunara-ink (src/styles/tokens.css) and the dark gradient
         // in index.html/SplashScreen.tsx — this is what Chrome/Android
         // renders as the install splash screen's background, generated
         // automatically from the manifest (no separate asset needed there,
         // unlike iOS — see the apple-touch-startup-image links in
         // index.html). Kept dark so it doesn't flash white/light against
         // the dark native iOS splash and the app's own animated one.
-        background_color: "#1F2933",
-        theme_color: "#0E7C7B",
+        background_color: "#10182B",
+        theme_color: "#B08A2E",
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },

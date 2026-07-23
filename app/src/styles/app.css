@@ -17,31 +17,31 @@ html {
      loads — html needs the same override, or its dark background shows
      through on any page taller than one viewport, past body's 100%-height
      box. */
-  background: var(--vetro-bg);
+  background: var(--lunara-bg);
 }
 
 body {
-  font-family: var(--vetro-font-sans);
-  font-size: var(--vetro-fs-body);
-  color: var(--vetro-text);
-  background: var(--vetro-bg);
+  font-family: var(--lunara-font-sans);
+  font-size: var(--lunara-fs-body);
+  color: var(--lunara-text);
+  background: var(--lunara-bg);
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 {
-  font-weight: var(--vetro-fw-bold);
-  letter-spacing: var(--vetro-ls-tight);
-  color: var(--vetro-ink);
+  font-weight: var(--lunara-fw-bold);
+  letter-spacing: var(--lunara-ls-tight);
+  color: var(--lunara-ink);
   margin: 0;
 }
 
-a { color: var(--vetro-accent); text-decoration: none; }
-a:hover { color: var(--vetro-accent-hover); }
+a { color: var(--lunara-accent); text-decoration: none; }
+a:hover { color: var(--lunara-accent-hover); }
 
 :focus-visible {
   outline: none;
-  box-shadow: var(--vetro-shadow-focus);
-  border-radius: var(--vetro-radius-sm);
+  box-shadow: var(--lunara-shadow-focus);
+  border-radius: var(--lunara-radius-sm);
 }
 
 button {
@@ -64,10 +64,10 @@ button {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--vetro-surface);
-  color: var(--vetro-text);
-  border-right: 1px solid var(--vetro-border);
-  padding: var(--vetro-space-5) var(--vetro-space-3);
+  background: var(--lunara-surface);
+  color: var(--lunara-text);
+  border-right: 1px solid var(--lunara-border);
+  padding: var(--lunara-space-5) var(--lunara-space-3);
 }
 
 /* Above the mobile breakpoint (where the sidebar instead becomes a
@@ -85,7 +85,7 @@ button {
 
 .sidebar-logo {
   display: block;
-  margin: 0 var(--vetro-space-2) var(--vetro-space-6);
+  margin: 0 var(--lunara-space-2) var(--lunara-space-6);
 }
 
 /* Org + signed-in-account block (SidebarIdentity.tsx) — anchored to the
@@ -93,30 +93,30 @@ button {
    (the nav above it has flex: 1 / a flex spacer, which is what actually
    pushes this down regardless of nav length). */
 .sidebar-identity {
-  margin: 0 var(--vetro-space-2);
-  padding-top: var(--vetro-space-4);
-  border-top: 1px solid var(--vetro-border);
+  margin: 0 var(--lunara-space-2);
+  padding-top: var(--lunara-space-4);
+  border-top: 1px solid var(--lunara-border);
 }
 
 .sidebar-org {
-  padding-bottom: var(--vetro-space-3);
-  margin-bottom: var(--vetro-space-3);
-  border-bottom: 1px solid var(--vetro-border);
+  padding-bottom: var(--lunara-space-3);
+  margin-bottom: var(--lunara-space-3);
+  border-bottom: 1px solid var(--lunara-border);
 }
 
 .sidebar-org-label {
   color: #8A97A0;
   font-size: 10px;
-  font-weight: var(--vetro-fw-semibold);
+  font-weight: var(--lunara-fw-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--vetro-ls-label);
+  letter-spacing: var(--lunara-ls-label);
   margin-bottom: 2px;
 }
 
 .sidebar-org-name {
-  color: var(--vetro-text);
-  font-size: var(--vetro-fs-body-sm);
-  font-weight: var(--vetro-fw-semibold);
+  color: var(--lunara-text);
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-semibold);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -125,7 +125,7 @@ button {
 .sidebar-user {
   display: flex;
   align-items: center;
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
   min-width: 0;
 }
 
@@ -136,10 +136,10 @@ button {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--vetro-teal);
-  color: var(--vetro-white);
+  background: var(--lunara-gold);
+  color: var(--lunara-white);
   font-size: 12px;
-  font-weight: var(--vetro-fw-semibold);
+  font-weight: var(--lunara-fw-semibold);
   flex-shrink: 0;
 }
 
@@ -148,9 +148,9 @@ button {
 }
 
 .sidebar-user-email {
-  color: var(--vetro-text);
-  font-size: var(--vetro-fs-body-sm);
-  font-weight: var(--vetro-fw-medium);
+  color: var(--lunara-text);
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-medium);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -160,13 +160,13 @@ button {
   display: inline-block;
   margin-top: 4px;
   padding: 2px 8px;
-  border-radius: var(--vetro-radius-pill);
-  background: var(--vetro-surface-muted);
-  color: var(--vetro-text-secondary);
+  border-radius: var(--lunara-radius-pill);
+  background: var(--lunara-surface-muted);
+  color: var(--lunara-text-secondary);
   font-size: 10px;
-  font-weight: var(--vetro-fw-semibold);
+  font-weight: var(--lunara-fw-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--vetro-ls-label);
+  letter-spacing: var(--lunara-ls-label);
 }
 
 .app-nav {
@@ -181,10 +181,10 @@ button {
    the officer/client portals stay flat since they're short enough (≤6
    items) not to need it. */
 .app-nav-section {
-  margin: var(--vetro-space-4) 0 var(--vetro-space-1);
-  padding: 0 var(--vetro-space-3);
+  margin: var(--lunara-space-4) 0 var(--lunara-space-1);
+  padding: 0 var(--lunara-space-3);
   font-size: 10.5px;
-  font-weight: var(--vetro-fw-bold);
+  font-weight: var(--lunara-fw-bold);
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #8A97A0;
@@ -197,14 +197,14 @@ button {
 .app-nav a {
   display: flex;
   align-items: center;
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
   color: #52606D;
   font-size: 13.5px;
-  font-weight: var(--vetro-fw-medium);
-  padding: 8px var(--vetro-space-3);
-  border-radius: var(--vetro-radius-md);
+  font-weight: var(--lunara-fw-medium);
+  padding: 8px var(--lunara-space-3);
+  border-radius: var(--lunara-radius-md);
   border-left: 3px solid transparent;
-  transition: background-color var(--vetro-duration) var(--vetro-ease), color var(--vetro-duration) var(--vetro-ease);
+  transition: background-color var(--lunara-duration) var(--lunara-ease), color var(--lunara-duration) var(--lunara-ease);
 }
 
 /* Icon-badge treatment (Workforce Platform design, project 0c499cb6): every
@@ -222,26 +222,26 @@ button {
   background: #F1F3F3;
   color: #8A97A0;
   flex-shrink: 0;
-  transition: background-color var(--vetro-duration) var(--vetro-ease), color var(--vetro-duration) var(--vetro-ease);
+  transition: background-color var(--lunara-duration) var(--lunara-ease), color var(--lunara-duration) var(--lunara-ease);
 }
 
 .app-nav a:hover {
-  color: var(--vetro-text);
-  background: var(--vetro-bg);
+  color: var(--lunara-text);
+  background: var(--lunara-bg);
   text-decoration: none;
 }
 
 .app-nav a.active {
-  color: var(--vetro-teal);
-  font-weight: var(--vetro-fw-semibold);
+  color: var(--lunara-gold);
+  font-weight: var(--lunara-fw-semibold);
   background: #E4F2F1;
-  border-left-color: var(--vetro-teal);
+  border-left-color: var(--lunara-gold);
   text-decoration: none;
 }
 
 .app-nav a.active > svg {
-  background: var(--vetro-teal);
-  color: var(--vetro-white);
+  background: var(--lunara-gold);
+  color: var(--lunara-white);
 }
 
 /* Locked nav items (PortalLayout, before vetting is complete) — same shape
@@ -250,12 +250,12 @@ button {
 .app-nav-locked {
   display: flex;
   align-items: center;
-  gap: var(--vetro-space-3);
-  color: var(--vetro-text-muted);
+  gap: var(--lunara-space-3);
+  color: var(--lunara-text-muted);
   font-size: 13.5px;
-  font-weight: var(--vetro-fw-medium);
-  padding: 8px var(--vetro-space-3);
-  border-radius: var(--vetro-radius-md);
+  font-weight: var(--lunara-fw-medium);
+  padding: 8px var(--lunara-space-3);
+  border-radius: var(--lunara-radius-md);
   border-left: 3px solid transparent;
   cursor: not-allowed;
 }
@@ -270,10 +270,10 @@ button {
    destination (Messages) is nested behind an overflow tab like "More". */
 .nav-badge {
   margin-left: auto;
-  background: var(--vetro-status-amber);
-  color: var(--vetro-ink);
+  background: var(--lunara-status-amber);
+  color: var(--lunara-ink);
   font-size: 11px;
-  font-weight: var(--vetro-fw-bold, 700);
+  font-weight: var(--lunara-fw-bold, 700);
   line-height: 1;
   padding: 3px 6px;
   border-radius: 999px;
@@ -296,21 +296,21 @@ button {
 .portal-status-banner {
   display: flex;
   align-items: center;
-  gap: var(--vetro-space-2);
-  font-size: var(--vetro-fs-body-sm);
-  padding: 10px var(--vetro-space-4);
-  border-radius: var(--vetro-radius-md);
-  margin-bottom: var(--vetro-space-4);
+  gap: var(--lunara-space-2);
+  font-size: var(--lunara-fs-body-sm);
+  padding: 10px var(--lunara-space-4);
+  border-radius: var(--lunara-radius-md);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .portal-status-banner-offline {
   background: rgba(214, 69, 69, 0.1);
-  color: var(--vetro-status-red);
+  color: var(--lunara-status-red);
 }
 
 .portal-status-banner-install {
-  background: var(--vetro-teal-light);
-  color: var(--vetro-teal-dark);
+  background: var(--lunara-gold-light);
+  color: var(--lunara-gold-dark);
 }
 
 .portal-status-banner-dismiss {
@@ -328,33 +328,33 @@ button {
 }
 
 .app-sidebar-footer {
-  border-top: 1px solid var(--vetro-border);
-  padding-top: var(--vetro-space-3);
-  margin-top: var(--vetro-space-3);
+  border-top: 1px solid var(--lunara-border);
+  padding-top: var(--lunara-space-3);
+  margin-top: var(--lunara-space-3);
 }
 
 .app-sidebar-footer a {
   display: flex;
   align-items: center;
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
   color: #52606D;
-  font-size: var(--vetro-fs-body-sm);
-  font-weight: var(--vetro-fw-medium);
-  padding: 9px var(--vetro-space-3);
-  border-radius: var(--vetro-radius-md);
-  transition: background-color var(--vetro-duration) var(--vetro-ease), color var(--vetro-duration) var(--vetro-ease);
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-medium);
+  padding: 9px var(--lunara-space-3);
+  border-radius: var(--lunara-radius-md);
+  transition: background-color var(--lunara-duration) var(--lunara-ease), color var(--lunara-duration) var(--lunara-ease);
 }
 
 .app-sidebar-footer a:hover {
-  color: var(--vetro-status-red-text);
-  background: var(--vetro-badge-red-bg);
+  color: var(--lunara-status-red-text);
+  background: var(--lunara-badge-red-bg);
   text-decoration: none;
 }
 
 .app-main {
   flex: 1;
   min-width: 0;
-  padding: var(--vetro-space-6) var(--vetro-space-8);
+  padding: var(--lunara-space-6) var(--lunara-space-8);
 }
 
 /* Page hero — full-bleed dark gradient banner behind every page's title,
@@ -368,40 +368,40 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--vetro-space-4);
+  gap: var(--lunara-space-4);
   width: calc(100vw - 232px);
-  margin: calc(var(--vetro-space-6) * -1) 0 var(--vetro-space-4) calc(var(--vetro-space-8) * -1);
-  padding: 14px var(--vetro-space-8);
-  background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+  margin: calc(var(--lunara-space-6) * -1) 0 var(--lunara-space-4) calc(var(--lunara-space-8) * -1);
+  padding: 14px var(--lunara-space-8);
+  background: linear-gradient(135deg, var(--lunara-ink) 0%, var(--lunara-gold-dark) 100%);
   background-image:
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 64px),
-    linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+    linear-gradient(135deg, var(--lunara-ink) 0%, var(--lunara-gold-dark) 100%);
   position: relative;
 }
 
 .page-header h1 {
-  font-size: var(--vetro-fs-h3);
-  color: var(--vetro-white);
+  font-size: var(--lunara-fs-h3);
+  color: var(--lunara-white);
 }
 
 .page-header p {
   color: #B8C2CC;
-  font-size: var(--vetro-fs-body-sm);
+  font-size: var(--lunara-fs-body-sm);
   margin: 1px 0 0;
 }
 
 .page-actions {
   display: flex;
-  gap: var(--vetro-space-2);
+  gap: var(--lunara-space-2);
   flex-shrink: 0;
 }
 
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: var(--vetro-space-4);
-  margin-top: var(--vetro-space-3);
-  margin-bottom: var(--vetro-space-5);
+  gap: var(--lunara-space-4);
+  margin-top: var(--lunara-space-3);
+  margin-bottom: var(--lunara-space-5);
   position: relative;
 }
 
@@ -409,31 +409,31 @@ button {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  background: var(--vetro-surface);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-lg);
-  box-shadow: var(--vetro-shadow-sm);
-  padding: var(--vetro-space-4) var(--vetro-space-5);
-  transition: box-shadow var(--vetro-duration) var(--vetro-ease);
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-lg);
+  box-shadow: var(--lunara-shadow-sm);
+  padding: var(--lunara-space-4) var(--lunara-space-5);
+  transition: box-shadow var(--lunara-duration) var(--lunara-ease);
 }
 
 .summary-tile:hover {
-  box-shadow: var(--vetro-shadow-card);
+  box-shadow: var(--lunara-shadow-card);
 }
 
 .summary-tile .count {
-  font-size: var(--vetro-fs-h1);
-  font-weight: var(--vetro-fw-bold);
-  letter-spacing: var(--vetro-ls-tight);
-  color: var(--vetro-ink);
+  font-size: var(--lunara-fs-h1);
+  font-weight: var(--lunara-fw-bold);
+  letter-spacing: var(--lunara-ls-tight);
+  color: var(--lunara-ink);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 .summary-tile .label {
-  font-size: var(--vetro-fs-body-sm);
-  color: var(--vetro-text-muted);
-  margin-top: var(--vetro-space-2);
+  font-size: var(--lunara-fs-body-sm);
+  color: var(--lunara-text-muted);
+  margin-top: var(--lunara-space-2);
 }
 
 .summary-tile .tile-icon {
@@ -442,51 +442,51 @@ button {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--vetro-radius-md);
-  background: var(--vetro-bg);
-  color: var(--vetro-text-muted);
+  border-radius: var(--lunara-radius-md);
+  background: var(--lunara-bg);
+  color: var(--lunara-text-muted);
 }
 
 .subtle-meta {
-  color: var(--vetro-text-muted);
-  font-size: var(--vetro-fs-body-sm);
-  margin-top: calc(var(--vetro-space-4) * -1 + 4px);
-  margin-bottom: var(--vetro-space-5);
+  color: var(--lunara-text-muted);
+  font-size: var(--lunara-fs-body-sm);
+  margin-top: calc(var(--lunara-space-4) * -1 + 4px);
+  margin-bottom: var(--lunara-space-5);
 }
 
 /* Table */
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--vetro-surface);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-lg);
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-lg);
   overflow: hidden;
-  box-shadow: var(--vetro-shadow-card);
+  box-shadow: var(--lunara-shadow-card);
 }
 
 .data-table th {
   text-align: left;
   font-size: 11px;
-  font-weight: var(--vetro-fw-semibold);
+  font-weight: var(--lunara-fw-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--vetro-ls-label);
-  color: var(--vetro-text-muted);
-  padding: var(--vetro-space-3) var(--vetro-space-4);
-  border-bottom: 1px solid var(--vetro-border);
-  background: var(--vetro-bg);
+  letter-spacing: var(--lunara-ls-label);
+  color: var(--lunara-text-muted);
+  padding: var(--lunara-space-3) var(--lunara-space-4);
+  border-bottom: 1px solid var(--lunara-border);
+  background: var(--lunara-bg);
 }
 
 .data-table td {
-  padding: var(--vetro-space-3) var(--vetro-space-4);
-  border-bottom: 1px solid var(--vetro-border);
-  font-size: var(--vetro-fs-body-sm);
-  color: var(--vetro-text-secondary);
+  padding: var(--lunara-space-3) var(--lunara-space-4);
+  border-bottom: 1px solid var(--lunara-border);
+  font-size: var(--lunara-fs-body-sm);
+  color: var(--lunara-text-secondary);
 }
 
 .data-table td:first-child {
-  color: var(--vetro-ink);
-  font-weight: var(--vetro-fw-medium);
+  color: var(--lunara-ink);
+  font-weight: var(--lunara-fw-medium);
 }
 
 .data-table tr:last-child td {
@@ -495,17 +495,17 @@ button {
 
 .data-table tr.clickable {
   cursor: pointer;
-  transition: background-color var(--vetro-duration) var(--vetro-ease);
+  transition: background-color var(--lunara-duration) var(--lunara-ease);
 }
 
 .data-table tr.clickable:hover {
-  background: var(--vetro-bg);
+  background: var(--lunara-bg);
 }
 
 .officer-cell {
   display: flex;
   align-items: center;
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
 }
 
 .officer-avatar {
@@ -515,10 +515,10 @@ button {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--vetro-teal-light);
-  color: var(--vetro-teal-dark);
+  background: var(--lunara-gold-light);
+  color: var(--lunara-gold-dark);
   font-size: 12px;
-  font-weight: var(--vetro-fw-semibold);
+  font-weight: var(--lunara-fw-semibold);
   flex-shrink: 0;
 }
 
@@ -527,7 +527,7 @@ button {
 .staff-layout {
   display: grid;
   grid-template-columns: 300px 1fr;
-  gap: var(--vetro-space-5);
+  gap: var(--lunara-space-5);
   align-items: start;
 }
 
@@ -535,7 +535,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: var(--vetro-space-2);
+  padding: var(--lunara-space-2);
 }
 
 .staff-list-item {
@@ -543,7 +543,7 @@ button {
   flex-direction: column;
   gap: 2px;
   padding: 10px 12px;
-  border-radius: var(--vetro-radius-md);
+  border-radius: var(--lunara-radius-md);
   cursor: pointer;
   border: 1px solid transparent;
   background: none;
@@ -552,12 +552,12 @@ button {
 }
 
 .staff-list-item:hover {
-  background: var(--vetro-bg);
+  background: var(--lunara-bg);
 }
 
 .staff-list-item.active {
-  background: var(--vetro-teal-light);
-  border-color: var(--vetro-teal);
+  background: var(--lunara-gold-light);
+  border-color: var(--lunara-gold);
 }
 
 .staff-list-item-name {
@@ -565,8 +565,8 @@ button {
   align-items: center;
   gap: 8px;
   font-size: 13.5px;
-  font-weight: var(--vetro-fw-semibold);
-  color: var(--vetro-text);
+  font-weight: var(--lunara-fw-semibold);
+  color: var(--lunara-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -574,7 +574,7 @@ button {
 
 .staff-list-item-meta {
   font-size: 12px;
-  color: var(--vetro-text-muted);
+  color: var(--lunara-text-muted);
   margin-left: 16px;
 }
 
@@ -588,22 +588,22 @@ button {
 .detail-field-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--vetro-space-4);
-  margin: var(--vetro-space-3) 0 var(--vetro-space-5);
+  gap: var(--lunara-space-4);
+  margin: var(--lunara-space-3) 0 var(--lunara-space-5);
 }
 
 .detail-field-label {
   font-size: 11px;
-  font-weight: var(--vetro-fw-semibold);
+  font-weight: var(--lunara-fw-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--vetro-ls-label);
-  color: var(--vetro-text-muted);
+  letter-spacing: var(--lunara-ls-label);
+  color: var(--lunara-text-muted);
   margin-bottom: 4px;
 }
 
 .detail-field-value {
-  font-size: var(--vetro-fs-body-sm);
-  color: var(--vetro-text);
+  font-size: var(--lunara-fs-body-sm);
+  color: var(--lunara-text);
 }
 
 /* Forms */
@@ -611,26 +611,26 @@ button {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: var(--vetro-space-4);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .form-field label {
-  font-size: var(--vetro-fs-body-sm);
-  font-weight: var(--vetro-fw-medium);
-  color: var(--vetro-text-secondary);
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-medium);
+  color: var(--lunara-text-secondary);
 }
 
 .form-field input,
 .form-field select,
 .form-field textarea {
-  font-family: var(--vetro-font-sans);
-  font-size: var(--vetro-fs-body-sm);
+  font-family: var(--lunara-font-sans);
+  font-size: var(--lunara-fs-body-sm);
   padding: 9px 12px;
-  background: var(--vetro-surface);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-md);
-  color: var(--vetro-text);
-  transition: border-color var(--vetro-duration) var(--vetro-ease), box-shadow var(--vetro-duration) var(--vetro-ease);
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-md);
+  color: var(--lunara-text);
+  transition: border-color var(--lunara-duration) var(--lunara-ease), box-shadow var(--lunara-duration) var(--lunara-ease);
 }
 
 .form-field textarea {
@@ -641,15 +641,15 @@ button {
 .form-field input:hover,
 .form-field select:hover,
 .form-field textarea:hover {
-  border-color: var(--vetro-border-strong);
+  border-color: var(--lunara-border-strong);
 }
 
 .form-field input:focus,
 .form-field select:focus,
 .form-field textarea:focus {
   outline: none;
-  border-color: var(--vetro-teal);
-  box-shadow: var(--vetro-shadow-focus);
+  border-color: var(--lunara-gold);
+  box-shadow: var(--lunara-shadow-focus);
 }
 
 /* Repeater rows (PortalHome's address/employment/reference history) — each
@@ -658,37 +658,37 @@ button {
 .repeater-row {
   display: flex;
   align-items: flex-end;
-  gap: var(--vetro-space-3);
-  background: var(--vetro-bg);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-md);
-  padding: var(--vetro-space-3);
-  margin-bottom: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
+  background: var(--lunara-bg);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-md);
+  padding: var(--lunara-space-3);
+  margin-bottom: var(--lunara-space-3);
 }
 
 .repeater-row-fields {
   display: flex;
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
   flex-wrap: wrap;
   flex: 1;
 }
 
 .repeater-remove {
   flex-shrink: 0;
-  color: var(--vetro-status-red);
+  color: var(--lunara-status-red);
 }
 
 .consent-box {
   display: flex;
   align-items: flex-start;
-  gap: var(--vetro-space-3);
-  font-size: var(--vetro-fs-body-sm);
-  color: var(--vetro-text-secondary);
-  background: var(--vetro-bg);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-md);
-  padding: var(--vetro-space-3) var(--vetro-space-4);
-  margin-bottom: var(--vetro-space-4);
+  gap: var(--lunara-space-3);
+  font-size: var(--lunara-fs-body-sm);
+  color: var(--lunara-text-secondary);
+  background: var(--lunara-bg);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-md);
+  padding: var(--lunara-space-3) var(--lunara-space-4);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .consent-box input {
@@ -702,13 +702,13 @@ button {
 .step-indicator {
   display: flex;
   align-items: center;
-  margin-bottom: var(--vetro-space-3);
+  margin-bottom: var(--lunara-space-3);
 }
 
 .step-indicator-item {
   display: flex;
   align-items: center;
-  gap: var(--vetro-space-2);
+  gap: var(--lunara-space-2);
   flex-shrink: 0;
 }
 
@@ -720,84 +720,84 @@ button {
   height: 28px;
   border-radius: 50%;
   font-size: 12px;
-  font-weight: var(--vetro-fw-semibold);
+  font-weight: var(--lunara-fw-semibold);
   flex-shrink: 0;
-  background: var(--vetro-surface);
-  border: 2px solid var(--vetro-border);
-  color: var(--vetro-text-muted);
-  transition: background-color var(--vetro-duration) var(--vetro-ease),
-    border-color var(--vetro-duration) var(--vetro-ease), color var(--vetro-duration) var(--vetro-ease);
+  background: var(--lunara-surface);
+  border: 2px solid var(--lunara-border);
+  color: var(--lunara-text-muted);
+  transition: background-color var(--lunara-duration) var(--lunara-ease),
+    border-color var(--lunara-duration) var(--lunara-ease), color var(--lunara-duration) var(--lunara-ease);
 }
 
 .step-indicator-item.done .step-indicator-circle {
-  background: var(--vetro-teal);
-  border-color: var(--vetro-teal);
-  color: var(--vetro-white);
+  background: var(--lunara-gold);
+  border-color: var(--lunara-gold);
+  color: var(--lunara-white);
 }
 
 .step-indicator-item.current .step-indicator-circle {
-  border-color: var(--vetro-teal);
-  color: var(--vetro-teal-dark);
-  background: var(--vetro-teal-light);
+  border-color: var(--lunara-gold);
+  color: var(--lunara-gold-dark);
+  background: var(--lunara-gold-light);
 }
 
 .step-indicator-label {
-  font-size: var(--vetro-fs-body-sm);
-  font-weight: var(--vetro-fw-medium);
-  color: var(--vetro-text-muted);
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-medium);
+  color: var(--lunara-text-muted);
   white-space: nowrap;
 }
 
 .step-indicator-item.current .step-indicator-label,
 .step-indicator-item.done .step-indicator-label {
-  color: var(--vetro-text);
+  color: var(--lunara-text);
 }
 
 .step-indicator-line {
   flex: 1;
   height: 2px;
-  background: var(--vetro-border);
-  margin: 0 var(--vetro-space-2);
+  background: var(--lunara-border);
+  margin: 0 var(--lunara-space-2);
   min-width: 16px;
 }
 
 .step-indicator-line.done {
-  background: var(--vetro-teal);
+  background: var(--lunara-gold);
 }
 
 .step-caption {
-  color: var(--vetro-text-muted);
-  font-size: var(--vetro-fs-body-sm);
-  margin-bottom: var(--vetro-space-4);
+  color: var(--lunara-text-muted);
+  font-size: var(--lunara-fs-body-sm);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .wizard-nav {
   display: flex;
   justify-content: space-between;
-  gap: var(--vetro-space-3);
-  margin-top: var(--vetro-space-2);
+  gap: var(--lunara-space-3);
+  margin-top: var(--lunara-space-2);
 }
 
 .review-summary {
   display: flex;
   flex-direction: column;
-  gap: var(--vetro-space-2);
-  margin-bottom: var(--vetro-space-4);
+  gap: var(--lunara-space-2);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .review-summary-group h4 {
   font-size: 13px;
-  color: var(--vetro-text-muted);
+  color: var(--lunara-text-muted);
   text-transform: uppercase;
-  letter-spacing: var(--vetro-ls-label);
-  margin-bottom: var(--vetro-space-2);
+  letter-spacing: var(--lunara-ls-label);
+  margin-bottom: var(--lunara-space-2);
 }
 
 .review-summary-row {
-  font-size: var(--vetro-fs-body-sm);
-  color: var(--vetro-text-secondary);
-  padding: var(--vetro-space-2) 0;
-  border-bottom: 1px solid var(--vetro-border);
+  font-size: var(--lunara-fs-body-sm);
+  color: var(--lunara-text-secondary);
+  padding: var(--lunara-space-2) 0;
+  border-bottom: 1px solid var(--lunara-border);
 }
 
 .review-summary-row:last-child {
@@ -805,8 +805,8 @@ button {
 }
 
 .review-summary-row strong {
-  color: var(--vetro-ink);
-  font-weight: var(--vetro-fw-medium);
+  color: var(--lunara-ink);
+  font-weight: var(--lunara-fw-medium);
 }
 
 @media (max-width: 600px) {
@@ -822,13 +822,13 @@ button {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--vetro-space-4);
-  background: linear-gradient(135deg, var(--vetro-teal-light) 0%, var(--vetro-surface) 100%);
-  border: 1px solid var(--vetro-teal);
-  border-left: 3px solid var(--vetro-teal);
-  border-radius: var(--vetro-radius-lg);
-  padding: var(--vetro-space-5);
-  margin-bottom: var(--vetro-space-5);
+  gap: var(--lunara-space-4);
+  background: linear-gradient(135deg, var(--lunara-gold-light) 0%, var(--lunara-surface) 100%);
+  border: 1px solid var(--lunara-gold);
+  border-left: 3px solid var(--lunara-gold);
+  border-radius: var(--lunara-radius-lg);
+  padding: var(--lunara-space-5);
+  margin-bottom: var(--lunara-space-5);
 }
 
 .welcome-banner-icon {
@@ -838,8 +838,8 @@ button {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--vetro-teal);
-  color: var(--vetro-white);
+  background: var(--lunara-gold);
+  color: var(--lunara-white);
   flex-shrink: 0;
 }
 
@@ -849,14 +849,14 @@ button {
 }
 
 .welcome-banner-text h3 {
-  font-size: var(--vetro-fs-h4);
+  font-size: var(--lunara-fs-h4);
   margin-bottom: 4px;
 }
 
 .welcome-banner-text p {
   margin: 0;
-  color: var(--vetro-text-secondary);
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--lunara-text-secondary);
+  font-size: var(--lunara-fs-body-sm);
 }
 
 @media (max-width: 600px) {
@@ -874,16 +874,16 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--vetro-space-2);
+  gap: var(--lunara-space-2);
   padding: 9px 16px;
-  border-radius: var(--vetro-radius-md);
-  font-size: var(--vetro-fs-body-sm);
-  font-weight: var(--vetro-fw-semibold);
+  border-radius: var(--lunara-radius-md);
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-semibold);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color var(--vetro-duration) var(--vetro-ease),
-    border-color var(--vetro-duration) var(--vetro-ease),
-    box-shadow var(--vetro-duration) var(--vetro-ease);
+  transition: background-color var(--lunara-duration) var(--lunara-ease),
+    border-color var(--lunara-duration) var(--lunara-ease),
+    box-shadow var(--lunara-duration) var(--lunara-ease);
 }
 
 .btn:disabled {
@@ -891,11 +891,11 @@ button {
   cursor: not-allowed;
 }
 
-.btn-primary { background: var(--vetro-teal); color: var(--vetro-white); box-shadow: 0 1px 2px rgba(14, 124, 123, 0.2); }
-.btn-primary:hover:not(:disabled) { background: var(--vetro-teal-dark); box-shadow: 0 2px 8px rgba(14, 124, 123, 0.28); }
-.btn-secondary { background: var(--vetro-surface); color: var(--vetro-ink); border-color: var(--vetro-border); }
-.btn-secondary:hover:not(:disabled) { border-color: var(--vetro-border-strong); box-shadow: var(--vetro-shadow-sm); }
-.btn-sos { background: var(--vetro-status-red); color: var(--vetro-white); box-shadow: 0 1px 2px rgba(196, 52, 43, 0.25); }
+.btn-primary { background: var(--lunara-gold); color: var(--lunara-white); box-shadow: 0 1px 2px rgba(14, 124, 123, 0.2); }
+.btn-primary:hover:not(:disabled) { background: var(--lunara-gold-dark); box-shadow: 0 2px 8px rgba(14, 124, 123, 0.28); }
+.btn-secondary { background: var(--lunara-surface); color: var(--lunara-ink); border-color: var(--lunara-border); }
+.btn-secondary:hover:not(:disabled) { border-color: var(--lunara-border-strong); box-shadow: var(--lunara-shadow-sm); }
+.btn-sos { background: var(--lunara-status-red); color: var(--lunara-white); box-shadow: 0 1px 2px rgba(196, 52, 43, 0.25); }
 .btn-sos:hover:not(:disabled) { background: #A82A22; }
 
 /* Lone-worker panic button (components/SosButton.tsx) — fixed above
@@ -903,8 +903,8 @@ button {
    page regardless of vetting status. */
 .sos-fab {
   position: fixed;
-  right: var(--vetro-space-4);
-  bottom: calc(var(--vetro-space-4) + env(safe-area-inset-bottom));
+  right: var(--lunara-space-4);
+  bottom: calc(var(--lunara-space-4) + env(safe-area-inset-bottom));
   z-index: 60;
   width: 56px;
   height: 56px;
@@ -912,19 +912,19 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--vetro-status-red);
-  color: var(--vetro-white);
+  background: var(--lunara-status-red);
+  color: var(--lunara-white);
   border: none;
   cursor: pointer;
-  box-shadow: var(--vetro-shadow-lifted);
-  transition: background-color var(--vetro-duration) var(--vetro-ease);
+  box-shadow: var(--lunara-shadow-lifted);
+  transition: background-color var(--lunara-duration) var(--lunara-ease);
 }
 .sos-fab:hover { background: #A82A22; }
 .sos-fab-sent { background: #1C7A45; }
 
 @media (max-width: 860px) {
   .sos-fab {
-    bottom: calc(56px + var(--vetro-space-4) + env(safe-area-inset-bottom));
+    bottom: calc(56px + var(--lunara-space-4) + env(safe-area-inset-bottom));
   }
 }
 
@@ -932,9 +932,9 @@ button {
    change; a full-width rounded-pill primary action reads as the one thing
    to do on that screen. */
 .btn-pill {
-  border-radius: var(--vetro-radius-pill);
+  border-radius: var(--lunara-radius-pill);
   padding: 12px 24px;
-  font-size: var(--vetro-fs-body);
+  font-size: var(--lunara-fs-body);
 }
 
 /* Status badges */
@@ -943,11 +943,11 @@ button {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  font-weight: var(--vetro-fw-semibold);
+  font-weight: var(--lunara-fw-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--vetro-ls-label);
+  letter-spacing: var(--lunara-ls-label);
   padding: 4px 10px;
-  border-radius: var(--vetro-radius-pill);
+  border-radius: var(--lunara-radius-pill);
   white-space: nowrap;
 }
 
@@ -960,19 +960,19 @@ button {
   flex-shrink: 0;
 }
 
-.status-active { color: var(--vetro-status-green-text); background: var(--vetro-badge-green-bg); }
-.status-expiring { color: var(--vetro-status-amber-text); background: var(--vetro-badge-amber-bg); }
-.status-expired { color: var(--vetro-status-red-text); background: var(--vetro-badge-red-bg); }
+.status-active { color: var(--lunara-status-green-text); background: var(--lunara-badge-green-bg); }
+.status-expiring { color: var(--lunara-status-amber-text); background: var(--lunara-badge-amber-bg); }
+.status-expired { color: var(--lunara-status-red-text); background: var(--lunara-badge-red-bg); }
 /* Vetting submitted to a provider, result not back yet — distinct from
    ACTIVE/EXPIRING/EXPIRED (all of which describe a *result* Vetro already
    holds); see VettingSubmission.status PENDING_REVIEW. */
-.status-pending { color: var(--vetro-badge-blue-text); background: var(--vetro-badge-blue-bg); }
+.status-pending { color: var(--lunara-badge-blue-text); background: var(--lunara-badge-blue-bg); }
 
 /* Shift statuses (Schedule/ClientHome/Reports) — same pill/dot language,
    two additions for "hasn't happened yet" states that compliance status
    never needed: a neutral "planned" and the teal accent for "on track". */
-.status-neutral { color: var(--vetro-ink-500); background: var(--vetro-surface-muted); }
-.status-confirmed { color: var(--vetro-teal-dark); background: var(--vetro-teal-light); }
+.status-neutral { color: var(--lunara-ink-500); background: var(--lunara-surface-muted); }
+.status-confirmed { color: var(--lunara-gold-dark); background: var(--lunara-gold-light); }
 
 /* Segmented control — Today/This week/All on Schedule, same pattern
    reusable anywhere a small set of mutually-exclusive filters is needed. */
@@ -980,8 +980,8 @@ button {
   display: inline-flex;
   align-items: flex-end;
   gap: 2px;
-  background: var(--vetro-surface-muted);
-  border-radius: var(--vetro-radius-md);
+  background: var(--lunara-surface-muted);
+  border-radius: var(--lunara-radius-md);
   padding: 3px;
   height: fit-content;
 }
@@ -989,21 +989,21 @@ button {
 .segmented-control button {
   border: none;
   background: transparent;
-  color: var(--vetro-text-secondary);
-  font-size: var(--vetro-fs-body-sm);
-  font-weight: var(--vetro-fw-medium);
+  color: var(--lunara-text-secondary);
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-medium);
   padding: 6px 14px;
-  border-radius: var(--vetro-radius-sm);
+  border-radius: var(--lunara-radius-sm);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.segmented-control button:hover { color: var(--vetro-text); }
+.segmented-control button:hover { color: var(--lunara-text); }
 
 .segmented-control button.active {
-  background: var(--vetro-surface);
-  color: var(--vetro-text);
-  box-shadow: var(--vetro-shadow-sm);
+  background: var(--lunara-surface);
+  color: var(--lunara-text);
+  box-shadow: var(--lunara-shadow-sm);
 }
 
 /* Schedule board — a shift-per-card, day-grouped view in place of a flat
@@ -1011,54 +1011,54 @@ button {
 .schedule-board {
   display: flex;
   flex-direction: column;
-  gap: var(--vetro-space-6);
+  gap: var(--lunara-space-6);
 }
 
 .schedule-day-heading {
-  font-size: var(--vetro-fs-h4);
-  font-weight: var(--vetro-fw-semibold);
-  margin-bottom: var(--vetro-space-3);
+  font-size: var(--lunara-fs-h4);
+  font-weight: var(--lunara-fw-semibold);
+  margin-bottom: var(--lunara-space-3);
 }
 
 .schedule-day-shifts {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
 }
 
 .shift-card {
-  background: var(--vetro-surface);
-  border: 1px solid var(--vetro-border);
-  border-left: 3px solid var(--vetro-border-strong);
-  border-radius: var(--vetro-radius-md);
-  padding: var(--vetro-space-4);
-  box-shadow: var(--vetro-shadow-sm);
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-left: 3px solid var(--lunara-border-strong);
+  border-radius: var(--lunara-radius-md);
+  padding: var(--lunara-space-4);
+  box-shadow: var(--lunara-shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
 }
 
 .shift-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: var(--vetro-space-2);
+  gap: var(--lunara-space-2);
 }
 
 .shift-card-site {
-  font-weight: var(--vetro-fw-semibold);
-  font-size: var(--vetro-fs-body);
+  font-weight: var(--lunara-fw-semibold);
+  font-size: var(--lunara-fs-body);
 }
 
 .shift-card-officer {
-  color: var(--vetro-text-secondary);
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--lunara-text-secondary);
+  font-size: var(--lunara-fs-body-sm);
   margin-top: 2px;
 }
 
 .shift-card-time {
-  color: var(--vetro-text-muted);
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--lunara-text-muted);
+  font-size: var(--lunara-fs-body-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1066,10 +1066,10 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--vetro-space-2);
+  gap: var(--lunara-space-2);
   margin-top: auto;
-  padding-top: var(--vetro-space-2);
-  border-top: 1px solid var(--vetro-border);
+  padding-top: var(--lunara-space-2);
+  border-top: 1px solid var(--lunara-border);
 }
 
 /* Officer portal Home — quick-action tiles to the locked/unlocked segments
@@ -1078,8 +1078,8 @@ button {
 .quick-actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: var(--vetro-space-3);
-  margin-bottom: var(--vetro-space-5);
+  gap: var(--lunara-space-3);
+  margin-bottom: var(--lunara-space-5);
 }
 
 .quick-action-tile {
@@ -1088,23 +1088,23 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--vetro-space-2);
-  padding: var(--vetro-space-4) var(--vetro-space-3);
+  gap: var(--lunara-space-2);
+  padding: var(--lunara-space-4) var(--lunara-space-3);
   min-height: 44px;
-  background: var(--vetro-surface);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-lg);
-  box-shadow: var(--vetro-shadow-sm);
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-lg);
+  box-shadow: var(--lunara-shadow-sm);
   text-decoration: none;
-  color: var(--vetro-text);
-  font-size: var(--vetro-fs-body-sm);
-  font-weight: var(--vetro-fw-medium);
+  color: var(--lunara-text);
+  font-size: var(--lunara-fs-body-sm);
+  font-weight: var(--lunara-fw-medium);
   text-align: center;
-  transition: box-shadow var(--vetro-duration) var(--vetro-ease);
+  transition: box-shadow var(--lunara-duration) var(--lunara-ease);
 }
 
 .quick-action-tile:hover {
-  box-shadow: var(--vetro-shadow-card);
+  box-shadow: var(--lunara-shadow-card);
   text-decoration: none;
 }
 
@@ -1114,23 +1114,23 @@ button {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--vetro-radius-md);
-  background: var(--vetro-teal-light);
-  color: var(--vetro-teal-dark);
+  border-radius: var(--lunara-radius-md);
+  background: var(--lunara-gold-light);
+  color: var(--lunara-gold-dark);
 }
 
 .quick-action-tile-locked {
   cursor: not-allowed;
-  color: var(--vetro-text-muted);
+  color: var(--lunara-text-muted);
 }
 
 .quick-action-tile-locked:hover {
-  box-shadow: var(--vetro-shadow-sm);
+  box-shadow: var(--lunara-shadow-sm);
 }
 
 .quick-action-tile-locked .quick-action-tile-icon {
-  background: var(--vetro-surface-muted);
-  color: var(--vetro-ink-500);
+  background: var(--lunara-surface-muted);
+  color: var(--lunara-ink-500);
 }
 
 .quick-action-tile-badge {
@@ -1145,16 +1145,16 @@ button {
 .shift-mix-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--vetro-space-4);
-  margin-bottom: var(--vetro-space-4);
+  gap: var(--lunara-space-4);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .shift-mix-legend-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--vetro-fs-body-sm);
-  color: var(--vetro-text-secondary);
+  font-size: var(--lunara-fs-body-sm);
+  color: var(--lunara-text-secondary);
 }
 
 .shift-mix-swatch {
@@ -1168,15 +1168,15 @@ button {
   display: flex;
   align-items: stretch;
   height: 16px;
-  border-radius: var(--vetro-radius-pill);
+  border-radius: var(--lunara-radius-pill);
   overflow: hidden;
   gap: 2px;
-  background: var(--vetro-surface-muted);
+  background: var(--lunara-surface-muted);
   min-width: 120px;
 }
 
 .shift-mix-bar-empty {
-  background: var(--vetro-surface-muted);
+  background: var(--lunara-surface-muted);
 }
 
 .shift-mix-segment {
@@ -1189,7 +1189,7 @@ button {
 .site-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--vetro-space-4);
+  gap: var(--lunara-space-4);
 }
 
 .site-card {
@@ -1200,69 +1200,69 @@ button {
 .site-card-summary {
   display: flex;
   flex-direction: column;
-  gap: var(--vetro-space-2);
+  gap: var(--lunara-space-2);
   width: 100%;
   text-align: left;
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--vetro-space-5);
+  padding: var(--lunara-space-5);
 }
 
-.site-card-summary:hover { background: var(--vetro-bg); }
+.site-card-summary:hover { background: var(--lunara-bg); }
 
 .site-card-name {
-  font-weight: var(--vetro-fw-semibold);
-  font-size: var(--vetro-fs-body);
-  color: var(--vetro-text);
+  font-weight: var(--lunara-fw-semibold);
+  font-size: var(--lunara-fs-body);
+  color: var(--lunara-text);
 }
 
 .site-card-address {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--vetro-text-muted);
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--lunara-text-muted);
+  font-size: var(--lunara-fs-body-sm);
   margin-top: 4px;
 }
 
 .site-card-contact {
-  color: var(--vetro-text-secondary);
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--lunara-text-secondary);
+  font-size: var(--lunara-fs-body-sm);
 }
 
-.site-card-expanded .site-card-summary { background: var(--vetro-bg); }
+.site-card-expanded .site-card-summary { background: var(--lunara-bg); }
 
 .site-card-manage {
-  padding: var(--vetro-space-4) var(--vetro-space-5) var(--vetro-space-5);
-  border-top: 1px solid var(--vetro-border);
+  padding: var(--lunara-space-4) var(--lunara-space-5) var(--lunara-space-5);
+  border-top: 1px solid var(--lunara-border);
 }
 
 .card {
-  background: var(--vetro-surface);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-lg);
-  box-shadow: var(--vetro-shadow-card);
-  padding: var(--vetro-space-5);
-  margin-bottom: var(--vetro-space-5);
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-lg);
+  box-shadow: var(--lunara-shadow-card);
+  padding: var(--lunara-space-5);
+  margin-bottom: var(--lunara-space-5);
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--vetro-space-4);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .card-header h2 {
-  font-size: var(--vetro-fs-h4);
+  font-size: var(--lunara-fs-h4);
 }
 
 /* Empty states */
 .empty-state {
   text-align: center;
-  padding: var(--vetro-space-7) var(--vetro-space-5);
-  color: var(--vetro-text-muted);
+  padding: var(--lunara-space-7) var(--lunara-space-5);
+  color: var(--lunara-text-muted);
 }
 
 .empty-state .empty-icon {
@@ -1271,15 +1271,15 @@ button {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--vetro-radius-lg);
-  background: var(--vetro-bg);
-  color: var(--vetro-text-muted);
-  margin-bottom: var(--vetro-space-4);
+  border-radius: var(--lunara-radius-lg);
+  background: var(--lunara-bg);
+  color: var(--lunara-text-muted);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .empty-state p {
   margin: 0;
-  font-size: var(--vetro-fs-body-sm);
+  font-size: var(--lunara-fs-body-sm);
 }
 
 /* Modal */
@@ -1292,14 +1292,14 @@ button {
   align-items: center;
   justify-content: center;
   z-index: 100;
-  animation: fade-in var(--vetro-duration) var(--vetro-ease);
+  animation: fade-in var(--lunara-duration) var(--lunara-ease);
 }
 
 .modal-panel {
   width: 380px;
   margin: 0;
-  box-shadow: var(--vetro-shadow-lifted);
-  animation: modal-in 180ms var(--vetro-ease);
+  box-shadow: var(--lunara-shadow-lifted);
+  animation: modal-in 180ms var(--lunara-ease);
 }
 
 @keyframes fade-in {
@@ -1328,9 +1328,9 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
-  color: var(--vetro-white);
-  padding: var(--vetro-space-7);
+  background: linear-gradient(135deg, var(--lunara-ink) 0%, var(--lunara-gold-dark) 100%);
+  color: var(--lunara-white);
+  padding: var(--lunara-space-7);
   position: relative;
   overflow: hidden;
 }
@@ -1364,33 +1364,33 @@ button {
 }
 
 .login-brand-copy h1 {
-  color: var(--vetro-white);
-  font-size: var(--vetro-fs-h1);
-  margin-bottom: var(--vetro-space-4);
+  color: var(--lunara-white);
+  font-size: var(--lunara-fs-h1);
+  margin-bottom: var(--lunara-space-4);
 }
 
 .login-brand-copy p {
   color: #B8C2CC;
-  font-size: var(--vetro-fs-body);
+  font-size: var(--lunara-fs-body);
   line-height: 1.6;
 }
 
 .login-feature-list {
   position: relative;
   list-style: none;
-  margin: var(--vetro-space-6) 0 0;
+  margin: var(--lunara-space-6) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
 }
 
 .login-feature-list li {
   display: flex;
   align-items: center;
-  gap: var(--vetro-space-3);
+  gap: var(--lunara-space-3);
   color: #D3DAE0;
-  font-size: var(--vetro-fs-body-sm);
+  font-size: var(--lunara-fs-body-sm);
   line-height: 1.5;
 }
 
@@ -1401,15 +1401,15 @@ button {
   flex-shrink: 0;
   width: 28px;
   height: 28px;
-  border-radius: var(--vetro-radius-md);
+  border-radius: var(--lunara-radius-md);
   background: rgba(255, 255, 255, 0.08);
-  color: var(--vetro-teal-light);
+  color: var(--lunara-gold-light);
 }
 
 .login-brand-foot {
   position: relative;
   color: #7B8794;
-  font-size: var(--vetro-fs-label);
+  font-size: var(--lunara-fs-label);
 }
 
 /* Mobile/PWA-only welcome header — see Login.tsx for why this exists
@@ -1422,8 +1422,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--vetro-space-6);
-  background: var(--vetro-surface);
+  padding: var(--lunara-space-6);
+  background: var(--lunara-surface);
 }
 
 .login-card {
@@ -1435,13 +1435,13 @@ button {
 }
 
 .login-card h2 {
-  font-size: var(--vetro-fs-h2);
-  margin-bottom: var(--vetro-space-2);
+  font-size: var(--lunara-fs-h2);
+  margin-bottom: var(--lunara-space-2);
 }
 
 .login-card .lede {
-  color: var(--vetro-text-muted);
-  margin-bottom: var(--vetro-space-6);
+  color: var(--lunara-text-muted);
+  margin-bottom: var(--lunara-space-6);
 }
 
 /* Kiosk.tsx — a shared site device, not anyone's own login, so this is
@@ -1452,62 +1452,62 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--vetro-space-5);
-  background: var(--vetro-bg);
+  padding: var(--lunara-space-5);
+  background: var(--lunara-bg);
 }
 
 .kiosk-card {
   width: 100%;
   max-width: 400px;
   text-align: center;
-  background: var(--vetro-surface);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-lg);
-  box-shadow: var(--vetro-shadow-card);
-  padding: var(--vetro-space-6) var(--vetro-space-5);
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-lg);
+  box-shadow: var(--lunara-shadow-card);
+  padding: var(--lunara-space-6) var(--lunara-space-5);
 }
 
 .kiosk-title {
-  font-size: var(--vetro-fs-h3);
+  font-size: var(--lunara-fs-h3);
   margin-bottom: 4px;
 }
 
 .kiosk-subtitle {
-  color: var(--vetro-text-muted);
-  margin-bottom: var(--vetro-space-5);
+  color: var(--lunara-text-muted);
+  margin-bottom: var(--lunara-space-5);
 }
 
 .kiosk-code-input {
   width: 100%;
   text-align: center;
   font-size: 28px;
-  font-weight: var(--vetro-fw-bold);
+  font-weight: var(--lunara-fw-bold);
   letter-spacing: 6px;
   padding: 14px;
-  margin-bottom: var(--vetro-space-4);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-md);
-  background: var(--vetro-bg);
-  color: var(--vetro-text);
+  margin-bottom: var(--lunara-space-4);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-md);
+  background: var(--lunara-bg);
+  color: var(--lunara-text);
 }
 
 .kiosk-result {
-  color: var(--vetro-status-green-text);
-  background: color-mix(in srgb, var(--vetro-status-green) 14%, white);
-  border-radius: var(--vetro-radius-md);
-  padding: var(--vetro-space-3);
-  margin-bottom: var(--vetro-space-4);
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--lunara-status-green-text);
+  background: color-mix(in srgb, var(--lunara-status-green) 14%, white);
+  border-radius: var(--lunara-radius-md);
+  padding: var(--lunara-space-3);
+  margin-bottom: var(--lunara-space-4);
+  font-size: var(--lunara-fs-body-sm);
 }
 
 .kiosk-change-site {
   display: block;
   width: 100%;
-  margin-top: var(--vetro-space-5);
+  margin-top: var(--lunara-space-5);
   background: none;
   border: none;
-  color: var(--vetro-text-muted);
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--lunara-text-muted);
+  font-size: var(--lunara-fs-body-sm);
   cursor: pointer;
   text-decoration: underline;
 }
@@ -1517,37 +1517,37 @@ button {
    .page-header, which assumes one (see its calc(100vw - 232px) width). */
 .candidate-vetting-shell {
   min-height: 100dvh;
-  background: var(--vetro-bg);
+  background: var(--lunara-bg);
 }
 
 .candidate-vetting-topbar {
   display: flex;
   align-items: center;
-  padding: var(--vetro-space-4) var(--vetro-space-5);
-  background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+  padding: var(--lunara-space-4) var(--lunara-space-5);
+  background: linear-gradient(135deg, var(--lunara-ink) 0%, var(--lunara-gold-dark) 100%);
 }
 
 .candidate-vetting-content {
   max-width: 640px;
   margin: 0 auto;
-  padding: var(--vetro-space-6) var(--vetro-space-4) var(--vetro-space-8);
+  padding: var(--lunara-space-6) var(--lunara-space-4) var(--lunara-space-8);
 }
 
 .candidate-vetting-intro {
   display: flex;
   align-items: flex-start;
-  gap: var(--vetro-space-4);
-  margin-bottom: var(--vetro-space-5);
+  gap: var(--lunara-space-4);
+  margin-bottom: var(--lunara-space-5);
 }
 
 .candidate-vetting-intro h1 {
-  font-size: var(--vetro-fs-h3);
+  font-size: var(--lunara-fs-h3);
   margin-bottom: 4px;
 }
 
 .candidate-vetting-intro p {
-  color: var(--vetro-text-secondary);
-  font-size: var(--vetro-fs-body-sm);
+  color: var(--lunara-text-secondary);
+  font-size: var(--lunara-fs-body-sm);
   margin: 0;
 }
 
@@ -1556,27 +1556,27 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--vetro-space-5);
+  padding: var(--lunara-space-5);
 }
 
 .candidate-vetting-state-card {
   width: 100%;
   max-width: 420px;
   text-align: center;
-  background: var(--vetro-surface);
-  border: 1px solid var(--vetro-border);
-  border-radius: var(--vetro-radius-lg);
-  box-shadow: var(--vetro-shadow-card);
-  padding: var(--vetro-space-6) var(--vetro-space-5);
+  background: var(--lunara-surface);
+  border: 1px solid var(--lunara-border);
+  border-radius: var(--lunara-radius-lg);
+  box-shadow: var(--lunara-shadow-card);
+  padding: var(--lunara-space-6) var(--lunara-space-5);
 }
 
 .error-text {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--vetro-status-red);
-  font-size: var(--vetro-fs-body-sm);
-  margin: 0 0 var(--vetro-space-4);
+  color: var(--lunara-status-red);
+  font-size: var(--lunara-fs-body-sm);
+  margin: 0 0 var(--lunara-space-4);
 }
 
 .mobile-nav-toggle {
@@ -1598,18 +1598,18 @@ button {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--vetro-space-2);
+    gap: var(--lunara-space-2);
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 5;
-    padding: calc(var(--vetro-space-5) + env(safe-area-inset-top)) var(--vetro-space-5) var(--vetro-space-5);
-    background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+    padding: calc(var(--lunara-space-5) + env(safe-area-inset-top)) var(--lunara-space-5) var(--lunara-space-5);
+    background: linear-gradient(135deg, var(--lunara-ink) 0%, var(--lunara-gold-dark) 100%);
   }
 
   .login-mobile-brand p {
     color: #D3DAE0;
-    font-size: var(--vetro-fs-body-sm);
+    font-size: var(--lunara-fs-body-sm);
     margin: 0;
     max-width: 320px;
   }
@@ -1629,13 +1629,13 @@ button {
     width: 260px;
     z-index: 55;
     transform: translateX(-100%);
-    transition: transform var(--vetro-duration) var(--vetro-ease);
+    transition: transform var(--lunara-duration) var(--lunara-ease);
     overflow-y: auto;
   }
 
   .app-sidebar.open {
     transform: translateX(0);
-    box-shadow: var(--vetro-shadow-lifted);
+    box-shadow: var(--lunara-shadow-lifted);
   }
 
   .app-sidebar-scrim {
@@ -1651,27 +1651,27 @@ button {
     justify-content: center;
     position: fixed;
     top: calc(14px + env(safe-area-inset-top));
-    left: var(--vetro-space-3);
+    left: var(--lunara-space-3);
     z-index: 56;
     width: 38px;
     height: 38px;
-    border-radius: var(--vetro-radius-md);
-    background: var(--vetro-surface);
-    color: var(--vetro-text);
-    border: 1px solid var(--vetro-border);
-    box-shadow: var(--vetro-shadow-sm);
+    border-radius: var(--lunara-radius-md);
+    background: var(--lunara-surface);
+    color: var(--lunara-text);
+    border: 1px solid var(--lunara-border);
+    box-shadow: var(--lunara-shadow-sm);
     cursor: pointer;
   }
 
   .app-main {
     max-width: 100%;
-    padding: var(--vetro-space-6) var(--vetro-space-4);
+    padding: var(--lunara-space-6) var(--lunara-space-4);
   }
 
   .page-header {
     width: 100vw;
-    margin: calc(var(--vetro-space-6) * -1) 0 var(--vetro-space-4) calc(var(--vetro-space-4) * -1);
-    padding: calc(14px + env(safe-area-inset-top)) var(--vetro-space-4) 14px 58px;
+    margin: calc(var(--lunara-space-6) * -1) 0 var(--lunara-space-4) calc(var(--lunara-space-4) * -1);
+    padding: calc(14px + env(safe-area-inset-top)) var(--lunara-space-4) 14px 58px;
     flex-wrap: wrap;
   }
 
@@ -1680,16 +1680,16 @@ button {
   }
 
   .card {
-    padding: var(--vetro-space-4);
+    padding: var(--lunara-space-4);
   }
 
   .card-header {
     flex-wrap: wrap;
-    gap: var(--vetro-space-2);
+    gap: var(--lunara-space-2);
   }
 
   .welcome-banner {
-    padding: var(--vetro-space-4);
+    padding: var(--lunara-space-4);
   }
 
   /* A <table> can't reflow onto multiple lines — let it scroll horizontally
@@ -1711,12 +1711,12 @@ button {
   /* iOS auto-zooms the whole page when a form field's font-size is under
      16px, to make it legible while typing — and in an installed standalone
      PWA that zoomed-in state routinely fails to reset on blur, leaving the
-     entire app stuck zoomed. --vetro-fs-body-sm (14px) is fine with a
+     entire app stuck zoomed. --lunara-fs-body-sm (14px) is fine with a
      desktop pointer but must never reach an <input> on a touch device. */
   .form-field input,
   .form-field select,
   .form-field textarea {
-    font-size: var(--vetro-fs-body);
+    font-size: var(--lunara-fs-body);
   }
 
   /* Bigger tap targets everywhere on mobile — 44px is the platform minimum
@@ -1739,11 +1739,11 @@ button {
   }
 
   .has-tab-bar .page-header {
-    padding-left: var(--vetro-space-4);
+    padding-left: var(--lunara-space-4);
   }
 
   .has-tab-bar .app-main {
-    padding-bottom: calc(var(--vetro-space-8) + 56px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--lunara-space-8) + 56px + env(safe-area-inset-bottom));
   }
 
   .mobile-tab-bar {
@@ -1754,9 +1754,9 @@ button {
     bottom: 0;
     z-index: 56;
     justify-content: space-around;
-    background: var(--vetro-surface);
-    border-top: 1px solid var(--vetro-border);
-    padding: 6px var(--vetro-space-2) calc(6px + env(safe-area-inset-bottom));
+    background: var(--lunara-surface);
+    border-top: 1px solid var(--lunara-border);
+    padding: 6px var(--lunara-space-2) calc(6px + env(safe-area-inset-bottom));
   }
 
   .mobile-tab {
@@ -1768,13 +1768,13 @@ button {
     min-width: 56px;
     min-height: 44px;
     padding: 4px 6px;
-    border-radius: var(--vetro-radius-md);
+    border-radius: var(--lunara-radius-md);
     background: none;
     border: none;
     cursor: pointer;
     color: #8A97A0;
     font-size: 10px;
-    font-weight: var(--vetro-fw-medium);
+    font-weight: var(--lunara-fw-medium);
     text-decoration: none;
   }
 
@@ -1784,18 +1784,18 @@ button {
   }
 
   .mobile-tab.active {
-    color: var(--vetro-teal);
+    color: var(--lunara-gold);
   }
 
   .mobile-tab-locked {
-    color: var(--vetro-ink-300);
+    color: var(--lunara-ink-300);
     cursor: not-allowed;
   }
 
   /* Check-call — the tab bar's centre action (CheckCallButton.tsx), raised
      above the bar the way a lot of apps highlight their primary action. */
   .mobile-tab-checkcall {
-    color: var(--vetro-text-secondary);
+    color: var(--lunara-text-secondary);
   }
 
   .mobile-tab-checkcall-icon {
@@ -1806,14 +1806,14 @@ button {
     height: 44px;
     margin-top: -22px;
     border-radius: 50%;
-    background: var(--vetro-teal);
-    color: var(--vetro-white);
-    box-shadow: var(--vetro-shadow-lifted);
-    transition: background-color var(--vetro-duration) var(--vetro-ease);
+    background: var(--lunara-gold);
+    color: var(--lunara-white);
+    box-shadow: var(--lunara-shadow-lifted);
+    transition: background-color var(--lunara-duration) var(--lunara-ease);
   }
 
   .mobile-tab-checkcall-sent {
-    background: var(--vetro-status-green);
+    background: var(--lunara-status-green);
   }
 }
 
@@ -1828,7 +1828,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--vetro-ink) 0%, var(--vetro-teal-dark) 100%);
+  background: linear-gradient(135deg, var(--lunara-ink) 0%, var(--lunara-gold-dark) 100%);
   opacity: 1;
   transition: opacity 500ms ease;
 }
@@ -1863,11 +1863,11 @@ button {
 }
 
 .pwa-splash-stroke-1 {
-  stroke: var(--vetro-teal);
+  stroke: var(--lunara-gold);
 }
 
 .pwa-splash-stroke-2 {
-  stroke: var(--vetro-white);
+  stroke: var(--lunara-white);
   animation-delay: 150ms;
 }
 
@@ -1875,6 +1875,12 @@ button {
   to {
     stroke-dashoffset: 0;
   }
+}
+
+.pwa-splash-dot {
+  fill: var(--lunara-gold);
+  opacity: 0;
+  animation: pwa-splash-glow-in 300ms ease-out 500ms forwards;
 }
 
 /* A soft, static glow gives the mark some depth against the flat gradient —
@@ -1915,7 +1921,7 @@ button {
 
 .pwa-splash-ring-circle {
   fill: none;
-  stroke: var(--vetro-teal);
+  stroke: var(--lunara-gold);
   stroke-width: 2;
   opacity: 0.55;
   /* circumference = 2πr = 2π·68 ≈ 428, enough dash length to fully hide it
@@ -1998,7 +2004,7 @@ button {
 
   .compliance-report .card {
     box-shadow: none !important;
-    border: 1px solid var(--vetro-border);
+    border: 1px solid var(--lunara-border);
     break-inside: avoid;
   }
 }

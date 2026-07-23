@@ -1,20 +1,29 @@
-# Vetro
+# Lunara Screening
 
-Scotland's Security Workforce, Verified. A compliance record for Scottish
-security contractors — SIA licence status, BS7858 vetting, and
-qualifications held in one auditable place, checked automatically instead
-of chased manually — plus site/contract tracking, shift scheduling, and
-client sign-off, so a contract's coverage and its compliance risk live in
-the same place. Built by Tide Events Group Scotland.
+Workforce compliance, tracked clearly. A UK-focused vetting and compliance
+workflow layer for small/mid-size organisations: invite a candidate, they
+upload their own documents through a branded self-service link, you review
+and verify what's verifiable, and export a clean compliance report — one
+record per person, not a folder of emails.
+
+Lunara Screening is a front end and workflow layer, not a statutory
+screening provider. It is not a DBS Registered Body or Umbrella Body — DBS,
+PVG, and Disclosure Scotland checks require an accredited partner and are
+not performed by this product today; every page that could be confused with
+one carries that disclaimer directly. What it does check itself: SIA
+licence validity (admin-assisted, cross-checked against the public Register
+of Licence Holders — there's no public API to automate this), plus
+first aid, right to work, ID document, and training records tracked with
+expiry dates and human review.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
-| `docs/BRAND_GUIDELINES.md` | Brand v1.0 — palette, type, voice/tone, do's and don'ts |
+| `docs/BRAND_GUIDELINES.md` | Brand identity — palette, type, voice/tone, do's and don'ts |
 | `index.html`, `src/styles/` | Marketing landing page applying the brand system |
-| `backend/` | Hono API + Prisma schema — the officer/licence/vetting record itself |
-| `app/` | The product itself — the contractor-admin dashboard (Vite + React) |
+| `backend/` | Hono API + Prisma schema — organisations, candidates, checks, documents, audit log |
+| `app/` | The product itself — the org admin dashboard (Vite + React) |
 | `infra/` | AWS CDK (TypeScript) app — serverless deploy of the backend |
 
 See `backend/README.md`, `app/README.md`, and `infra/README.md` for how each
@@ -40,32 +49,24 @@ to click around locally.
 
 ## Multi-tenant
 
-Each contractor is a tenant, one app deployment/API/database serving all of
-them — there's no per-tenant infrastructure. With a custom domain, that's a
-subdomain each (`clyde-coast.vetro.co.uk`, `highland-guard.vetro.co.uk`); until
-`vetro.com` is in hand, every route instead nests under `/:tenant`
-(`.../clyde-coast`, `.../highland-guard`) so this still works today from a
-single CloudFront default domain (see `app/src/lib/tenant.ts` — subdomain
-takes priority automatically once one exists). Either way, isolation is
-enforced server-side (see `backend/README.md`'s "Multi-tenancy" section), not
-just by which URL the app happens to be pointed at.
-
-Locally, visit `http://localhost:5173/<slug>` (or `http://<slug>.localhost:5173`
-to exercise the subdomain path) to develop against a specific tenant —
-`prisma/seed.ts` creates two (`clyde-coast`, `highland-guard`) so you can see
-isolation between them without any DNS setup.
+Each organisation is a tenant, one app deployment/API/database serving all
+of them — there's no per-tenant infrastructure. With a custom domain, that's
+a subdomain each (`your-org.lunarascreening.co.uk`); until then, every route
+instead nests under `/:tenant` (`.../your-org`) so this still works today
+from a single CloudFront default domain (see `app/src/lib/tenant.ts` —
+subdomain takes priority automatically once one exists). Either way,
+isolation is enforced server-side (see `backend/README.md`'s "Multi-tenancy"
+section), not just by which URL the app happens to be pointed at.
 
 ## Onboarding & roles
 
-Anyone can sign up and create their own organization (`/signup`) — Cognito
+Anyone can sign up and create their own organisation (`/signup`) — Cognito
 handles the raw account (email + password, email-code verified), then the
-backend grants that specific account `ADMIN` of the org it just created. A
-platform admin can also create an org on someone's behalf as an alternative
-entry point. Either way, that org's admin invites teammates and invites
-officers to a self-service portal where they submit their own vetting
-details and documents for review — Vetro still never performs the BS7858
-check itself. A third role, `CLIENT`, scopes a login to one site instead of
-one officer — the contact at that location confirming shifts actually
-happened. See `backend/README.md`'s "Onboarding & roles" and "Scheduling,
-sites, and the client portal" for the full flow and the Cognito role model
-behind it.
+backend grants that specific account `ADMIN` of the org it just created. An
+admin invites teammates as `ADMIN` or `REVIEWER` (candidates/review queue
+only), configures role types (which checks each kind of role needs), and
+invites candidates by email — each candidate gets a magic link, no account
+of their own, to upload their documents and enter check details. Every
+status change and document view is written to the audit log; a candidate
+can request a copy of their own data or its deletion at any time through
+their own link, resolved by an admin (`routes/dataRequests.ts`).
