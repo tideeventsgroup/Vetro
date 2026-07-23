@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
+import { deriveStatus } from "../lib/status.js";
 import type { AppEnv } from "../lib/hono-env.js";
 
 export const vettingInvites = new Hono<AppEnv>();
@@ -30,7 +31,14 @@ vettingInvites.get("/vetting-invites", async (c) => {
 
 vettingInvites.post("/vetting-invites", async (c) => {
   const db = await getDb();
-  const body = await c.req.json<{ firstName: string; lastName: string; email: string; phone?: string }>();
+  const body = await c.req.json<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    requiresDbs?: boolean;
+    requiresRightToWork?: boolean;
+  }>();
   if (!body.firstName?.trim() || !body.lastName?.trim() || !body.email?.trim()) {
     return c.json({ error: "firstName, lastName, and email are required" }, 400);
   }
@@ -42,6 +50,8 @@ vettingInvites.post("/vetting-invites", async (c) => {
       lastName: body.lastName.trim(),
       email: body.email.trim(),
       phone: body.phone?.trim() || undefined,
+      requiresDbs: body.requiresDbs ?? false,
+      requiresRightToWork: body.requiresRightToWork ?? false,
       token: generateToken(),
       invitedByEmail: c.get("actorEmail") ?? "unknown",
     },
@@ -109,6 +119,19 @@ vettingInvites.post("/vetting-invites/:id/convert", async (c) => {
       lastName: existing.lastName,
       email: existing.email,
       phone: existing.phone,
+      // Right to work, if this invite's vetting workflow asked for it — same
+      // "answers land in the file the moment the check completes" idea EBC
+      // Global describes, just carried over from the candidate's own answer
+      // rather than a third-party verification (Vetro doesn't perform RTW
+      // checks itself either — see rightToWorkConfirmed elsewhere).
+      ...(existing.requiresRightToWork
+        ? {
+            rightToWorkConfirmed: existing.rightToWorkConfirmed,
+            rightToWorkCheckedAt: new Date(),
+            rightToWorkDocumentType: existing.rightToWorkDocumentType,
+            rightToWorkExpiryDate: existing.rightToWorkExpiryDate,
+          }
+        : {}),
     },
   });
 
@@ -121,6 +144,19 @@ vettingInvites.post("/vetting-invites/:id/convert", async (c) => {
       consentGiven: existing.consentGiven,
     },
   });
+
+  if (existing.requiresDbs && existing.dbsCertificateNumber && existing.dbsLevel && existing.dbsIssueDate) {
+    await db.dbsCheck.create({
+      data: {
+        officerId: officer.id,
+        level: existing.dbsLevel,
+        certificateNumber: existing.dbsCertificateNumber,
+        issueDate: existing.dbsIssueDate,
+        status: deriveStatus(null),
+        lastCheckedAt: new Date(),
+      },
+    });
+  }
 
   const updated = await db.vettingInvite.update({
     where: { id },

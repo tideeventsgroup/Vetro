@@ -362,30 +362,44 @@ model VettingSubmission {
 // A candidate who hasn't been added to the roster yet — sent a link (see
 // routes/vettingInvitePublic.ts) to complete BS7858-style vetting before an
 // admin decides whether to bring them into the system as an Officer at all.
-// Submitting doesn't create an Officer by itself; converting does (see
-// POST /vetting-invites/:id/convert), at which point the submitted answers
-// become a normal VettingSubmission on the new Officer, going through the
-// same review queue as self-service submissions.
+// requiresDbs/requiresRightToWork are chosen by the admin at invite time —
+// "screening under the appropriate vetting workflow", in EBC Global's
+// language — so the candidate-facing form only asks for what this role
+// actually needs, and answers land pre-filled into the matching record
+// (DbsCheck / Officer.rightToWork*) the moment the invite is converted,
+// rather than every candidate answering every possible question. Submitting
+// doesn't create an Officer by itself; converting does (see
+// POST /vetting-invites/:id/convert), at which point the address/employment/
+// reference answers become a normal VettingSubmission on the new Officer,
+// going through the same review queue as self-service submissions.
 model VettingInvite {
-  id                 String              @id @default(cuid())
-  contractorId       String
-  contractor         Contractor          @relation(fields: [contractorId], references: [id])
-  firstName          String
-  lastName           String
-  email              String
-  phone              String?
-  token              String              @unique
-  status             VettingInviteStatus @default(PENDING)
-  addressHistory     Json?
-  employmentHistory  Json?
-  references         Json?
-  consentGiven       Boolean             @default(false)
-  submittedAt        DateTime?
-  convertedOfficerId String?             @unique
-  convertedOfficer   Officer?            @relation(fields: [convertedOfficerId], references: [id])
-  invitedByEmail     String
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                      String              @id @default(cuid())
+  contractorId            String
+  contractor              Contractor          @relation(fields: [contractorId], references: [id])
+  firstName               String
+  lastName                String
+  email                   String
+  phone                   String?
+  token                   String              @unique
+  status                  VettingInviteStatus @default(PENDING)
+  requiresDbs             Boolean             @default(false)
+  requiresRightToWork     Boolean             @default(false)
+  addressHistory          Json?
+  employmentHistory       Json?
+  references              Json?
+  dbsLevel                DbsLevel?
+  dbsCertificateNumber    String?
+  dbsIssueDate            DateTime?
+  rightToWorkConfirmed    Boolean             @default(false)
+  rightToWorkDocumentType String?
+  rightToWorkExpiryDate   DateTime?
+  consentGiven            Boolean             @default(false)
+  submittedAt             DateTime?
+  convertedOfficerId      String?             @unique
+  convertedOfficer        Officer?            @relation(fields: [convertedOfficerId], references: [id])
+  invitedByEmail          String
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
 
   @@index([contractorId])
 }

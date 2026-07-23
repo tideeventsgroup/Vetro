@@ -102,9 +102,17 @@ export interface VettingInvite {
   phone: string | null;
   token: string;
   status: VettingInviteStatus;
+  requiresDbs: boolean;
+  requiresRightToWork: boolean;
   addressHistory: unknown;
   employmentHistory: unknown;
   references: unknown;
+  dbsLevel: DbsLevel | null;
+  dbsCertificateNumber: string | null;
+  dbsIssueDate: string | null;
+  rightToWorkConfirmed: boolean;
+  rightToWorkDocumentType: string | null;
+  rightToWorkExpiryDate: string | null;
   consentGiven: boolean;
   submittedAt: string | null;
   convertedOfficerId: string | null;
@@ -117,6 +125,8 @@ export interface PublicVettingInvite {
   lastName: string;
   organisationName: string;
   status: VettingInviteStatus;
+  requiresDbs: boolean;
+  requiresRightToWork: boolean;
 }
 
 export interface TeamMember {
@@ -612,7 +622,14 @@ class VetroApiClient {
     return this.request("/vetting-invites");
   }
 
-  createVettingInvite(input: { firstName: string; lastName: string; email: string; phone?: string }): Promise<VettingInvite> {
+  createVettingInvite(input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    requiresDbs?: boolean;
+    requiresRightToWork?: boolean;
+  }): Promise<VettingInvite> {
     return this.request("/vetting-invites", { method: "POST", body: JSON.stringify(input) });
   }
 
@@ -634,7 +651,18 @@ class VetroApiClient {
 
   submitPublicVettingInvite(
     token: string,
-    input: { addressHistory: unknown; employmentHistory: unknown; references: unknown; consentGiven: boolean }
+    input: {
+      addressHistory: unknown;
+      employmentHistory: unknown;
+      references: unknown;
+      consentGiven: boolean;
+      dbsLevel?: DbsLevel;
+      dbsCertificateNumber?: string;
+      dbsIssueDate?: string;
+      rightToWorkConfirmed?: boolean;
+      rightToWorkDocumentType?: string;
+      rightToWorkExpiryDate?: string;
+    }
   ): Promise<{ status: VettingInviteStatus }> {
     return this.request(`/candidate-vetting/${encodeURIComponent(token)}/submit`, {
       method: "POST",

@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { DbsLevel, Prisma } from "@prisma/client";
 import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { recordAudit } from "../lib/audit.js";
@@ -30,6 +30,8 @@ vettingInvitePublic.get("/candidate-vetting/:token", async (c) => {
     lastName: invite.lastName,
     organisationName: invite.contractor.name,
     status: invite.status,
+    requiresDbs: invite.requiresDbs,
+    requiresRightToWork: invite.requiresRightToWork,
   });
 });
 
@@ -46,6 +48,12 @@ vettingInvitePublic.post("/candidate-vetting/:token/submit", async (c) => {
     employmentHistory: Prisma.InputJsonValue;
     references: Prisma.InputJsonValue;
     consentGiven: boolean;
+    dbsLevel?: DbsLevel;
+    dbsCertificateNumber?: string;
+    dbsIssueDate?: string;
+    rightToWorkConfirmed?: boolean;
+    rightToWorkDocumentType?: string;
+    rightToWorkExpiryDate?: string;
   }>();
 
   if (!body.consentGiven) {
@@ -61,6 +69,20 @@ vettingInvitePublic.post("/candidate-vetting/:token/submit", async (c) => {
       consentGiven: body.consentGiven,
       status: "SUBMITTED",
       submittedAt: new Date(),
+      ...(invite.requiresDbs
+        ? {
+            dbsLevel: body.dbsLevel,
+            dbsCertificateNumber: body.dbsCertificateNumber,
+            dbsIssueDate: body.dbsIssueDate ? new Date(body.dbsIssueDate) : undefined,
+          }
+        : {}),
+      ...(invite.requiresRightToWork
+        ? {
+            rightToWorkConfirmed: body.rightToWorkConfirmed ?? false,
+            rightToWorkDocumentType: body.rightToWorkDocumentType,
+            rightToWorkExpiryDate: body.rightToWorkExpiryDate ? new Date(body.rightToWorkExpiryDate) : undefined,
+          }
+        : {}),
     },
   });
 

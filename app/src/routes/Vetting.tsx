@@ -6,7 +6,7 @@ import { Officer, useApi, VettingInvite, VettingSubmissionForReview } from "../l
 import { worstDbsCheck, worstVettingRecord } from "../lib/status.js";
 import { useTenantSlug } from "../lib/tenant.js";
 
-const EMPTY_INVITE_FORM = { firstName: "", lastName: "", email: "", phone: "" };
+const EMPTY_INVITE_FORM = { firstName: "", lastName: "", email: "", phone: "", requiresDbs: false, requiresRightToWork: false };
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" });
@@ -88,6 +88,8 @@ export function Vetting() {
         lastName: inviteForm.lastName.trim(),
         email: inviteForm.email.trim(),
         phone: inviteForm.phone.trim() || undefined,
+        requiresDbs: inviteForm.requiresDbs,
+        requiresRightToWork: inviteForm.requiresRightToWork,
       });
       setNewInviteLink(`${window.location.origin}/candidate-vetting/${created.token}`);
       setLinkCopied(false);
@@ -232,6 +234,27 @@ export function Vetting() {
               />
             </div>
           </div>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--vetro-text-secondary)" }}>
+              Vetting workflow — also collect:
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, marginBottom: 4 }}>
+              <input
+                type="checkbox"
+                checked={inviteForm.requiresDbs}
+                onChange={(e) => setInviteForm((f) => ({ ...f, requiresDbs: e.target.checked }))}
+              />
+              DBS check details
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
+              <input
+                type="checkbox"
+                checked={inviteForm.requiresRightToWork}
+                onChange={(e) => setInviteForm((f) => ({ ...f, requiresRightToWork: e.target.checked }))}
+              />
+              Right to work
+            </label>
+          </div>
           <button className="btn btn-primary" type="submit" disabled={isInviting}>
             <MailIcon width={14} height={14} />
             {isInviting ? "Sending…" : "Send invite"}
@@ -268,6 +291,7 @@ export function Vetting() {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Checks requested</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -289,6 +313,11 @@ export function Vetting() {
                       )}
                     </td>
                     <td>{invite.email}</td>
+                    <td style={{ fontSize: 13, color: "var(--vetro-text-muted)" }}>
+                      BS7858
+                      {invite.requiresDbs ? ", DBS" : ""}
+                      {invite.requiresRightToWork ? ", Right to work" : ""}
+                    </td>
                     <td>
                       <VettingInviteStatusBadge status={invite.status} />
                     </td>
@@ -310,7 +339,7 @@ export function Vetting() {
                   </tr>
                   {expandedInviteId === invite.id && (
                     <tr>
-                      <td colSpan={4} style={{ background: "var(--vetro-bg)" }}>
+                      <td colSpan={5} style={{ background: "var(--vetro-bg)" }}>
                         <div style={{ padding: "12px 4px" }}>
                           <p style={{ fontSize: 13, marginBottom: 4 }}>
                             <strong>Address history:</strong> {listPreview(invite.addressHistory)}
@@ -318,9 +347,25 @@ export function Vetting() {
                           <p style={{ fontSize: 13, marginBottom: 4 }}>
                             <strong>Employment history:</strong> {listPreview(invite.employmentHistory)}
                           </p>
-                          <p style={{ fontSize: 13, marginBottom: 12 }}>
+                          <p style={{ fontSize: 13, marginBottom: invite.requiresDbs || invite.requiresRightToWork ? 4 : 12 }}>
                             <strong>References:</strong> {listPreview(invite.references)}
                           </p>
+                          {invite.requiresDbs && (
+                            <p style={{ fontSize: 13, marginBottom: 4 }}>
+                              <strong>DBS:</strong>{" "}
+                              {invite.dbsCertificateNumber
+                                ? `${invite.dbsLevel} — certificate ${invite.dbsCertificateNumber}${invite.dbsIssueDate ? ` (issued ${formatDate(invite.dbsIssueDate)})` : ""}`
+                                : "Not provided"}
+                            </p>
+                          )}
+                          {invite.requiresRightToWork && (
+                            <p style={{ fontSize: 13, marginBottom: 12 }}>
+                              <strong>Right to work:</strong>{" "}
+                              {invite.rightToWorkConfirmed ? "Confirmed" : "Not confirmed"}
+                              {invite.rightToWorkDocumentType ? ` — ${invite.rightToWorkDocumentType}` : ""}
+                              {invite.rightToWorkExpiryDate ? `, expires ${formatDate(invite.rightToWorkExpiryDate)}` : ""}
+                            </p>
+                          )}
                           <button
                             className="btn btn-primary"
                             disabled={isConverting}
