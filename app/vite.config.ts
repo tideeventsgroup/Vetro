@@ -15,9 +15,9 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
       },
       manifest: {
-        name: "Vetro",
-        short_name: "Vetro",
-        description: "Scotland's security workforce, verified — SIA licence and BS7858 vetting, checked automatically.",
+        name: "Vetro Vetting App",
+        short_name: "Vetro Vetting",
+        description: "Scotland's security workforce, verified — BS7858 and BPSS pre-employment vetting, checked automatically.",
         start_url: "/",
         display: "standalone",
         // Matches --vetro-ink (src/styles/tokens.css) and the dark gradient

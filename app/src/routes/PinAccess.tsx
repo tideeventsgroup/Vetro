@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, useState } from "react";
+import { Link } from "react-router-dom";
 import { StatusBadge } from "../components/StatusBadge.js";
 import { CheckIcon, PlusIcon, ShieldCheckIcon, TrashIcon, UploadIcon } from "../components/icons.js";
 import { PinAccessStatus, useApi } from "../lib/api.js";
@@ -139,6 +140,9 @@ export function PinAccess() {
                 {isVerifying ? "Checking…" : "Continue"}
               </button>
             </form>
+            <p className="subtle-meta" style={{ marginTop: 16 }}>
+              Admin? <Link to="/login">Sign in here</Link>
+            </p>
           </div>
         </div>
       </div>

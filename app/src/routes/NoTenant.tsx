@@ -1,14 +1,19 @@
 import { Navigate } from "react-router-dom";
-
-const DEV_TENANT_SLUG = import.meta.env.VITE_DEV_TENANT_SLUG;
+import { getTenantSlug } from "../lib/tenant.js";
 
 /**
- * Landing for a bare "/" — sign-in itself doesn't need a tenant slug (see
- * App.tsx and Login.tsx), so there's nothing else for this to resolve;
- * it just sends you to /login. VITE_DEV_TENANT_SLUG short-circuits this
- * straight to a specific tenant for local dev convenience.
+ * Landing for a bare "/" — this is the PWA's start_url (see vite.config.ts),
+ * so it's what an installed home-screen icon actually opens to. A tenant
+ * subdomain (clyde-coast.vetro.co.uk, or VITE_DEV_TENANT_SLUG locally)
+ * resolves straight through getTenantSlug() even with no path segment, so
+ * this sends staff straight to their tenant's PIN-based vetting login
+ * (routes/PinAccess.tsx) rather than the admin sign-in — PinAccess itself
+ * links through to /login for anyone who does need the admin console. A
+ * bare marketing/apex domain has no tenant to resolve at all, so that case
+ * still falls back to /login.
  */
 export function NoTenant() {
-  if (DEV_TENANT_SLUG) return <Navigate to={`/${DEV_TENANT_SLUG}`} replace />;
+  const tenant = getTenantSlug();
+  if (tenant) return <Navigate to={`/${tenant}/pin-access`} replace />;
   return <Navigate to="/login" replace />;
 }
