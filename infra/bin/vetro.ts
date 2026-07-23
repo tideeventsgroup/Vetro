@@ -54,6 +54,7 @@ new ApiStack(app, "VetroApiStack", {
   domainName,
   hostedZoneId,
   loginUrlTemplate,
+  groqApiKey: process.env.GROQ_API_KEY,
 });
 
 new ScheduleStack(app, "VetroScheduleStack", {

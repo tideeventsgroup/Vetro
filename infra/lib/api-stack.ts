@@ -28,6 +28,8 @@ export interface ApiStackProps extends StackProps {
   hostedZoneId?: string;
   /** `{slug}` placeholder — the invite email's sign-in link (see bin/vetro.ts and lib/cognito.ts's buildInviteClientMetadata). */
   loginUrlTemplate: string;
+  /** Powers the AI second-opinion review in the compliance panel (backend/src/lib/groq.ts). Omit to leave that endpoint returning 503. */
+  groqApiKey?: string;
 }
 
 export class ApiStack extends Stack {
@@ -44,6 +46,7 @@ export class ApiStack extends Stack {
       COGNITO_CLIENT_ID: props.userPoolClient.userPoolClientId,
       DOCUMENTS_BUCKET: props.documentsBucket.bucketName,
       APP_LOGIN_URL_TEMPLATE: props.loginUrlTemplate,
+      ...(props.groqApiKey ? { GROQ_API_KEY: props.groqApiKey } : {}),
     };
 
     const bundling = prismaLambdaBundling();
