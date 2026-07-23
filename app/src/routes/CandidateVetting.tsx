@@ -117,45 +117,72 @@ export function CandidateVetting() {
 
   if (loadError) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--vetro-bg)", padding: "24px 16px" }}>
-        <div className="card" style={{ maxWidth: 460, margin: "80px auto", textAlign: "center" }}>
-          <span className="empty-icon">
-            <ShieldCheckIcon />
-          </span>
-          <h2 style={{ fontSize: 18, margin: "8px 0" }}>Link unavailable</h2>
-          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>{loadError}</p>
+      <div className="candidate-vetting-shell">
+        <div className="candidate-vetting-topbar">
+          <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="24" />
+        </div>
+        <div className="candidate-vetting-state">
+          <div className="candidate-vetting-state-card">
+            <span className="empty-icon">
+              <ShieldCheckIcon />
+            </span>
+            <h2 style={{ fontSize: 18, margin: "8px 0" }}>Link unavailable</h2>
+            <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>{loadError}</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!invite) return <p style={{ color: "var(--vetro-text-muted)", textAlign: "center", marginTop: 80 }}>Loading…</p>;
+  if (!invite) {
+    return (
+      <div className="candidate-vetting-shell">
+        <div className="candidate-vetting-topbar">
+          <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="24" />
+        </div>
+        <p style={{ color: "var(--vetro-text-muted)", textAlign: "center", marginTop: 80 }}>Loading…</p>
+      </div>
+    );
+  }
 
   if (submitted || invite.status === "SUBMITTED") {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--vetro-bg)", padding: "24px 16px" }}>
-        <div className="card" style={{ maxWidth: 460, margin: "80px auto", textAlign: "center" }}>
-          <span className="empty-icon">
-            <ShieldCheckIcon />
-          </span>
-          <h2 style={{ fontSize: 18, margin: "8px 0" }}>Thanks, {invite.firstName}</h2>
-          <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>
-            {invite.organisationName} has received your details and will be in touch once they've been reviewed.
-          </p>
+      <div className="candidate-vetting-shell">
+        <div className="candidate-vetting-topbar">
+          <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="24" />
+        </div>
+        <div className="candidate-vetting-state">
+          <div className="candidate-vetting-state-card">
+            <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)" }}>
+              <ShieldCheckIcon />
+            </span>
+            <h2 style={{ fontSize: 18, margin: "8px 0" }}>Thanks, {invite.firstName}</h2>
+            <p style={{ color: "var(--vetro-text-muted)", fontSize: 14 }}>
+              {invite.organisationName} has received your details and will be in touch once they've been reviewed.
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--vetro-bg)", padding: "24px 16px" }}>
-      <div style={{ maxWidth: 640, margin: "40px auto" }}>
-        <div className="page-header">
+    <div className="candidate-vetting-shell">
+      <div className="candidate-vetting-topbar">
+        <img src="/brand/vetro-logo-horizontal-dark.svg" alt="Vetro" height="24" />
+      </div>
+
+      <div className="candidate-vetting-content">
+        <div className="candidate-vetting-intro">
+          <span className="empty-icon" style={{ background: "var(--vetro-teal-light)", color: "var(--vetro-teal-dark)", flexShrink: 0 }}>
+            <ShieldCheckIcon />
+          </span>
           <div>
-            <h1>Vetting details</h1>
+            <h1>Hi {invite.firstName}, let's get you vetted</h1>
             <p>
-              {invite.organisationName} has invited {invite.firstName} {invite.lastName} to complete BS7858-style
-              pre-employment vetting before joining the roster.
+              {invite.organisationName} has invited you to complete BS7858-style pre-employment vetting before
+              joining the roster. It only takes a few minutes — you can come back to this link any time before you
+              submit.
             </p>
           </div>
         </div>
