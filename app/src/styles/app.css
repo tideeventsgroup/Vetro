@@ -1556,6 +1556,22 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .modal-overlay, .modal-panel { animation: none; }
   html { scroll-behavior: auto; }
+
+  .login-brand-panel,
+  .login-orb-moon,
+  .login-orb-glow,
+  .login-star,
+  .login-brand-copy,
+  .login-feature-list li,
+  .login-brand-foot,
+  .login-card,
+  .login-card form .form-field,
+  .login-card form .btn-pill {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    background-position: 0% 0% !important;
+  }
 }
 
 /* Login */
@@ -1569,7 +1585,9 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: linear-gradient(135deg, var(--lunara-ink) 0%, var(--lunara-gold-dark) 100%);
+  background: linear-gradient(120deg, var(--lunara-ink) 0%, var(--lunara-indigo-dark) 35%, var(--lunara-gold-dark) 78%, var(--lunara-ink) 100%);
+  background-size: 320% 320%;
+  animation: brand-gradient-drift 22s ease-in-out infinite;
   color: var(--lunara-white);
   padding: var(--lunara-space-7);
   position: relative;
@@ -1589,18 +1607,68 @@ button {
   );
 }
 
-.login-brand-panel::after {
-  content: '';
+@keyframes brand-gradient-drift {
+  0%, 100% { background-position: 0% 30%; }
+  50% { background-position: 100% 70%; }
+}
+
+/* Luna(r) motif — a soft "moonlight" glow that drifts slowly, plus a
+   handful of twinkling points, rather than a static flat panel. Purely
+   ambient: it reads as "alive" without ever competing with the copy. */
+.login-orb {
   position: absolute;
-  inset: -20%;
-  background:
-    radial-gradient(420px circle at 8% 8%, rgba(201, 161, 92, 0.32) 0%, transparent 70%),
-    radial-gradient(360px circle at 96% 94%, rgba(244, 239, 230, 0.10) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+.login-orb-moon {
+  top: -120px;
+  left: -90px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(244, 239, 230, 0.5) 0%, rgba(201, 161, 92, 0.22) 45%, transparent 75%);
+  animation: orb-drift-1 16s ease-in-out infinite;
+}
+
+.login-orb-glow {
+  bottom: -140px;
+  right: -100px;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(201, 161, 92, 0.32) 0%, transparent 70%);
+  animation: orb-drift-2 20s ease-in-out infinite;
+}
+
+@keyframes orb-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(26px, 34px) scale(1.08); }
+}
+
+@keyframes orb-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-22px, -28px) scale(1.05); }
+}
+
+.login-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--lunara-white);
+  opacity: 0.2;
+  animation: star-twinkle 3.6s ease-in-out infinite;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.7); }
 }
 
 .login-brand-copy {
   position: relative;
   max-width: 380px;
+  animation: fade-rise 600ms var(--lunara-ease) both;
 }
 
 .login-brand-copy h1 {
@@ -1613,6 +1681,11 @@ button {
   color: #B8C2CC;
   font-size: var(--lunara-fs-body);
   line-height: 1.6;
+}
+
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .login-feature-list {
@@ -1633,7 +1706,13 @@ button {
   color: #D3DAE0;
   font-size: var(--lunara-fs-body-sm);
   line-height: 1.5;
+  opacity: 0;
+  animation: fade-rise 500ms var(--lunara-ease) both;
 }
+
+.login-feature-list li:nth-child(1) { animation-delay: 220ms; }
+.login-feature-list li:nth-child(2) { animation-delay: 340ms; }
+.login-feature-list li:nth-child(3) { animation-delay: 460ms; }
 
 .login-feature-icon {
   display: flex;
@@ -1658,6 +1737,9 @@ button {
   border-radius: var(--lunara-radius-md);
   background: rgba(18, 24, 43, 0.45);
   backdrop-filter: blur(2px);
+  opacity: 0;
+  animation: fade-rise 500ms var(--lunara-ease) both;
+  animation-delay: 580ms;
 }
 
 /* Mobile/PWA-only welcome header — see Login.tsx for why this exists
@@ -1682,6 +1764,9 @@ button {
   border-radius: var(--lunara-radius-lg);
   box-shadow: var(--lunara-shadow-lifted);
   padding: var(--lunara-space-6);
+  opacity: 0;
+  animation: fade-rise 550ms var(--lunara-ease) both;
+  animation-delay: 100ms;
 }
 
 .login-card h2 {
@@ -1692,6 +1777,32 @@ button {
 .login-card .lede {
   color: var(--lunara-text-muted);
   margin-bottom: var(--lunara-space-6);
+}
+
+/* Staggered reveal for the form itself — the fields settle in just after
+   the card, so the eye has something to follow instead of one flat pop. */
+.login-card form .form-field {
+  opacity: 0;
+  animation: fade-rise 450ms var(--lunara-ease) both;
+}
+
+.login-card form .form-field:nth-of-type(1) { animation-delay: 240ms; }
+.login-card form .form-field:nth-of-type(2) { animation-delay: 320ms; }
+.login-card form .form-field:nth-of-type(3) { animation-delay: 400ms; }
+.login-card form .form-field:nth-of-type(4) { animation-delay: 480ms; }
+
+.login-card form .btn-pill {
+  opacity: 0;
+  animation: fade-rise 450ms var(--lunara-ease) both;
+  animation-delay: 540ms;
+}
+
+.login-card .btn-pill {
+  transition: transform 120ms var(--lunara-ease), background-color var(--lunara-duration) var(--lunara-ease), box-shadow var(--lunara-duration) var(--lunara-ease);
+}
+
+.login-card .btn-pill:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 /* Icon-adorned inputs (email/password on Login + Signup) — the icon anchors

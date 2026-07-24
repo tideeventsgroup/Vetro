@@ -77,6 +77,11 @@ export function Signup() {
   return (
     <div className="login-shell">
       <div className="login-brand-panel">
+        <span className="login-orb login-orb-moon" aria-hidden="true" />
+        <span className="login-orb login-orb-glow" aria-hidden="true" />
+        <span className="login-star" style={{ top: "18%", left: "62%" }} aria-hidden="true" />
+        <span className="login-star" style={{ top: "38%", left: "84%", animationDelay: "1.1s" }} aria-hidden="true" />
+        <span className="login-star" style={{ top: "68%", left: "48%", animationDelay: "2.2s" }} aria-hidden="true" />
         <img
           src="/brand/lunara-logo-primary-dark.svg"
           alt="Lunara Screening"
