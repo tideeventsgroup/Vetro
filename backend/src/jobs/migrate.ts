@@ -27,7 +27,27 @@ interface MigrateEvent {
    * the same way running the migrations themselves is.
    */
   bootstrapOrganisation?: { name: string; slug: string };
+  /**
+   * Manual `aws lambda invoke` only — empties every application table
+   * (schema and _prisma_migrations history are left alone) so an operator
+   * can reset a deployment to a clean slate without re-running the
+   * fresh-start migration itself. Cognito users are untouched by this; a
+   * stale custom:contractor_id claim on an existing Cognito user will point
+   * at an Organisation row that no longer exists after a wipe, so clearing
+   * this out is normally paired with deleting the affected Cognito users.
+   */
+  wipeData?: boolean;
 }
+
+const APP_TABLES = [
+  "AuditLogEntry",
+  "DataRequest",
+  "Document",
+  "Check",
+  "Candidate",
+  "RoleType",
+  "Organisation",
+];
 
 export const handler = async (
   event: MigrateEvent = {}
@@ -38,6 +58,8 @@ export const handler = async (
 
   const results: MigrationResult[] = [];
   let organisation: { id: string; slug: string } | undefined;
+  let wiped = false;
+  let counts: Record<string, number> | undefined;
 
   try {
     await client.query(`
@@ -89,6 +111,12 @@ export const handler = async (
       }
     }
 
+    if (event.wipeData) {
+      const quoted = APP_TABLES.map((t) => `"${t}"`).join(", ");
+      await client.query(`TRUNCATE TABLE ${quoted} RESTART IDENTITY CASCADE;`);
+      wiped = true;
+    }
+
     if (event.bootstrapOrganisation) {
       const { name, slug } = event.bootstrapOrganisation;
       const { rows } = await client.query<{ id: string; slug: string }>(
@@ -100,11 +128,17 @@ export const handler = async (
       );
       organisation = rows[0];
     }
+
+    counts = {};
+    for (const table of APP_TABLES) {
+      const { rows } = await client.query<{ count: string }>(`SELECT COUNT(*) FROM "${table}"`);
+      counts[table] = Number(rows[0].count);
+    }
   } finally {
     await client.end();
   }
 
-  const body = JSON.stringify({ migrations: results, organisation });
+  const body = JSON.stringify({ migrations: results, organisation, wiped, counts });
   console.log(body);
   return { statusCode: 200, body };
 };
