@@ -72,11 +72,29 @@ export class FrontendStack extends Stack {
       });
     }
 
-    new s3deploy.BucketDeployment(this, "DeploySite", {
-      sources: [s3deploy.Source.asset(path.join(__dirname, "../../app/dist"))],
+    // Split in two so the two halves get opposite cache lifetimes: hashed
+    // /assets/* files are safe to cache forever (a content change always
+    // means a new filename), but the app shell — index.html, sw.js,
+    // registerSW.js, manifest.webmanifest — has to be revalidated on every
+    // request. Without this, a browser (or the PWA's own service worker,
+    // which precaches index.html per workbox's globPatterns above) can go
+    // on serving a deploy from hours or days ago indefinitely, since a
+    // single-page app never re-fetches its shell after the first load —
+    // exactly the failure mode that made an already-shipped bug fix look
+    // like it hadn't landed.
+    new s3deploy.BucketDeployment(this, "DeploySiteAssets", {
+      sources: [s3deploy.Source.asset(path.join(__dirname, "../../app/dist/assets"))],
+      destinationBucket: siteBucket,
+      destinationKeyPrefix: "assets",
+      cacheControl: [s3deploy.CacheControl.fromString("public, max-age=31536000, immutable")],
+    });
+
+    new s3deploy.BucketDeployment(this, "DeploySiteShell", {
+      sources: [s3deploy.Source.asset(path.join(__dirname, "../../app/dist"), { exclude: ["assets/**"] })],
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ["/*"],
+      cacheControl: [s3deploy.CacheControl.fromString("no-cache")],
     });
 
     new CfnOutput(this, "DistributionDomainName", { value: distribution.distributionDomainName });
