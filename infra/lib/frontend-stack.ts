@@ -82,11 +82,17 @@ export class FrontendStack extends Stack {
     // single-page app never re-fetches its shell after the first load —
     // exactly the failure mode that made an already-shipped bug fix look
     // like it hadn't landed.
+    // prune: false on both — each BucketDeployment defaults to pruning
+    // anything in the destination it doesn't own, so without this the two
+    // deployments take turns deleting each other's files (whichever runs
+    // second wins), silently emptying out /assets or the shell depending on
+    // ordering.
     new s3deploy.BucketDeployment(this, "DeploySiteAssets", {
       sources: [s3deploy.Source.asset(path.join(__dirname, "../../app/dist/assets"))],
       destinationBucket: siteBucket,
       destinationKeyPrefix: "assets",
       cacheControl: [s3deploy.CacheControl.fromString("public, max-age=31536000, immutable")],
+      prune: false,
     });
 
     new s3deploy.BucketDeployment(this, "DeploySiteShell", {
@@ -95,6 +101,7 @@ export class FrontendStack extends Stack {
       distribution,
       distributionPaths: ["/*"],
       cacheControl: [s3deploy.CacheControl.fromString("no-cache")],
+      prune: false,
     });
 
     new CfnOutput(this, "DistributionDomainName", { value: distribution.distributionDomainName });
