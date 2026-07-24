@@ -3,14 +3,8 @@ import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NewPasswordRequiredError, useAuth } from "../lib/auth.js";
 import { useApi } from "../lib/api.js";
-import { CheckIcon, EyeIcon, EyeOffIcon, FileIcon, LockIcon, MailIcon, RosterIcon } from "../components/icons.js";
+import { EyeIcon, EyeOffIcon, LockIcon, MailIcon } from "../components/icons.js";
 import { DashboardColourBadge } from "../components/StatusBadge.js";
-
-const FEATURES = [
-  { icon: RosterIcon, text: "SIA licence, first aid, right to work and training tracked in one place" },
-  { icon: FileIcon, text: "Candidates upload their own documents through a branded, mobile-friendly link" },
-  { icon: CheckIcon, text: "A clear compliance report per candidate, ready to export whenever you need it" },
-];
 
 // Login itself is tenant-agnostic — there's no /:tenant prefix here (see
 // App.tsx), so the destination after signing in is resolved from the
@@ -97,16 +91,6 @@ export function Login() {
             <DashboardColourBadge colour="amber" />
             <DashboardColourBadge colour="red" />
           </div>
-          <ul className="login-feature-list">
-            {FEATURES.map(({ icon: Icon, text }) => (
-              <li key={text}>
-                <span className="login-feature-icon">
-                  <Icon width={14} height={14} />
-                </span>
-                {text}
-              </li>
-            ))}
-          </ul>
         </div>
         <p className="login-brand-foot">
           Lunara Screening is not a DBS Registered Body or Umbrella Body. DBS, PVG, and Disclosure

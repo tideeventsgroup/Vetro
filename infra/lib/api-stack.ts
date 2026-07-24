@@ -95,11 +95,9 @@ export class ApiStack extends Stack {
         allowHeaders: [
           "Authorization",
           "Content-Type",
-          "X-Vetro-Tenant",
-          "X-Vetro-Role",
-          "X-Vetro-Officer-Id",
-          "X-Vetro-Site-Id",
-          "X-Vetro-Platform-Admin",
+          "X-Lunara-Tenant",
+          "X-Lunara-Role",
+          "X-Lunara-Platform-Admin",
         ],
         allowMethods: [
           apigwv2.CorsHttpMethod.GET,
